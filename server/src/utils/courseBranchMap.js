@@ -1,0 +1,27 @@
+export const courseBranchMap = {
+  "B.Tech": [
+    "Computer Science & Engineering",
+    "Information Technology",
+    "Electrical Engineering",
+    "Mechanical Engineering",
+    "Civil Engineering",
+    "Electronics & Communication Engineering",
+    "Robotics & AI",
+  ],
+  "M.Tech": [
+    "Computer Science & Engineering",
+    "Electronics Engineering",
+    "Mechanical Engineering",
+    "Production Engineering",
+    "Geo Technical Engineering",
+    "Structural Engineering",
+    "Environmental Science & Engineering",
+  ],
+  MBA: ["Finance", "Marketing", "Human Resource"],
+  MCA: ["Computer Applications"],
+  "B.Voc.": ["Interior Design"],
+  "B.Com": ["Entrepreneurship"],
+  BBA: [],
+  BCA: [],
+  "B.Arch": [],
+};
