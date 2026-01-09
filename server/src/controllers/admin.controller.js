@@ -7,15 +7,111 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { courseBranchMap } from "../utils/courseBranchMap.js";
 
 const getAllUsers = asyncHandler(async (req, res) => {
-  const users = await User.find().select("-password");
+  const users = await User.find(
+    {},
+    {
+      fullname: 1,
+      username: 1,
+      email: 1,
+      role: 1,
+      jerseyNumber: 1,
+      course: 1,
+      year: 1,
+      branch: 1,
+      attendance: 1,
+      selectedEvents: 1,
+    }
+  ).lean();
+
+  const formattedUsers = users.map((u) => ({
+    id: u._id,
+    fullname: u.fullname,
+    username: u.username,
+    email: u.email,
+    role: u.role,
+    jerseyNumber: u.jerseyNumber || null,
+    course: u.course || null,
+    year: u.year || null,
+    branch: u.branch || null,
+    attendance: u.attendance || "Not Marked",
+    eventsCount: u.selectedEvents?.length || 0,
+  }));
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        count: formattedUsers.length,
+        users: formattedUsers,
+      },
+      "Users fetched successfully"
+    )
+  );
+});
+
+const getUserDetails = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+
+  const user = await User.findById(userId, {
+    fullname: 1,
+    username: 1,
+    email: 1,
+    role: 1,
+    gender: 1,
+    phone: 1,
+    course: 1,
+    branch: 1,
+    year: 1,
+    crn: 1,
+    urn: 1,
+    jerseyNumber: 1,
+    attendance: 1,
+    isUserDetailsComplete: 1,
+    isEventsLocked: 1,
+    selectedEvents: 1,
+    createdAt: 1,
+  })
+    .populate({
+      path: "selectedEvents",
+      select: "eventname eventType eventDay",
+    })
+    .lean();
+
+  if (!user) {
+    return res.status(404).json(new ApiResponse(404, null, "User not found"));
+  }
+
+  const formattedUser = {
+    id: user._id,
+    fullname: user.fullname,
+    username: user.username,
+    email: user.email,
+    role: user.role,
+    gender: user.gender || null,
+    phone: user.phone || null,
+    course: user.course || null,
+    branch: user.branch || null,
+    year: user.year || null,
+    crn: user.crn || null,
+    urn: user.urn || null,
+    jerseyNumber: user.jerseyNumber || null,
+    attendance: user.attendance || "Not Marked",
+    isUserDetailsComplete: Boolean(user.isUserDetailsComplete),
+    isEventsLocked: Boolean(user.isEventsLocked),
+    selectedEvents:
+      user.selectedEvents?.map((e) => ({
+        id: e._id,
+        name: e.eventname,
+        type: e.eventType,
+        day: e.eventDay,
+      })) || [],
+    createdAt: user.createdAt,
+  };
+
   return res
     .status(200)
     .json(
-      new ApiResponse(
-        200,
-        { count: users.length, users },
-        "Users fetched successfully."
-      )
+      new ApiResponse(200, formattedUser, "User details fetched successfully")
     );
 });
 
@@ -113,6 +209,7 @@ const deleteUser = asyncHandler(async (req, res) => {
 
 export {
   getAllUsers,
+  getUserDetails,
   changeUserDetails,
   markAttendance,
   deleteUser,

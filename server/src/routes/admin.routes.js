@@ -1,5 +1,12 @@
 import { Router } from "express";
-import { getAllUsers, deleteUser, changeUserDetails, markAttendance, unlockEvents } from "../controllers/admin.controller.js";
+import {
+  getAllUsers,
+  deleteUser,
+  changeUserDetails,
+  markAttendance,
+  unlockEvents,
+  getUserDetails,
+} from "../controllers/admin.controller.js";
 
 const router = Router();
 
@@ -9,6 +16,6 @@ router.route("/user/:userId").delete(deleteUser);
 router.route("/user/events/unlock").post(unlockEvents);
 
 router.route("/users").get(getAllUsers);
+router.route("/user/:userId").get(getUserDetails);
 
 export default router;
-
