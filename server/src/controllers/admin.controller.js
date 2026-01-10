@@ -5,6 +5,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { courseBranchMap } from "../utils/courseBranchMap.js";
+import { Event } from "../models/Events.model.js";
 
 const getAllUsers = asyncHandler(async (req, res) => {
   const users = await User.find(

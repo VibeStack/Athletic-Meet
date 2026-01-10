@@ -21,7 +21,7 @@ export const loginUser = asyncHandler(async (req, res) => {
     createdAt: 1,
   });
 
-  const sessionLimit = user.role === "Manager" ? 3 : 1;
+  const sessionLimit = user.role === "Manager" ? 2 : 1;
   if (allUserSessions.length >= sessionLimit) {
     await allUserSessions[0].deleteOne();
   }
