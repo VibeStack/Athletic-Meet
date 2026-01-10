@@ -31,12 +31,12 @@ import otpRouter from "./routes/emailOtp.routes.js";
 import authLoginRouter from "./routes/authLogin.routes.js";
 import adminRouter from "./routes/admin.routes.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
-import { checkAuth, requireAdmin } from "./middlewares/auth.middleware.js";
+import { checkAuth, requireAdminAccess } from "./middlewares/auth.middleware.js";
 
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/otp", otpRouter);
 app.use("/api/v1/auth", authLoginRouter);
-app.use("/api/v1/admin", checkAuth, requireAdmin, adminRouter);
+app.use("/api/v1/admin", checkAuth, requireAdminAccess, adminRouter);
 
 app.use(errorHandler);
 

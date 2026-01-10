@@ -97,16 +97,19 @@ const userSchema = new mongoose.Schema(
     selectedEvents: {
       type: [
         {
-          type: Schema.Types.ObjectId,
-          ref: "Event",
+          eventId: {
+            type: Schema.Types.ObjectId,
+            ref: "Event",
+            required: true,
+          },
+          status: {
+            type: String,
+            enum: ["Present", "Absent", "Not Marked"],
+            default: "Not Marked",
+          },
         },
       ],
       default: [],
-    },
-    attendance: {
-      type: String,
-      enum: ["Absent", "Not Marked", "Present"],
-      default: "Not Marked",
     },
   },
   {

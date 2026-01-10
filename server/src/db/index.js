@@ -3,22 +3,40 @@ import { DB_NAME } from "../constants.js";
 
 const connectDB = async () => {
   try {
-    const connetionInstance = await mongoose.connect(
-      `${process.env.MONGODB_URI}/${DB_NAME}`
+    if (mongoose.connection.readyState !== 0) {
+      console.log("✅ MongoDB already connected");
+      return mongoose.connection;
+    }
+
+    const connection = await mongoose.connect(
+      `${process.env.MONGODB_URI}/${DB_NAME}`,
+      {
+        autoIndex: true,
+        serverSelectionTimeoutMS: 5000,
+      }
     );
-    console.log(
-      `\nMongoDB Connected !! DB Host: ${connetionInstance.connection.host}`
-    );
+
+    console.log("🟢 MongoDB connected successfully");
+    console.log(`📦 Database: ${connection.connection.name}`);
+    console.log(`🌐 Host: ${connection.connection.host}`);
+
+    return connection.connection;
+
   } catch (error) {
-    console.log("\n\nMongoDB Connection Failed! (src/db/index.js)\n\n", error);
+    console.error("🔥 MongoDB connection failed");
+
+    if (error.name === "MongoNetworkError") {
+      console.error("❌ Network error: Unable to reach MongoDB server");
+    } else if (error.name === "MongoServerSelectionError") {
+      console.error("❌ Server selection failed (check URI / IP whitelist)");
+    } else if (error.message?.includes("auth")) {
+      console.error("❌ Authentication failed (check username/password)");
+    } else {
+      console.error("❌ Unknown MongoDB error:", error);
+    }
+
     process.exit(1);
   }
 };
-
-process.on("SIGINT", async () => {
-  await mongoose.disconnect();
-  console.log("✅ Client Disconnected!");
-  process.exit(0);
-});
 
 export default connectDB;

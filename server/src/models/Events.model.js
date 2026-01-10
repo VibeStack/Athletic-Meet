@@ -2,41 +2,33 @@ import mongoose from "mongoose";
 
 const eventSchema = new mongoose.Schema(
   {
-    eventname: {
+    name: {
       type: String,
       required: true,
       trim: true,
     },
-    eventType: {
+
+    type: {
       type: String,
-      enum: ["Field", "Team Events", "Track"],
+      enum: ["Field", "Team", "Track"],
       required: true,
     },
-    eventDay: {
+
+    category: {
+      type: String,
+      enum: ["Boys", "Girls"],
+      required: true,
+    },
+
+    day: {
       type: String,
       enum: ["Day 1", "Day 2", "Both"],
-      require: true,
+      required: true,
     },
+
     isActive: {
       type: Boolean,
       default: true,
-    },
-    enrolledStudentsStatus: {
-      present: {
-        type: Number,
-        default: 0,
-        min: 0,
-      },
-      absent: {
-        type: Number,
-        default: 0,
-        min: 0,
-      },
-      notMarked: {
-        type: Number,
-        default: 0,
-        min: 0,
-      },
     },
   },
   {

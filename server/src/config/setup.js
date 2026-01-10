@@ -22,10 +22,7 @@ try {
           "email",
           "password",
           "role",
-          "attendance",
           "isUserDetailsComplete",
-          "createdAt",
-          "updatedAt",
         ],
 
         properties: {
@@ -102,13 +99,23 @@ try {
 
           selectedEvents: {
             bsonType: "array",
+            description:
+              "List of events selected by the user with attendance status",
             items: {
-              bsonType: "objectId",
+              bsonType: "object",
+              required: ["eventId", "status"],
+              properties: {
+                eventId: {
+                  bsonType: "objectId",
+                  description: "Referenced Event ID",
+                },
+                status: {
+                  enum: ["Present", "Absent", "Not Marked"],
+                  description: "Attendance status for the event",
+                },
+              },
+              additionalProperties: false,
             },
-          },
-
-          attendance: {
-            enum: ["Absent", "Not Marked", "Present"],
           },
 
           createdAt: { bsonType: "date" },
@@ -150,28 +157,40 @@ try {
     validator: {
       $jsonSchema: {
         bsonType: "object",
-        required: [
-          "_id",
-          "lastAssignedJerseyNumber",
-          "freeJerseyNumbers",
-          "createdAt",
-          "updatedAt",
-        ],
+        required: ["_id", "lastAssignedJerseyNumber", "freeJerseyNumbers"],
 
         properties: {
-          _id: { bsonType: "objectId" },
+          _id: {
+            bsonType: "string",
+            description: "Counter identifier (GLOBAL)",
+          },
 
-          lastAssignedJerseyNumber: { bsonType: "int" },
+          lastAssignedJerseyNumber: {
+            bsonType: "int",
+            minimum: 0,
+            description: "Last assigned jersey number",
+          },
 
           freeJerseyNumbers: {
             bsonType: "array",
-            items: { bsonType: "int" },
+            description: "List of reusable jersey numbers",
+            items: {
+              bsonType: "int",
+              minimum: 1,
+            },
           },
 
-          createdAt: { bsonType: "date" },
-          updatedAt: { bsonType: "date" },
+          createdAt: {
+            bsonType: "date",
+          },
 
-          __v: { bsonType: "int" },
+          updatedAt: {
+            bsonType: "date",
+          },
+
+          __v: {
+            bsonType: "int",
+          },
         },
 
         additionalProperties: false,
@@ -216,52 +235,39 @@ try {
     validator: {
       $jsonSchema: {
         bsonType: "object",
-        required: ["_id", "eventname", "eventType", "eventDay", "isActive"],
+        required: ["_id", "name", "type", "category", "day", "isActive"],
 
         properties: {
           _id: {
             bsonType: "objectId",
           },
 
-          eventname: {
+          name: {
             bsonType: "string",
             minLength: 1,
             description: "Event name is required",
           },
 
-          eventType: {
-            enum: ["Field", "Team Events", "Track"],
-            description: "Event type must be Field or Track",
+          type: {
+            enum: ["Field", "Team", "Track"],
+            description: "Event type must be Field, Team, or Track",
           },
 
-          eventDay: {
+          category: {
+            enum: ["Boys", "Girls"],
+            description: "Event category must be Boys or Girls",
+          },
+
+          day: {
             enum: ["Day 1", "Day 2", "Both"],
-            description: "Event day must be Day 1 or Day 2",
+            description: "Event day must be Day 1, Day 2, or Both",
           },
 
           isActive: {
             bsonType: "bool",
             description: "Event active status",
           },
-          enrolledStudentsStatus: {
-            bsonType: "object",
-            required: ["present", "absent", "notMarked"],
-            properties: {
-              present: {
-                bsonType: "int",
-                minimum: 0,
-              },
-              absent: {
-                bsonType: "int",
-                minimum: 0,
-              },
-              notMarked: {
-                bsonType: "int",
-                minimum: 0,
-              },
-            },
-            additionalProperties: false,
-          },
+
           __v: {
             bsonType: "int",
           },
