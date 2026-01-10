@@ -18,7 +18,7 @@ export default function Step1AccountForm({ nextStep, setStep }) {
   const onSubmit = async (data) => {
     const API_URL = import.meta.env.VITE_API_URL;
     try {
-      const response = await axios.post(
+      const { data: response } = await axios.post(
         `${API_URL}/otp/registerOtpSender`,
         data,
         {
@@ -26,29 +26,36 @@ export default function Step1AccountForm({ nextStep, setStep }) {
         }
       );
 
-      if (response.data.message === "Account already exists. Please log in.") {
+      if (
+        response.success &&
+        response.message === "Account already exists. Please log in."
+      ) {
         alert("Account already exists. Please log in.");
         navigate("/login");
       } else if (
-        response.data.message ===
-        "Email already verified. Please complete your profile."
+        response.success &&
+        response.message ===
+          "Email already verified. Please complete your profile."
       ) {
         alert("Email already verified. Please complete your profile.");
         setStep(3);
       } else if (
-        response.data.message === "OTP already sent. Please check your email."
+        response.success &&
+        response.message === "OTP already sent. Please check your email."
       ) {
         alert("OTP already sent. Please check your email.");
         nextStep();
       } else if (
-        response.data.message ===
-        "OTP sent successfully! Please verify your email."
+        response.success &&
+        response.message ===
+          "OTP sent successfully! Please verify your email."
       ) {
         alert("✅ OTP sent to your email. Please verify to continue.");
         nextStep();
       } else if (
-        response.data.message ===
-        "Username already taken. Please choose another username."
+        response.success &&
+        response.message ===
+          "Username already taken. Please choose another username."
       ) {
         alert("Username already taken. Please choose another username.");
         setError("username", {

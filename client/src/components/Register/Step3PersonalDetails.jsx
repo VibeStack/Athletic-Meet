@@ -80,15 +80,15 @@ export default function Step3PersonalDetails({ nextStep }) {
       setLoading(true);
       setMessage("Saving your registration details...");
 
-      const response = await axios.post(
+      const { data: response } = await axios.post(
         `${API_URL}/user/register`,
         fullUserData
       );
 
-      if (response.data.message === "Registration completed successfully.") {
+      if (response.message === "Registration completed successfully") {
         setMessage("Registration completed successfully!");
         nextStep();
-        const loginResponse = await axios.post(
+        const { data: loginResponse } = await axios.post(
           `${API_URL}/auth/login`,
           {
             username: getValues("username"),
@@ -97,7 +97,7 @@ export default function Step3PersonalDetails({ nextStep }) {
           },
           { withCredentials: true }
         );
-        if (loginResponse.data.message === "Login successful!") {
+        if (loginResponse.message === "Login successful!") {
           setTimeout(() => {
             navigate("/portal");
           }, 2000);

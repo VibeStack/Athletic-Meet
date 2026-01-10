@@ -1,6 +1,4 @@
 import React from "react";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import { useFormContext } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import InputField from "./InputField";
@@ -19,55 +17,29 @@ export default function Step1Credentials({ nextStep }) {
 
   const onSubmit = async (data) => {
     try {
-      const response = await axios.post(`${API_URL}/auth/login`, data, {
-        withCredentials: true,
-      });
+      const { data: response } = await axios.post(
+        `${API_URL}/auth/login`,
+        data,
+        {
+          withCredentials: true,
+        }
+      );
 
-      if (response.data.success) {
-        toast.success("Welcome back! Login successful 🎉", {
-          position: "top-right",
-          autoClose: 2000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          theme: "dark",
-        });
+      if (response.success && response.message === "Login successful!") {
+        alert("✅ Login successful!");
+        nextStep();
 
         setTimeout(() => {
-          nextStep();
           navigate("/portal");
         }, 2000);
       } else {
-        toast.warning(
-          "Incorrect login details. Please check and try again ⚠️",
-          {
-            position: "top-right",
-            autoClose: 4000,
-            hideProgressBar: false,
-            theme: "dark",
-          }
-        );
+        alert(response.data.message || "Login failed. Please try again.");
       }
     } catch (error) {
       if (error.response) {
-        toast.error(
-          error.response?.data?.error ||
-            "Login failed. Please verify your credentials ❌",
-          {
-            position: "top-right",
-            autoClose: 4000,
-            hideProgressBar: false,
-            theme: "dark",
-          }
-        );
+        alert(error.response.data?.message || "Invalid credentials.");
       } else {
-        toast.error("Network issue detected. Please try again later 🌐", {
-          position: "top-right",
-          autoClose: 4000,
-          hideProgressBar: false,
-          theme: "dark",
-        });
+        alert("Server error. Please check your internet connection.");
       }
 
       reset({ username: "", email: "", password: "" });
@@ -76,7 +48,6 @@ export default function Step1Credentials({ nextStep }) {
 
   return (
     <>
-      <ToastContainer />
       <form
         onSubmit={handleSubmit(onSubmit)}
         className="bg-white/90 backdrop-blur-sm shadow-2xl rounded-2xl w-full max-w-md p-6 sm:p-8 md:p-10 mx-auto border border-white/50 transition-all duration-500"

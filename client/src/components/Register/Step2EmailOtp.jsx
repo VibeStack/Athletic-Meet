@@ -119,9 +119,9 @@ export default function Step2EmailOtp({ nextStep }) {
       setMessage("Verifying OTP...");
       await axios.post(
         `${import.meta.env.VITE_API_URL}/otp/registerOtpVerifier`,
-        { email, otp }
+        { email, otp },
+        { withCredentials: true }
       );
-
       setMessage("✅ OTP verified successfully!");
       nextStep();
     } catch (error) {
