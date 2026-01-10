@@ -167,15 +167,15 @@ const menuSections = [
 ];
 
 const roleStyles = {
-  Student: "text-blue-700 bg-blue-100 ring-1 ring-blue-200",
-  Admin: "text-purple-700 bg-purple-100 ring-1 ring-purple-200",
-  Manager: "text-rose-700 bg-rose-100 ring-1 ring-rose-200",
+  Student: "text-sky-700 bg-sky-100 ring-1 ring-sky-300",
+  Admin: "text-violet-700 bg-violet-100 ring-1 ring-violet-300",
+  Manager: "text-amber-700 bg-amber-100 ring-1 ring-amber-300",
 };
 
 const roleStylesDark = {
-  Student: "text-blue-300 bg-blue-500/20 ring-1 ring-blue-500/30",
-  Admin: "text-purple-300 bg-purple-500/20 ring-1 ring-purple-500/30",
-  Manager: "text-rose-300 bg-rose-500/20 ring-1 ring-rose-500/30",
+  Student: "text-sky-300 bg-sky-500/20 ring-1 ring-sky-400/40",
+  Admin: "text-violet-300 bg-violet-500/20 ring-1 ring-violet-400/40",
+  Manager: "text-amber-300 bg-amber-500/20 ring-1 ring-amber-400/40",
 };
 
 export default function HamburgerMenu({ menuOpen, setMenuOpen, user }) {
@@ -223,15 +223,56 @@ export default function HamburgerMenu({ menuOpen, setMenuOpen, user }) {
           ${isAnimating ? "translate-x-0" : "-translate-x-full"}
           ${
             darkMode
-              ? "bg-slate-900/95 backdrop-blur-xl border-r border-white/5"
-              : "bg-white/95 backdrop-blur-xl border-r border-slate-200 shadow-2xl"
+              ? "bg-slate-950/98 backdrop-blur-xl border-r border-white/5"
+              : "bg-white/98 backdrop-blur-xl border-r border-slate-200 shadow-2xl"
           }`}
       >
-        {/* Decorative gradient orb (top-left) */}
-        <div
-          className={`absolute -top-20 -left-20 w-40 h-40 rounded-full blur-3xl pointer-events-none
-          ${darkMode ? "bg-indigo-500/20" : "bg-indigo-500/10"}`}
-        />
+        {/* Animated gradient orbs background */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {/* Top-left cyan orb */}
+          <div
+            className="absolute -top-20 -left-20 w-48 h-48 rounded-full blur-3xl animate-pulse"
+            style={{
+              background: darkMode
+                ? "radial-gradient(circle, rgba(6,182,212,0.25) 0%, transparent 70%)"
+                : "radial-gradient(circle, rgba(6,182,212,0.15) 0%, transparent 70%)",
+              animationDuration: "4s",
+            }}
+          />
+          {/* Center-right purple orb */}
+          <div
+            className="absolute top-1/3 -right-16 w-40 h-40 rounded-full blur-3xl animate-pulse"
+            style={{
+              background: darkMode
+                ? "radial-gradient(circle, rgba(139,92,246,0.25) 0%, transparent 70%)"
+                : "radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 70%)",
+              animationDuration: "5s",
+              animationDelay: "1s",
+            }}
+          />
+          {/* Bottom-left pink orb */}
+          <div
+            className="absolute bottom-20 -left-10 w-36 h-36 rounded-full blur-3xl animate-pulse"
+            style={{
+              background: darkMode
+                ? "radial-gradient(circle, rgba(236,72,153,0.2) 0%, transparent 70%)"
+                : "radial-gradient(circle, rgba(236,72,153,0.1) 0%, transparent 70%)",
+              animationDuration: "6s",
+              animationDelay: "2s",
+            }}
+          />
+          {/* Bottom-right blue orb */}
+          <div
+            className="absolute -bottom-10 right-10 w-32 h-32 rounded-full blur-3xl animate-pulse"
+            style={{
+              background: darkMode
+                ? "radial-gradient(circle, rgba(59,130,246,0.2) 0%, transparent 70%)"
+                : "radial-gradient(circle, rgba(59,130,246,0.1) 0%, transparent 70%)",
+              animationDuration: "4.5s",
+              animationDelay: "0.5s",
+            }}
+          />
+        </div>
 
         {/* Header - Premium Brand Section */}
         <div
@@ -262,33 +303,47 @@ export default function HamburgerMenu({ menuOpen, setMenuOpen, user }) {
           </button>
 
           {/* Centered Brand Container */}
-          <div className="flex flex-col items-center pt-2 pb-1">
-            {/* Logo with animated gradient border */}
+          <div className="flex flex-col items-center pt-4 pb-2">
+            {/* Logo with gradient border */}
             <div className="relative mb-4">
               {/* Outer glow */}
-              <div className="absolute -inset-2 bg-linear-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-2xl blur-xl opacity-30" />
+              <div
+                className="absolute -inset-3 rounded-[20px] blur-xl opacity-50"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #06b6d4, #3b82f6, #8b5cf6, #d946ef)",
+                }}
+              />
               {/* Gradient border */}
-              <div className="relative p-[2px] rounded-2xl bg-linear-to-br from-indigo-400 via-purple-500 to-pink-500">
+              <div
+                className="relative p-[2.5px] rounded-[18px] overflow-hidden"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #06b6d4, #3b82f6, #8b5cf6, #d946ef)",
+                }}
+              >
                 <div
-                  className="w-16 h-16 rounded-2xl flex items-center justify-center font-bold text-2xl text-white"
+                  className="w-16 h-16 rounded-[16px] flex items-center justify-center font-black text-2xl text-white overflow-hidden relative"
                   style={{
                     background: darkMode
-                      ? "linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)"
-                      : "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+                      ? "linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)"
+                      : "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
                   }}
                 >
-                  A
+                  {/* Shine effect */}
+                  <span className="absolute inset-0 bg-linear-to-br from-white/25 via-transparent to-transparent" />
+                  <span className="relative z-10">A</span>
                 </div>
               </div>
             </div>
 
-            {/* Brand name with gradient text */}
+            {/* Brand name */}
             <h2
-              className="font-extrabold text-xl tracking-tight mb-2"
+              className="font-extrabold text-2xl tracking-tight mb-3"
               style={{
                 background: darkMode
-                  ? "linear-gradient(135deg, #fff 0%, #c7d2fe 100%)"
-                  : "linear-gradient(135deg, #1e1b4b 0%, #6366f1 100%)",
+                  ? "linear-gradient(90deg, #67e8f9, #a5b4fc, #c4b5fd)"
+                  : "linear-gradient(90deg, #0891b2, #6366f1, #9333ea)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 backgroundClip: "text",
@@ -297,15 +352,25 @@ export default function HamburgerMenu({ menuOpen, setMenuOpen, user }) {
               Athletix
             </h2>
 
-            {/* Role badge - pill style with dot */}
+            {/* Role badge */}
             <div
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-widest ${
+              className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-widest ${
                 darkMode
                   ? roleStylesDark[user?.role] || "text-slate-400 bg-slate-800"
                   : roleStyles[user?.role] || "text-slate-600 bg-slate-100"
               }`}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60" />
+              <span
+                className="w-2 h-2 rounded-full"
+                style={{
+                  background:
+                    user?.role === "Manager"
+                      ? "#f59e0b"
+                      : user?.role === "Admin"
+                      ? "#8b5cf6"
+                      : "#0ea5e9",
+                }}
+              />
               {user?.role || "Guest"} Portal
             </div>
           </div>
@@ -420,17 +485,49 @@ export default function HamburgerMenu({ menuOpen, setMenuOpen, user }) {
           }`}
         >
           <div
-            className={`flex items-center gap-3 p-3 rounded-xl transition-all duration-200 cursor-pointer ${
+            className={`flex items-center gap-3 p-3 rounded-2xl transition-all duration-200 cursor-pointer ${
               darkMode ? "hover:bg-white/5" : "hover:bg-slate-200/50"
             }`}
           >
-            {/* Avatar with status indicator */}
+            {/* Avatar with gradient border (matching header) */}
             <div className="relative">
-              <div className="w-11 h-11 rounded-xl bg-linear-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center font-bold shadow-lg shadow-indigo-500/25">
-                {user?.fullname?.charAt(0) || "?"}
+              {/* Glow effect */}
+              <div
+                className="absolute -inset-1.5 rounded-xl blur-md opacity-40"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #06b6d4, #3b82f6, #8b5cf6, #d946ef)",
+                }}
+              />
+              {/* Gradient border */}
+              <div
+                className="relative p-[2px] rounded-xl"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #06b6d4, #3b82f6, #8b5cf6, #d946ef)",
+                }}
+              >
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white overflow-hidden relative"
+                  style={{
+                    background: darkMode
+                      ? "linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)"
+                      : "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
+                  }}
+                >
+                  {/* Shine effect */}
+                  <span className="absolute inset-0 bg-linear-to-br from-white/25 via-transparent to-transparent" />
+                  <span className="relative z-10 text-sm">
+                    {user?.fullname?.charAt(0) || "?"}
+                  </span>
+                </div>
               </div>
               {/* Online status dot */}
-              <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-900" />
+              <div
+                className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 shadow-sm shadow-emerald-500/50 ${
+                  darkMode ? "border-slate-900" : "border-white"
+                }`}
+              />
             </div>
 
             <div className="min-w-0 flex-1">
@@ -460,7 +557,7 @@ export default function HamburgerMenu({ menuOpen, setMenuOpen, user }) {
               stroke="currentColor"
               strokeWidth="2"
             >
-              <path d="M8 9l4-4 4 4M8 15l4 4 4-4" />
+              <path d="M6 9l6 6 6-6" />
             </svg>
           </div>
         </div>

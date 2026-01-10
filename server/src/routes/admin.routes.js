@@ -17,5 +17,6 @@ router.route("/user/events/unlock").post(unlockEvents);
 
 router.route("/users").get(getAllUsers);
 router.route("/user/:userId").get(getUserDetails);
+router.route("/users/attendance").post(markAttendance);
 
 export default router;

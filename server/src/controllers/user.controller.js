@@ -132,7 +132,7 @@ export const getCurrentUser = asyncHandler(async (req, res) => {
 
     selectedEvents: user.selectedEvents,
 
-    createdAt: user.createdAt, // optional
+    createdAt: user.createdAt,
   };
 
   return res
@@ -140,27 +140,55 @@ export const getCurrentUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(userResponse, "User fetched successfully"));
 });
 
-
 export const getEvents = asyncHandler(async (req, res) => {
-  const events = await Event.find({ isActive: true });
-  res.status(200).json(new ApiResponse(events, "Events fetched successfully"));
+  const events = await Event.find({ isActive: true }).select(
+    "_id name type category day"
+  );
+
+  const formattedEvents = events.map((event) => ({
+    id: event._id,
+    name: event.name,
+    type: event.type,
+    category: event.category,
+    day: event.day,
+  }));
+
+  res
+    .status(200)
+    .json(new ApiResponse(formattedEvents, "Events fetched successfully"));
 });
 
 export const lockEvents = asyncHandler(async (req, res) => {
   const { sid } = req.signedCookies;
   const { events } = req.body;
 
-  const session = await Session.findById(sid);
-  const user = await User.findById(session.userId);
-  if (!user) {
-    throw new ApiError(404, "User not found.");
+  if (!sid) {
+    throw new ApiError(401, "Session not found");
   }
 
-  user.selectedEvents.push(...events);
-  await user.save();
+  if (!Array.isArray(events) || events.length === 0) {
+    throw new ApiError(400, "Events must be a non-empty array");
+  }
 
+  const session = await Session.findById(sid);
+  if (!session) {
+    throw new ApiError(401, "Invalid session");
+  }
+
+  const user = await User.findById(session.userId);
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  if (user.selectedEvents.length > 0 && user.selectedEvents.length <= 3) {
+    throw new ApiError(409, "Events already locked. Contact admin to unlock.");
+  }
+
+  user.selectedEvents = events.map((eventId) => ({
+    eventId,
+  }));
+  await user.save();
   return res
     .status(200)
-    .json(new ApiResponse(null, "Events locked successfully"));
+    .json(new ApiResponse(user.selectedEvents, "Events locked successfully"));
 });
-

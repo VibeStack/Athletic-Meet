@@ -170,12 +170,21 @@ const unlockEvents = asyncHandler(async (req, res) => {
 });
 
 const markAttendance = asyncHandler(async (req, res) => {
-  const { jerseyNumber } = req.params;
+  const { jerseyNumber, eventId } = req.body;
   const user = await User.findOne({ jerseyNumber });
   if (!user) {
     throw new ApiError(404, "User not found");
   }
-  user.attendance = "Present";
+  const event = await Event.findById(eventId);
+  if (!event) {
+    throw new ApiError(404, "Event not found");
+  }
+  user.selectedEvents = user.selectedEvents.map((e) => {
+    if (e.eventId.toString() === eventId.toString()) {
+      return { ...e, status: "Present" };
+    }
+    return e;
+  });
   await user.save();
   return res
     .status(200)

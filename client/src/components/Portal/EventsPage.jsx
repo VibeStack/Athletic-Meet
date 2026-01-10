@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useTheme } from "./ThemeContext";
 import axios from "axios";
+import { useOutletContext } from "react-router-dom";
 
 const MAX_EVENTS = 3;
 
@@ -41,56 +42,52 @@ const getEventEmoji = (eventName) => {
   return "🏆";
 };
 
-// Extract gender from event name
-const getEventGender = (eventName) => {
-  const name = eventName.toLowerCase();
-  if (name.includes("(boys)")) return "Boys";
-  if (name.includes("(girls)")) return "Girls";
-  if (name.includes("(mixed)")) return "Mixed";
-  return "Both";
-};
-
 export default function EventsPage() {
   const { darkMode } = useTheme();
-  const [enrolledEvents, setEnrolledEvents] = useState([]);
+  const { user } = useOutletContext();
+  const [enrolledEvents, setEnrolledEvents] = useState([]); // Array of IDs only
   const [isLocked, setIsLocked] = useState(false);
   const [locking, setLocking] = useState(false);
   const [enrolling, setEnrolling] = useState(null);
-  const [allEvents, setAllEvents] = useState([]);
+  const [allEvents, setAllEvents] = useState([]); // Full event objects
   const [loading, setLoading] = useState(true);
-  const [userRole, setUserRole] = useState(null);
+  const BASE_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        // Fetch both user profile and events in parallel
-        const [profileRes, eventsRes] = await Promise.all([
-          axios.get(`${import.meta.env.VITE_API_URL}/user/profile`, {
-            withCredentials: true,
-          }),
-          axios.get(`${import.meta.env.VITE_API_URL}/user/events`, {
-            withCredentials: true,
-          }),
-        ]);
+        const { data: response } = await axios.get(`${BASE_URL}/user/events`, {
+          withCredentials: true,
+        });
 
-        // Get user's selected events from profile
-        const selectedFromDB = profileRes.data.data.selectedEvents || [];
-        const role = profileRes.data.data.role;
+        // 1️⃣ Gender filtering
+        const genderBasedFilteredEvents = response.data.filter((event) => {
+          if (user.gender === "Male") return event.category === "Boys";
+          return event.category === "Girls";
+        });
 
-        // Initialize enrolled events and locked state from backend
-        setEnrolledEvents(selectedFromDB);
-        setIsLocked(selectedFromDB.length > 0);
-        setUserRole(role);
+        // 2️⃣ Extract event IDs from user.selectedEvents
+        const selectedEventIds = (user.selectedEvents || []).map(
+          (e) => e.eventId
+        );
 
-        // Map backend data to UI format
-        const mappedEvents = eventsRes.data.data.map((event) => ({
-          id: event._id,
-          name: event.eventname,
-          day: event.eventDay,
-          eventType: event.eventType,
-          gender: getEventGender(event.eventname),
-          emoji: getEventEmoji(event.eventname),
-          isTeam: event.eventType === "Team Events",
+        // 3️⃣ Get full event objects for enrolled events
+        const enrolledEventsDB = genderBasedFilteredEvents.filter((event) =>
+          selectedEventIds.includes(event.id)
+        );
+
+        // 4️⃣ Save states - store only IDs in enrolledEvents
+        setEnrolledEvents(enrolledEventsDB.map((e) => e.id));
+        setIsLocked(selectedEventIds.length > 0);
+
+        // 5️⃣ Map events for UI
+        const mappedEvents = genderBasedFilteredEvents.map((event) => ({
+          id: event.id,
+          name: event.name,
+          day: event.day,
+          type: event.type,
+          category: event.category,
+          emoji: getEventEmoji(event.name),
         }));
 
         setAllEvents(mappedEvents);
@@ -100,31 +97,32 @@ export default function EventsPage() {
         setLoading(false);
       }
     };
-    fetchInitialData();
-  }, []);
 
-  const trackEvents = allEvents.filter((e) => e.eventType === "Track");
-  const fieldEvents = allEvents.filter((e) => e.eventType === "Field");
-  const teamEvents = allEvents.filter((e) => e.eventType === "Team Events");
+    fetchInitialData();
+  }, [user.gender, user.selectedEvents, BASE_URL]);
+
+  const trackEvents = allEvents.filter((e) => e.type === "Track");
+  const fieldEvents = allEvents.filter((e) => e.type === "Field");
+  const teamEvents = allEvents.filter((e) => e.type === "Team");
 
   const enrollmentStats = useMemo(() => {
     const enrolled = allEvents.filter((e) => enrolledEvents.includes(e.id));
     return {
-      trackCount: enrolled.filter((e) => e.eventType === "Track").length,
-      fieldCount: enrolled.filter((e) => e.eventType === "Field").length,
+      trackCount: enrolled.filter((e) => e.type === "Track").length,
+      fieldCount: enrolled.filter((e) => e.type === "Field").length,
       total: enrolled.length,
     };
   }, [enrolledEvents, allEvents]);
 
   const canEnrollInEvent = (event) => {
     if (isLocked) return false;
-    if (event.isTeam) return false;
+    if (event.type === "Team") return false;
     if (enrolledEvents.includes(event.id)) return true;
     if (enrollmentStats.total >= MAX_EVENTS) return false;
     const { trackCount, fieldCount } = enrollmentStats;
-    if (event.eventType === "Track")
+    if (event.type === "Track")
       return trackCount < 2 || (trackCount === 1 && fieldCount === 0);
-    if (event.eventType === "Field")
+    if (event.type === "Field")
       return fieldCount < 2 || (fieldCount === 1 && trackCount === 0);
     return false;
   };
@@ -135,7 +133,6 @@ export default function EventsPage() {
     if (!canEnrollInEvent(event) && !enrolledEvents.includes(eventId)) return;
 
     setEnrolling(eventId);
-    await new Promise((resolve) => setTimeout(resolve, 200));
     setEnrolledEvents((prev) =>
       prev.includes(eventId)
         ? prev.filter((id) => id !== eventId)
@@ -153,7 +150,7 @@ export default function EventsPage() {
     setLocking(true);
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/user/events/lock`,
+        `${BASE_URL}/user/events/lock`,
         { events: enrolledEvents },
         { withCredentials: true }
       );
@@ -174,7 +171,7 @@ export default function EventsPage() {
     setLocking(true);
     try {
       await axios.post(
-        `${import.meta.env.VITE_API_URL}/admin/user/events/unlock`,
+        `${BASE_URL}/admin/user/events/unlock`,
         {},
         { withCredentials: true }
       );
@@ -195,6 +192,7 @@ export default function EventsPage() {
   const EventCard = ({ event }) => {
     const isEnrolled = enrolledEvents.includes(event.id);
     const canEnroll = canEnrollInEvent(event);
+    const isTeam = event.type === "Team";
 
     return (
       <div
@@ -232,19 +230,19 @@ export default function EventsPage() {
                 darkMode ? "text-gray-400" : "text-gray-500"
               }`}
             >
-              {event.gender} • {event.day}
+              {event.category} • {event.day}
             </p>
           </div>
           <button
             onClick={() => handleEnroll(event.id)}
             disabled={
               isLocked ||
-              event.isTeam ||
+              isTeam ||
               (!canEnroll && !isEnrolled) ||
               enrolling === event.id
             }
             className={`shrink-0 w-[85px] py-2.5 rounded-lg text-xs font-bold transition-all duration-200 ${
-              event.isTeam
+              isTeam
                 ? darkMode
                   ? "bg-slate-700 text-gray-500 cursor-not-allowed"
                   : "bg-gray-100 text-gray-400 cursor-not-allowed"
@@ -255,13 +253,13 @@ export default function EventsPage() {
                 : darkMode
                 ? "bg-slate-700 text-gray-500 cursor-not-allowed"
                 : "bg-gray-100 text-gray-400 cursor-not-allowed"
-            } ${isLocked ? "cursor-not-allowed! opacity-60" : ""}`}
+            } ${isLocked ? "cursor-not-allowed opacity-60" : ""}`}
           >
             {enrolling === event.id
               ? "..."
               : isLocked && isEnrolled
               ? "Locked"
-              : event.isTeam
+              : isTeam
               ? "Team"
               : isEnrolled
               ? "Remove"
@@ -360,7 +358,7 @@ export default function EventsPage() {
           </p>
         </div>
 
-        {/* Better Aligned Counter */}
+        {/* Stats Counter */}
         <div
           className={`flex items-stretch gap-2 p-2 rounded-xl ${
             darkMode
@@ -431,7 +429,7 @@ export default function EventsPage() {
         </div>
       </div>
 
-      {/* Your Enrolled Events - Show when locked */}
+      {/* Your Enrolled Events - ✅ FIXED: use e.id not e.eventId */}
       {isLocked && enrolledEvents.length > 0 && (
         <div
           className={`rounded-2xl overflow-hidden ${
@@ -464,6 +462,7 @@ export default function EventsPage() {
             </div>
           </div>
           <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {/* ✅ FIXED: filter using e.id, key using event.id */}
             {allEvents
               .filter((e) => enrolledEvents.includes(e.id))
               .map((event) => (
@@ -536,7 +535,7 @@ export default function EventsPage() {
                 darkMode ? "text-emerald-100" : "text-emerald-900"
               }`}
             >
-              {userRole === "Admin" || userRole === "Manager"
+              {user.role === "Admin" || user.role === "Manager"
                 ? "Events Locked (Admin Override Available)"
                 : "Events Locked Successfully"}
             </p>
@@ -545,12 +544,12 @@ export default function EventsPage() {
                 darkMode ? "text-emerald-200" : "text-emerald-800"
               }`}
             >
-              {userRole === "Admin" || userRole === "Manager"
+              {user.role === "Admin" || user.role === "Manager"
                 ? "You can unlock and re-select events using the button on the right."
                 : "Your enrollment is finalized. Contact an admin or manager to make changes."}
             </p>
           </div>
-          {(userRole === "Admin" || userRole === "Manager") && (
+          {(user.role === "Admin" || user.role === "Manager") && (
             <button
               onClick={handleUnlockEvents}
               disabled={locking}

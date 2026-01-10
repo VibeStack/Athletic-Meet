@@ -140,13 +140,29 @@ export default function PortalLayout() {
 
                 <div className="flex items-center gap-3">
                   <div
-                    className={`relative w-10 h-10 rounded-xl flex items-center justify-center font-black ${
+                    className={`relative w-10 h-10 rounded-xl flex items-center justify-center font-black overflow-hidden ${
                       darkMode
                         ? "bg-linear-to-br from-cyan-400 to-blue-600 text-white"
-                        : "bg-slate-900 text-white"
+                        : "text-white"
                     }`}
+                    style={
+                      !darkMode
+                        ? {
+                            background:
+                              "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%)",
+                          }
+                        : {}
+                    }
                   >
-                    A
+                    {/* Crystal shine overlay for light mode */}
+                    {!darkMode && (
+                      <>
+                        <span className="absolute inset-0 bg-linear-to-br from-white/20 via-transparent to-transparent" />
+                        <span className="absolute top-0 left-0 w-full h-px bg-linear-to-r from-transparent via-white/40 to-transparent" />
+                        <span className="absolute top-0 left-0 h-full w-px bg-linear-to-b from-white/30 via-transparent to-transparent" />
+                      </>
+                    )}
+                    <span className="relative z-10">A</span>
                     <span className="absolute inset-0 rounded-xl ring-1 ring-white/20" />
                   </div>
 
@@ -196,13 +212,24 @@ export default function PortalLayout() {
                   >
                     <div className="hidden sm:flex items-center gap-3 px-3 py-1.5">
                       <div
-                        className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${
+                        className={`relative w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold overflow-hidden ${
                           darkMode
                             ? "bg-linear-to-br from-cyan-500 to-blue-500 text-white"
-                            : "bg-slate-900 text-white"
+                            : "text-white"
                         }`}
+                        style={
+                          !darkMode
+                            ? {
+                                background:
+                                  "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%)",
+                              }
+                            : {}
+                        }
                       >
-                        {avatarLetter}
+                        {!darkMode && (
+                          <span className="absolute inset-0 bg-linear-to-br from-white/20 via-transparent to-transparent" />
+                        )}
+                        <span className="relative z-10">{avatarLetter}</span>
                       </div>
 
                       <div className="leading-tight">
@@ -259,7 +286,7 @@ export default function PortalLayout() {
             <div className="text-center text-red-500 font-medium">{error}</div>
           )}
 
-          {!loading && !error && <Outlet />}
+          {!loading && !error && <Outlet context={{ user: userDetail }} />}
         </div>
       </main>
     </div>

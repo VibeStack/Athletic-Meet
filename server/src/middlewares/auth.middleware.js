@@ -21,7 +21,7 @@ export const checkAuth = async (req, res, next) => {
       throw new ApiError(401, "Session expired or invalid");
     }
 
-    const user = await User.findById(session.userId).lean();
+    const user = await User.findById(session.userId);
     if (!user) {
       res.clearCookie("sid", {
         httpOnly: true,

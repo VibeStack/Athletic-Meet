@@ -97,6 +97,7 @@ const userSchema = new mongoose.Schema(
     selectedEvents: {
       type: [
         {
+          _id: false,
           eventId: {
             type: Schema.Types.ObjectId,
             ref: "Event",
