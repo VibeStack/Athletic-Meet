@@ -63,7 +63,7 @@ export default function PortalLayout() {
   const navigate = useNavigate();
   const { darkMode, toggleTheme } = useTheme();
 
-  const [userDetail, setUserDetail] = useState(null);
+  const [userDetail, setUserDetail] = useState({});
   const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -120,7 +120,6 @@ export default function PortalLayout() {
           : "bg-linear-to-br from-cyan-50 via-white to-blue-50"
       }`}
     >
-      {/* ================= HEADER ================= */}
       <header className="fixed inset-x-0 top-4 z-40">
         <div className="mx-auto max-w-7xl px-4">
           <div
@@ -131,9 +130,7 @@ export default function PortalLayout() {
             }`}
           >
             <div className="h-full rounded-2xl px-5 flex items-center justify-between bg-linear-to-b from-white/10 to-transparent">
-              {/* LEFT */}
               <div className="flex items-center gap-4">
-                {/* Hamburger */}
                 <button
                   onClick={() => setMenuOpen(true)}
                   className="relative p-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 transition"
@@ -141,7 +138,6 @@ export default function PortalLayout() {
                   <HamburgerIcon className="w-5 h-5 opacity-80" />
                 </button>
 
-                {/* Brand */}
                 <div className="flex items-center gap-3">
                   <div
                     className={`relative w-10 h-10 rounded-xl flex items-center justify-center font-black ${
@@ -173,9 +169,7 @@ export default function PortalLayout() {
                 </div>
               </div>
 
-              {/* RIGHT */}
               <div className="flex items-center gap-2">
-                {/* Theme Toggle */}
                 <button
                   onClick={toggleTheme}
                   className="relative w-10 h-10 rounded-xl flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/10 transition"
@@ -192,7 +186,6 @@ export default function PortalLayout() {
                   )}
                 </button>
 
-                {/* User + Logout Group */}
                 {!loading && userDetail && (
                   <div
                     className={`flex items-center gap-2 pl-2 pr-1 py-1 rounded-xl ${
@@ -201,7 +194,6 @@ export default function PortalLayout() {
                         : "bg-white/80 border border-slate-200"
                     }`}
                   >
-                    {/* User */}
                     <div className="hidden sm:flex items-center gap-3 px-3 py-1.5">
                       <div
                         className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${
@@ -232,10 +224,8 @@ export default function PortalLayout() {
                       </div>
                     </div>
 
-                    {/* Divider */}
                     <div className="hidden sm:block w-px h-6 bg-black/10 dark:bg-white/10" />
 
-                    {/* Logout */}
                     <button
                       onClick={handleLogout}
                       className="flex items-center gap-2 px-3 py-2 rounded-lg text-red-500 font-semibold hover:bg-red-500/10 transition"
@@ -251,9 +241,12 @@ export default function PortalLayout() {
         </div>
       </header>
 
-      <HamburgerMenu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
+      <HamburgerMenu
+        menuOpen={menuOpen}
+        setMenuOpen={setMenuOpen}
+        user={userDetail}
+      />
 
-      {/* ================= MAIN ================= */}
       <main className="pt-28">
         <div className="max-w-7xl mx-auto px-4 py-6">
           {loading && (

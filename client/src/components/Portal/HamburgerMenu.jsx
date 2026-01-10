@@ -1,255 +1,470 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { useAuth } from "./AuthContext";
 import { useTheme } from "./ThemeContext";
 
-const menuItems = [
+// ========== CUSTOM SVG ICONS ==========
+const DashboardIcon = ({ className }) => (
+  <svg
+    className={className || "w-5 h-5"}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+  >
+    <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" />
+  </svg>
+);
+
+const EventsIcon = ({ className }) => (
+  <svg
+    className={className || "w-5 h-5"}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+  >
+    <path d="M13 2.05v2.02c3.95.49 7 3.85 7 7.93 0 4.08-3.05 7.44-7 7.93v2.02c5.05-.5 9-4.76 9-9.95S18.05 2.55 13 2.05zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7c3.87 0 7 3.13 7 7s-3.13 7-7 7z" />
+  </svg>
+);
+
+const CertificateIcon = ({ className }) => (
+  <svg
+    className={className || "w-5 h-5"}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+  >
+    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+  </svg>
+);
+
+const UsersIcon = ({ className }) => (
+  <svg
+    className={className || "w-5 h-5"}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+  >
+    <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
+  </svg>
+);
+
+const QrIcon = ({ className }) => (
+  <svg
+    className={className || "w-5 h-5"}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+  >
+    <path d="M9.5 6.5v3h-3v-3h3M11 5H5v6h6V5zm-1.5 9.5v3h-3v-3h3M11 13H5v6h6v-6zm6.5-6.5v3h-3v-3h3M19 5h-6v6h6V5zm-6 8h1.5v1.5H13V13zm1.5 1.5H16V16h-1.5v-1.5zM16 13h1.5v1.5H16V13zm-3 3h1.5v1.5H13V16zm1.5 1.5H16V19h-1.5v-1.5zM16 16h1.5v1.5H16V16zm1.5-1.5H19V16h-1.5v-1.5zm0 3H19V19h-1.5v-1.5zM19 13v1.5h-1.5V13H19z" />
+  </svg>
+);
+
+const ExportIcon = ({ className }) => (
+  <svg
+    className={className || "w-5 h-5"}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+  >
+    <path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2v9.67z" />
+  </svg>
+);
+
+const SettingsIcon = ({ className }) => (
+  <svg
+    className={className || "w-5 h-5"}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+  >
+    <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" />
+  </svg>
+);
+
+const ShieldIcon = ({ className }) => (
+  <svg
+    className={className || "w-5 h-5"}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+  >
+    <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z" />
+  </svg>
+);
+
+// ========== SECTION-BASED MENU STRUCTURE ==========
+const menuSections = [
   {
-    label: "Dashboard",
-    path: "/portal",
-    icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6",
-    roles: ["Student", "Admin", "Manager"],
-    color: "indigo",
+    title: "Core",
+    items: [
+      {
+        label: "Dashboard",
+        path: "/portal",
+        roles: ["Student", "Admin", "Manager"],
+        gradient: "from-indigo-500 to-blue-600",
+        shadowColor: "shadow-indigo-500/30",
+        icon: DashboardIcon,
+      },
+      {
+        label: "Users",
+        path: "/portal/admin/users",
+        roles: ["Admin", "Manager"],
+        gradient: "from-sky-400 to-blue-600",
+        shadowColor: "shadow-sky-500/30",
+        icon: UsersIcon,
+      },
+    ],
   },
   {
-    label: "Events",
-    path: "/portal/events",
-    icon: "M13 10V3L4 14h7v7l9-11h-7z",
-    roles: ["Student", "Admin", "Manager"],
-    color: "purple",
+    title: "Events",
+    items: [
+      {
+        label: "Events",
+        path: "/portal/events",
+        roles: ["Student", "Admin", "Manager"],
+        gradient: "from-violet-500 to-purple-600",
+        shadowColor: "shadow-violet-500/30",
+        icon: EventsIcon,
+      },
+      {
+        label: "QR Scanner",
+        path: "/portal/admin/scanner",
+        roles: ["Admin", "Manager"],
+        gradient: "from-emerald-400 to-teal-600",
+        shadowColor: "shadow-emerald-500/30",
+        icon: QrIcon,
+      },
+      {
+        label: "Event Controls",
+        path: "/portal/manager/event-controls",
+        roles: ["Manager"],
+        gradient: "from-orange-400 to-amber-600",
+        shadowColor: "shadow-orange-500/30",
+        icon: SettingsIcon,
+      },
+    ],
   },
   {
-    label: "Certificates",
-    path: "/portal/certificates",
-    icon: "M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z",
-    roles: ["Student", "Admin", "Manager"],
-    color: "amber",
-  },
-  {
-    label: "Users",
-    path: "/portal/admin/users",
-    icon: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197",
-    roles: ["Admin", "Manager"],
-    color: "blue",
-  },
-  {
-    label: "QR Scanner",
-    path: "/portal/admin/scanner",
-    icon: "M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h2M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z",
-    roles: ["Admin", "Manager"],
-    color: "emerald",
-  },
-  {
-    label: "Export Data",
-    path: "/portal/manager/export",
-    icon: "M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
-    roles: ["Manager"],
-    color: "rose",
-  },
-  {
-    label: "Event Controls",
-    path: "/portal/manager/event-controls",
-    icon: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z",
-    roles: ["Manager"],
-    color: "orange",
-  },
-  {
-    label: "Certificate Controls",
-    path: "/portal/manager/certificate-controls",
-    icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z",
-    roles: ["Manager"],
-    color: "pink",
+    title: "Certificates",
+    items: [
+      {
+        label: "Certificates",
+        path: "/portal/certificates",
+        roles: ["Student", "Admin", "Manager"],
+        gradient: "from-amber-400 to-orange-500",
+        shadowColor: "shadow-amber-500/30",
+        icon: CertificateIcon,
+      },
+      {
+        label: "Export Data",
+        path: "/portal/manager/export",
+        roles: ["Manager"],
+        gradient: "from-rose-400 to-pink-600",
+        shadowColor: "shadow-rose-500/30",
+        icon: ExportIcon,
+      },
+      {
+        label: "Certificate Controls",
+        path: "/portal/manager/certificate-controls",
+        roles: ["Manager"],
+        gradient: "from-fuchsia-500 to-purple-700",
+        shadowColor: "shadow-fuchsia-500/30",
+        icon: ShieldIcon,
+      },
+    ],
   },
 ];
 
-const colorClasses = {
-  indigo: {
-    active: "bg-indigo-500",
-    bg: "bg-indigo-500/10",
-    text: "text-indigo-500",
-  },
-  purple: {
-    active: "bg-purple-500",
-    bg: "bg-purple-500/10",
-    text: "text-purple-500",
-  },
-  amber: {
-    active: "bg-amber-500",
-    bg: "bg-amber-500/10",
-    text: "text-amber-500",
-  },
-  blue: { active: "bg-blue-500", bg: "bg-blue-500/10", text: "text-blue-500" },
-  emerald: {
-    active: "bg-emerald-500",
-    bg: "bg-emerald-500/10",
-    text: "text-emerald-500",
-  },
-  rose: { active: "bg-rose-500", bg: "bg-rose-500/10", text: "text-rose-500" },
-  orange: {
-    active: "bg-orange-500",
-    bg: "bg-orange-500/10",
-    text: "text-orange-500",
-  },
-  pink: { active: "bg-pink-500", bg: "bg-pink-500/10", text: "text-pink-500" },
+const roleStyles = {
+  Student: "text-blue-700 bg-blue-100 ring-1 ring-blue-200",
+  Admin: "text-purple-700 bg-purple-100 ring-1 ring-purple-200",
+  Manager: "text-rose-700 bg-rose-100 ring-1 ring-rose-200",
 };
 
-export default function HamburgerMenu({ isOpen, onClose }) {
-  const { user } = useAuth();
+const roleStylesDark = {
+  Student: "text-blue-300 bg-blue-500/20 ring-1 ring-blue-500/30",
+  Admin: "text-purple-300 bg-purple-500/20 ring-1 ring-purple-500/30",
+  Manager: "text-rose-300 bg-rose-500/20 ring-1 ring-rose-500/30",
+};
+
+export default function HamburgerMenu({ menuOpen, setMenuOpen, user }) {
   const { darkMode } = useTheme();
   const location = useLocation();
+  const [isAnimating, setIsAnimating] = useState(false);
 
-  const visibleItems = menuItems.filter((item) =>
-    item.roles.includes(user?.role)
-  );
-
+  /* -------- ANIMATION CONTROL -------- */
   useEffect(() => {
-    onClose();
+    if (menuOpen) {
+      setIsAnimating(true);
+    }
+  }, [menuOpen]);
+
+  /* -------- CLOSE ON ROUTE CHANGE -------- */
+  useEffect(() => {
+    setMenuOpen(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
+  /* -------- BODY SCROLL LOCK -------- */
   useEffect(() => {
-    document.body.style.overflow = isOpen ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [isOpen]);
+    if (!menuOpen) return;
+    const original = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => (document.body.style.overflow = original);
+  }, [menuOpen]);
+
+  if (!menuOpen) return null;
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop with blur */}
       <div
-        className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-200 ${
-          isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        className={`fixed inset-0 z-40 bg-black/50 backdrop-blur-md transition-opacity duration-300 ${
+          isAnimating ? "opacity-100" : "opacity-0"
         }`}
-        onClick={onClose}
+        onClick={() => setMenuOpen(false)}
       />
 
-      {/* Menu Panel */}
-      <div
-        className={`fixed top-0 left-0 h-full w-72 z-50 transform transition-transform duration-200 ${
-          isOpen ? "translate-x-0" : "-translate-x-full"
-        } ${darkMode ? "bg-slate-900" : "bg-white"} shadow-2xl`}
+      {/* Panel with slide animation */}
+      <aside
+        className={`fixed top-0 left-0 z-50 h-full w-[280px] flex flex-col overflow-hidden
+          transition-transform duration-300 ease-out
+          ${isAnimating ? "translate-x-0" : "-translate-x-full"}
+          ${
+            darkMode
+              ? "bg-slate-900/95 backdrop-blur-xl border-r border-white/5"
+              : "bg-white/95 backdrop-blur-xl border-r border-slate-200 shadow-2xl"
+          }`}
       >
-        {/* Gradient accent line */}
-        <div className="absolute top-0 left-0 right-0 h-1 bg-linear-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
-
-        {/* Header */}
+        {/* Decorative gradient orb (top-left) */}
         <div
-          className={`p-5 border-b ${
-            darkMode ? "border-slate-800" : "border-gray-100"
+          className={`absolute -top-20 -left-20 w-40 h-40 rounded-full blur-3xl pointer-events-none
+          ${darkMode ? "bg-indigo-500/20" : "bg-indigo-500/10"}`}
+        />
+
+        {/* Header - Premium Brand Section */}
+        <div
+          className={`relative p-5 ${
+            darkMode ? "border-b border-white/5" : "border-b border-slate-100"
           }`}
         >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-linear-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-white font-bold shadow-lg">
-                A
-              </div>
-              <div>
-                <h2
-                  className={`font-bold ${
-                    darkMode ? "text-white" : "text-gray-900"
-                  }`}
+          {/* Close button - top right */}
+          <button
+            onClick={() => setMenuOpen(false)}
+            className={`absolute top-4 right-4 p-2 rounded-xl transition-all duration-200 group ${
+              darkMode
+                ? "hover:bg-white/10 text-slate-500 hover:text-white"
+                : "hover:bg-slate-100 text-slate-400 hover:text-slate-600"
+            }`}
+            aria-label="Close menu"
+          >
+            <svg
+              className="w-5 h-5 transition-transform group-hover:rotate-90"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+            >
+              <path d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+
+          {/* Centered Brand Container */}
+          <div className="flex flex-col items-center pt-2 pb-1">
+            {/* Logo with animated gradient border */}
+            <div className="relative mb-4">
+              {/* Outer glow */}
+              <div className="absolute -inset-2 bg-linear-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-2xl blur-xl opacity-30" />
+              {/* Gradient border */}
+              <div className="relative p-[2px] rounded-2xl bg-linear-to-br from-indigo-400 via-purple-500 to-pink-500">
+                <div
+                  className="w-16 h-16 rounded-2xl flex items-center justify-center font-bold text-2xl text-white"
+                  style={{
+                    background: darkMode
+                      ? "linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)"
+                      : "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+                  }}
                 >
-                  Athletix
-                </h2>
-                <p
-                  className={`text-xs ${
-                    darkMode ? "text-indigo-400" : "text-indigo-600"
-                  }`}
-                >
-                  {user?.role} Portal
-                </p>
+                  A
+                </div>
               </div>
             </div>
-            <button
-              onClick={onClose}
-              className={`p-2 rounded-lg ${
+
+            {/* Brand name with gradient text */}
+            <h2
+              className="font-extrabold text-xl tracking-tight mb-2"
+              style={{
+                background: darkMode
+                  ? "linear-gradient(135deg, #fff 0%, #c7d2fe 100%)"
+                  : "linear-gradient(135deg, #1e1b4b 0%, #6366f1 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}
+            >
+              Athletix
+            </h2>
+
+            {/* Role badge - pill style with dot */}
+            <div
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-widest ${
                 darkMode
-                  ? "hover:bg-slate-800 text-gray-400"
-                  : "hover:bg-gray-100 text-gray-500"
+                  ? roleStylesDark[user?.role] || "text-slate-400 bg-slate-800"
+                  : roleStyles[user?.role] || "text-slate-600 bg-slate-100"
               }`}
             >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
+              <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60" />
+              {user?.role || "Guest"} Portal
+            </div>
           </div>
         </div>
 
-        {/* Navigation */}
-        <nav className="p-3 space-y-1">
-          {visibleItems.map((item) => {
-            const isActive = location.pathname === item.path;
-            const colors = colorClasses[item.color];
+        {/* Navigation Sections */}
+        <nav className="flex-1 px-3 py-5 overflow-y-auto">
+          {menuSections.map((section, sectionIdx) => {
+            const visibleItems = section.items.filter(
+              (item) => user?.role && item.roles.includes(user.role)
+            );
+
+            if (visibleItems.length === 0) return null;
+
             return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                  isActive
-                    ? `${colors.active} text-white shadow-lg`
-                    : darkMode
-                    ? `text-gray-300 hover:bg-slate-800 hover:${colors.text}`
-                    : `text-gray-600 hover:${colors.bg} hover:${colors.text}`
-                }`}
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  viewBox="0 0 24 24"
-                >
-                  <path d={item.icon} />
-                </svg>
-                <span className="font-medium">{item.label}</span>
-              </Link>
+              <div key={section.title} className={sectionIdx > 0 ? "mt-6" : ""}>
+                {/* Section Header */}
+                <div className="flex items-center gap-2 px-3 mb-3">
+                  <h3
+                    className={`text-[10px] font-bold tracking-[0.15em] uppercase ${
+                      darkMode ? "text-slate-500" : "text-slate-400"
+                    }`}
+                  >
+                    {section.title}
+                  </h3>
+                  <div
+                    className={`flex-1 h-px ${
+                      darkMode ? "bg-slate-800" : "bg-slate-200"
+                    }`}
+                  />
+                </div>
+
+                {/* Section Items */}
+                <div className="space-y-1">
+                  {visibleItems.map((item) => {
+                    const active = location.pathname === item.path;
+                    const Icon = item.icon;
+
+                    return (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
+                          ${
+                            active
+                              ? `bg-linear-to-r ${item.gradient} text-white shadow-lg ${item.shadowColor}`
+                              : darkMode
+                              ? "text-slate-400 hover:text-white hover:bg-white/5"
+                              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                          }`}
+                      >
+                        {/* Active indicator line */}
+                        {active && (
+                          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white/40 rounded-r-full" />
+                        )}
+
+                        {/* Icon container */}
+                        <div
+                          className={`flex items-center justify-center w-9 h-9 rounded-lg transition-all duration-200 ${
+                            active
+                              ? "bg-white/20"
+                              : darkMode
+                              ? "bg-slate-800 group-hover:bg-slate-700"
+                              : "bg-slate-100 group-hover:bg-slate-200"
+                          }`}
+                        >
+                          <Icon
+                            className={`w-[18px] h-[18px] transition-colors ${
+                              active
+                                ? "text-white"
+                                : darkMode
+                                ? "text-slate-400 group-hover:text-slate-200"
+                                : "text-slate-500 group-hover:text-slate-700"
+                            }`}
+                          />
+                        </div>
+
+                        {/* Label */}
+                        <span className="font-medium text-[14px] tracking-tight">
+                          {item.label}
+                        </span>
+
+                        {/* Hover arrow indicator */}
+                        {!active && (
+                          <svg
+                            className={`w-4 h-4 ml-auto opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 ${
+                              darkMode ? "text-slate-500" : "text-slate-400"
+                            }`}
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                          >
+                            <path d="M9 18l6-6-6-6" />
+                          </svg>
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
             );
           })}
         </nav>
 
-        {/* Footer */}
+        {/* Footer / Account */}
         <div
-          className={`absolute bottom-0 left-0 right-0 p-4 border-t ${
+          className={`relative p-4 ${
             darkMode
-              ? "border-slate-800 bg-slate-900"
-              : "border-gray-100 bg-white"
+              ? "bg-linear-to-t from-slate-800/80 to-transparent border-t border-white/5"
+              : "bg-linear-to-t from-slate-100 to-transparent border-t border-slate-100"
           }`}
         >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-linear-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-sm font-bold">
-              {user?.fullname?.charAt(0) || "?"}
+          <div
+            className={`flex items-center gap-3 p-3 rounded-xl transition-all duration-200 cursor-pointer ${
+              darkMode ? "hover:bg-white/5" : "hover:bg-slate-200/50"
+            }`}
+          >
+            {/* Avatar with status indicator */}
+            <div className="relative">
+              <div className="w-11 h-11 rounded-xl bg-linear-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center font-bold shadow-lg shadow-indigo-500/25">
+                {user?.fullname?.charAt(0) || "?"}
+              </div>
+              {/* Online status dot */}
+              <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-900" />
             </div>
-            <div className="flex-1 min-w-0">
+
+            <div className="min-w-0 flex-1">
               <p
                 className={`text-sm font-semibold truncate ${
-                  darkMode ? "text-white" : "text-gray-900"
+                  darkMode ? "text-white" : "text-slate-900"
                 }`}
               >
-                {user?.fullname || user?.username}
+                {user?.fullname || "Guest"}
               </p>
               <p
                 className={`text-xs truncate ${
-                  darkMode ? "text-gray-500" : "text-gray-500"
+                  darkMode ? "text-slate-400" : "text-slate-500"
                 }`}
               >
                 {user?.email}
               </p>
             </div>
+
+            {/* Expand icon */}
+            <svg
+              className={`w-4 h-4 ${
+                darkMode ? "text-slate-500" : "text-slate-400"
+              }`}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M8 9l4-4 4 4M8 15l4 4 4-4" />
+            </svg>
           </div>
         </div>
-      </div>
+      </aside>
     </>
   );
 }
