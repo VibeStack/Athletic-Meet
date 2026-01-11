@@ -6,19 +6,20 @@ import { useTheme } from "../ThemeContext";
 export default function QRScannerPage() {
   const { darkMode } = useTheme();
   const [allEvents, setAllEvents] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState(""); // "Boys" or "Girls"
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedEvent, setSelectedEvent] = useState("");
   const [scanning, setScanning] = useState(false);
   const [cameraPermission, setCameraPermission] = useState("prompt");
   const [scanResult, setScanResult] = useState(null);
   const [processing, setProcessing] = useState(false);
-  const [recentScans, setRecentScans] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [attendanceStats, setAttendanceStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(false);
   const scannerRef = useRef(null);
 
   const API_URL = import.meta.env.VITE_API_URL;
 
-  // Fetch ALL events from backend (no filter)
+  // Fetch ALL events from backend
   useEffect(() => {
     const fetchEvents = async () => {
       try {
@@ -34,6 +35,42 @@ export default function QRScannerPage() {
     };
     fetchEvents();
   }, [API_URL]);
+
+  // Fetch attendance stats when event is selected
+  const fetchAttendanceStats = useCallback(
+    async (eventId) => {
+      if (!eventId) {
+        setAttendanceStats(null);
+        return;
+      }
+
+      setStatsLoading(true);
+      try {
+        const { data } = await axios.get(
+          `${API_URL}/admin/attendance/event/${eventId}`,
+          {
+            withCredentials: true,
+          }
+        );
+        setAttendanceStats(data.data);
+      } catch (err) {
+        console.error("Failed to fetch attendance stats:", err);
+        setAttendanceStats(null);
+      } finally {
+        setStatsLoading(false);
+      }
+    },
+    [API_URL]
+  );
+
+  // Fetch stats when event changes
+  useEffect(() => {
+    if (selectedEvent) {
+      fetchAttendanceStats(selectedEvent);
+    } else {
+      setAttendanceStats(null);
+    }
+  }, [selectedEvent, fetchAttendanceStats]);
 
   // Check camera permission
   useEffect(() => {
@@ -65,6 +102,7 @@ export default function QRScannerPage() {
     setSelectedCategory(category);
     setSelectedEvent("");
     setScanResult(null);
+    setAttendanceStats(null);
     stopScanning();
   };
 
@@ -135,16 +173,8 @@ export default function QRScannerPage() {
           });
           playSound("success");
 
-          // Add to recent scans
-          setRecentScans((prev) => [
-            {
-              jerseyNumber: data.jerseyNumber,
-              name: data.name || "Student",
-              time: new Date(),
-              event: selectedEventData?.name,
-            },
-            ...prev.slice(0, 9),
-          ]);
+          // Re-fetch attendance stats after successful scan
+          fetchAttendanceStats(selectedEvent);
         } else {
           setScanResult({
             success: false,
@@ -591,7 +621,7 @@ export default function QRScannerPage() {
           </div>
         </div>
 
-        {/* Right Column: Recent Scans + Instructions */}
+        {/* Right Column: Attendance Stats + Instructions */}
         <div className="space-y-4">
           {/* Instructions */}
           <div
@@ -667,7 +697,7 @@ export default function QRScannerPage() {
             </ol>
           </div>
 
-          {/* Recent Scans */}
+          {/* Attendance Stats */}
           <div
             className={`rounded-2xl p-5 ${
               darkMode
@@ -676,12 +706,12 @@ export default function QRScannerPage() {
             }`}
           >
             <h3
-              className={`font-semibold mb-3 flex items-center gap-2 ${
+              className={`font-semibold mb-4 flex items-center gap-2 ${
                 darkMode ? "text-white" : "text-gray-900"
               }`}
             >
               <svg
-                className="w-4 h-4 text-cyan-500"
+                className="w-5 h-5 text-cyan-500"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -690,66 +720,200 @@ export default function QRScannerPage() {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
                 />
               </svg>
-              Recent Scans
+              Attendance Stats
             </h3>
 
-            {recentScans.length === 0 ? (
+            {!selectedEvent ? (
               <p
                 className={`text-sm text-center py-8 ${
                   darkMode ? "text-gray-500" : "text-gray-400"
                 }`}
               >
-                No scans yet. Start scanning to see history here.
+                Select an event to see attendance statistics
               </p>
-            ) : (
-              <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                {recentScans.map((scan, i) => (
+            ) : statsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin h-8 w-8 border-3 border-cyan-400/30 rounded-full border-t-cyan-400"></div>
+              </div>
+            ) : attendanceStats ? (
+              <div className="space-y-4">
+                {/* Stats Grid */}
+                <div className="grid grid-cols-3 gap-3">
+                  {/* Present */}
                   <div
-                    key={i}
-                    className={`flex items-center justify-between py-3 px-4 rounded-xl text-sm ${
+                    className={`text-center p-4 rounded-xl ${
                       darkMode
-                        ? "bg-slate-700/50 border border-slate-600/50"
-                        : "bg-gray-50 border border-gray-100"
+                        ? "bg-emerald-900/30 border border-emerald-500/30"
+                        : "bg-emerald-50 border border-emerald-200"
                     }`}
                   >
-                    <div className="flex items-center gap-3">
-                      <span
-                        className={`font-bold ${
-                          darkMode ? "text-amber-400" : "text-amber-600"
-                        }`}
-                      >
-                        #{scan.jerseyNumber}
-                      </span>
-                      <div>
-                        <p
-                          className={`font-medium ${
-                            darkMode ? "text-white" : "text-gray-900"
-                          }`}
-                        >
-                          {scan.name}
-                        </p>
-                        <p
-                          className={`text-xs ${
-                            darkMode ? "text-gray-500" : "text-gray-400"
-                          }`}
-                        >
-                          {scan.event}
-                        </p>
-                      </div>
-                    </div>
-                    <span
-                      className={`text-xs ${
-                        darkMode ? "text-gray-500" : "text-gray-400"
+                    <p
+                      className={`text-3xl font-bold ${
+                        darkMode ? "text-emerald-400" : "text-emerald-600"
                       }`}
                     >
-                      {scan.time.toLocaleTimeString()}
+                      {attendanceStats.present || 0}
+                    </p>
+                    <p
+                      className={`text-xs mt-1 font-medium ${
+                        darkMode ? "text-emerald-300" : "text-emerald-700"
+                      }`}
+                    >
+                      Present
+                    </p>
+                  </div>
+
+                  {/* Absent */}
+                  <div
+                    className={`text-center p-4 rounded-xl ${
+                      darkMode
+                        ? "bg-red-900/30 border border-red-500/30"
+                        : "bg-red-50 border border-red-200"
+                    }`}
+                  >
+                    <p
+                      className={`text-3xl font-bold ${
+                        darkMode ? "text-red-400" : "text-red-600"
+                      }`}
+                    >
+                      {attendanceStats.absent || 0}
+                    </p>
+                    <p
+                      className={`text-xs mt-1 font-medium ${
+                        darkMode ? "text-red-300" : "text-red-700"
+                      }`}
+                    >
+                      Absent
+                    </p>
+                  </div>
+
+                  {/* Not Marked */}
+                  <div
+                    className={`text-center p-4 rounded-xl ${
+                      darkMode
+                        ? "bg-amber-900/30 border border-amber-500/30"
+                        : "bg-amber-50 border border-amber-200"
+                    }`}
+                  >
+                    <p
+                      className={`text-3xl font-bold ${
+                        darkMode ? "text-amber-400" : "text-amber-600"
+                      }`}
+                    >
+                      {attendanceStats.notMarked || 0}
+                    </p>
+                    <p
+                      className={`text-xs mt-1 font-medium ${
+                        darkMode ? "text-amber-300" : "text-amber-700"
+                      }`}
+                    >
+                      Not Marked
+                    </p>
+                  </div>
+                </div>
+
+                {/* Progress Bar */}
+                <div>
+                  <div className="flex justify-between text-xs mb-2">
+                    <span
+                      className={darkMode ? "text-gray-400" : "text-gray-500"}
+                    >
+                      Progress
+                    </span>
+                    <span
+                      className={`font-medium ${
+                        darkMode ? "text-white" : "text-gray-900"
+                      }`}
+                    >
+                      {attendanceStats.total > 0
+                        ? Math.round(
+                            ((attendanceStats.present || 0) /
+                              attendanceStats.total) *
+                              100
+                          )
+                        : 0}
+                      %
                     </span>
                   </div>
-                ))}
+                  <div
+                    className={`h-3 rounded-full overflow-hidden ${
+                      darkMode ? "bg-slate-700" : "bg-gray-200"
+                    }`}
+                  >
+                    <div
+                      className="h-full bg-linear-to-r from-emerald-500 to-teal-500 transition-all duration-500"
+                      style={{
+                        width: `${
+                          attendanceStats.total > 0
+                            ? ((attendanceStats.present || 0) /
+                                attendanceStats.total) *
+                              100
+                            : 0
+                        }%`,
+                      }}
+                    ></div>
+                  </div>
+                </div>
+
+                {/* Total */}
+                <div
+                  className={`text-center p-3 rounded-xl ${
+                    darkMode ? "bg-slate-700/50" : "bg-gray-100"
+                  }`}
+                >
+                  <p
+                    className={`text-sm ${
+                      darkMode ? "text-gray-400" : "text-gray-600"
+                    }`}
+                  >
+                    Total Enrolled:{" "}
+                    <span
+                      className={`font-bold ${
+                        darkMode ? "text-white" : "text-gray-900"
+                      }`}
+                    >
+                      {attendanceStats.total || 0}
+                    </span>
+                  </p>
+                </div>
+
+                {/* Refresh Button */}
+                <button
+                  onClick={() => fetchAttendanceStats(selectedEvent)}
+                  disabled={statsLoading}
+                  className={`w-full py-2 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                    darkMode
+                      ? "bg-slate-700 text-gray-300 hover:bg-slate-600 border border-slate-600"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"
+                  }`}
+                >
+                  <svg
+                    className={`w-4 h-4 ${statsLoading ? "animate-spin" : ""}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    />
+                  </svg>
+                  Refresh Stats
+                </button>
               </div>
+            ) : (
+              <p
+                className={`text-sm text-center py-8 ${
+                  darkMode ? "text-gray-500" : "text-gray-400"
+                }`}
+              >
+                No attendance data available
+              </p>
             )}
           </div>
 

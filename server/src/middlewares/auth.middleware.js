@@ -21,7 +21,13 @@ export const checkAuth = async (req, res, next) => {
       throw new ApiError(401, "Session expired or invalid");
     }
 
-    const user = await User.findById(session.userId);
+    const user = await User.findById(session.userId)
+      .populate({
+        path: "selectedEvents.eventId",
+        model: "Event",
+        select: "_id name day type isActive",
+      })
+      .lean();
     if (!user) {
       res.clearCookie("sid", {
         httpOnly: true,
@@ -31,7 +37,16 @@ export const checkAuth = async (req, res, next) => {
       });
       throw new ApiError(401, "User not found");
     }
-
+    user.selectedEvents = user.selectedEvents.map(({ eventId, status }) => {
+      return {
+        eventId: eventId._id.toString(),
+        eventName: eventId.name,
+        eventDay: eventId.day,
+        eventType: eventId.type,
+        isEventActive: eventId.isActive,
+        userEventAttendance: status,
+      };
+    });
     req.user = user;
     return next();
   } catch (error) {

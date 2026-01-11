@@ -17,6 +17,7 @@ import CertificatesPage from "./components/Portal/CertificatesPage";
 
 // Admin Components
 import UsersPage from "./components/Portal/Admin/UsersPage";
+import UserDetailPage from "./components/Portal/Admin/UserDetailPage";
 import QRScannerPage from "./components/Portal/Admin/QRScannerPage";
 
 // Manager Components
@@ -58,6 +59,14 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={["Admin", "Manager"]}>
                   <UsersPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="admin/users/:userId"
+              element={
+                <ProtectedRoute allowedRoles={["Admin", "Manager"]}>
+                  <UserDetailPage />
                 </ProtectedRoute>
               }
             />

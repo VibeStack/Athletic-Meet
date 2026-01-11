@@ -30,6 +30,9 @@ const eventSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    studentsCount: {
+      
+    },
   },
   {
     strict: "throw",

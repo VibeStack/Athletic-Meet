@@ -7,7 +7,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { courseBranchMap } from "../utils/courseBranchMap.js";
 import { Event } from "../models/Events.model.js";
 
-const getAllUsers = asyncHandler(async (req, res) => {
+export const getAllUsers = asyncHandler(async (req, res) => {
   const users = await User.find(
     {},
     {
@@ -50,7 +50,7 @@ const getAllUsers = asyncHandler(async (req, res) => {
   );
 });
 
-const getUserDetails = asyncHandler(async (req, res) => {
+export const getUserDetails = asyncHandler(async (req, res) => {
   const { userId } = req.params;
 
   const user = await User.findById(userId, {
@@ -116,7 +116,7 @@ const getUserDetails = asyncHandler(async (req, res) => {
     );
 });
 
-const changeUserDetails = asyncHandler(async (req, res) => {
+export const changeUserDetails = asyncHandler(async (req, res) => {
   const { userId } = req.params;
   const changedDetails = req.body;
   const user = await User.findById(userId);
@@ -149,7 +149,7 @@ const changeUserDetails = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, null, "User details updated successfully"));
 });
 
-const unlockEvents = asyncHandler(async (req, res) => {
+export const unlockEvents = asyncHandler(async (req, res) => {
   const { sid } = req.signedCookies;
 
   const session = await Session.findById(sid);
@@ -170,7 +170,7 @@ const unlockEvents = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, null, "Events unlocked successfully"));
 });
 
-const markAttendance = asyncHandler(async (req, res) => {
+export const markAttendance = asyncHandler(async (req, res) => {
   const { jerseyNumber, eventId } = req.body;
   const user = await User.findOne({ jerseyNumber });
   if (!user) {
@@ -192,7 +192,50 @@ const markAttendance = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, null, "Attendance marked successfully"));
 });
 
-const deleteUser = asyncHandler(async (req, res) => {
+export const getAttendanceStats = asyncHandler(async (req, res) => {
+  const users = await User.find(
+    {},
+    {
+      fullname: 1,
+      username: 1,
+      email: 1,
+      role: 1,
+      jerseyNumber: 1,
+      course: 1,
+      year: 1,
+      branch: 1,
+      attendance: 1,
+      selectedEvents: 1,
+    }
+  ).lean();
+
+  const formattedUsers = users.map((u) => ({
+    id: u._id,
+    fullname: u.fullname,
+    username: u.username,
+    email: u.email,
+    role: u.role,
+    jerseyNumber: u.jerseyNumber || null,
+    course: u.course || null,
+    year: u.year || null,
+    branch: u.branch || null,
+    attendance: u.attendance || "Not Marked",
+    eventsCount: u.selectedEvents?.length || 0,
+  }));
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        count: formattedUsers.length,
+        users: formattedUsers,
+      },
+      "Users fetched successfully"
+    )
+  );
+});
+
+export const deleteUser = asyncHandler(async (req, res) => {
   const { userId } = req.params;
 
   const user = await User.findById(userId);
@@ -217,11 +260,3 @@ const deleteUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, null, "User deleted successfully"));
 });
 
-export {
-  getAllUsers,
-  getUserDetails,
-  changeUserDetails,
-  markAttendance,
-  deleteUser,
-  unlockEvents,
-};

@@ -1,451 +1,480 @@
-import { useEffect, useState } from "react";
-import { Link, useOutletContext } from "react-router-dom";
-import QRCode from "qrcode";
+import React, { useEffect, useState } from "react";
+import { useOutletContext, useNavigate } from "react-router-dom";
 import { useTheme } from "./ThemeContext";
+import { generateQr } from "./generateQr";
+import ProfileField from "./ProfileField";
 
 export default function PortalHome() {
   const { user } = useOutletContext();
   const { darkMode } = useTheme();
-  const [qrDataUrl, setQrDataUrl] = useState("");
+  const navigate = useNavigate();
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState("");
 
   useEffect(() => {
     if (!user?.jerseyNumber) {
-      setQrDataUrl("");
+      setQrCodeDataUrl("");
       return;
     }
 
-    let cancelled = false;
-
-    const qrData = JSON.stringify({
-      jerseyNumber: user.jerseyNumber,
-      userId: user.id,
+    const qrPayload = {
+      id: "GNDEC Athletix 2026",
       name: user.username,
-    });
-
-    QRCode.toDataURL(qrData, {
-      width: 180,
-      margin: 2,
-      color: {
-        dark: darkMode ? "#22d3ee" : "#0891b2",
-        light: "#ffffff",
-      },
-    })
-      .then((url) => {
-        if (!cancelled) setQrDataUrl(url);
-      })
-      .catch(() => {
-        if (!cancelled) setQrDataUrl("");
-      });
-
-    return () => {
-      cancelled = true;
+      jerseyNumber: user.jerseyNumber,
     };
-  }, [user?.jerseyNumber, user?.id, user?.username, darkMode]);
 
-  // Loading skeleton
-  if (!user) {
-    return (
-      <div className="space-y-5">
-        <div className="animate-pulse h-48 rounded-3xl bg-slate-200 dark:bg-slate-800" />
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="animate-pulse h-28 rounded-2xl bg-slate-200 dark:bg-slate-800"
-            />
-          ))}
-        </div>
-      </div>
-    );
-  }
+    generateQr(qrPayload, {
+      darkMode,
+      width: 180,
+    }).then(setQrCodeDataUrl);
+  }, [user?.username, user?.jerseyNumber, user?.selectedEvents, darkMode]);
 
   return (
-    <div className="space-y-6">
-      {/* Hero Section - Simplified & Elevated */}
-      <div className="relative overflow-hidden rounded-3xl">
-        {/* Background gradient */}
-        <div
-          className={`absolute inset-0 ${
+    <>
+      {/* HERO SECTION */}
+      <section
+        className={`relative overflow-hidden rounded-3xl transition-all duration-500
+          ${
             darkMode
-              ? "bg-linear-to-br from-slate-900 via-cyan-950 to-slate-900"
-              : "bg-linear-to-br from-cyan-500 via-blue-500 to-indigo-600"
+              ? "bg-linear-to-br from-slate-950 via-slate-900 to-slate-950 border border-white/10 shadow-[0_30px_100px_rgba(0,0,0,0.7)]"
+              : "bg-linear-to-br from-slate-100 via-white to-slate-200 border border-slate-200 shadow-[0_30px_100px_rgba(15,23,42,0.12)]"
           }`}
-        />
+      >
+        <div className="absolute inset-0 pointer-events-none">
+          <div
+            className={`absolute -top-32 -right-32 w-96 h-96 rounded-full blur-3xl opacity-30 ${
+              darkMode ? "bg-cyan-500" : "bg-slate-300"
+            }`}
+          />
+          <div
+            className={`absolute bottom-0 left-0 w-80 h-80 rounded-full blur-3xl opacity-25 ${
+              darkMode ? "bg-blue-500" : "bg-slate-200"
+            }`}
+          />
+        </div>
 
-        {/* Subtle noise texture - premium grain effect */}
-        <div
-          className="absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle at 1px 1px, white 1px, transparent 0)",
-            backgroundSize: "24px 24px",
-          }}
-        />
-
-        {/* Single subtle glow */}
-        <div className="absolute -top-32 -right-32 w-96 h-96 bg-cyan-400/15 rounded-full blur-3xl" />
-
-        <div className="relative p-6 lg:p-8">
-          <div className="flex flex-col lg:flex-row lg:items-center gap-6">
-            <div className="flex-1">
-              {/* Status badge */}
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 backdrop-blur-sm rounded-full text-white/90 text-xs font-medium mb-4 border border-white/10">
-                <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-                Active Session
-              </div>
-
-              {/* Main heading - larger for impact */}
-              <h1 className="text-4xl lg:text-5xl font-black text-white mb-3 tracking-tight leading-tight">
-                Welcome back,
-                <br />
-                {user?.fullname?.split(" ")[0] || user?.username}! 👋
-              </h1>
-
-              {/* Subtitle with breathing room */}
-              <p className="text-cyan-100/70 mb-8 text-sm tracking-wide">
-                64th Annual Athletic Meet • GNDEC Ludhiana
-              </p>
-
-              {/* Jersey card - cleaner design */}
-              {user?.jerseyNumber && (
-                <div className="inline-flex items-center gap-4 px-5 py-3 bg-white/10 backdrop-blur-sm rounded-2xl border border-white/10">
-                  <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
-                    <span className="text-white font-black text-xl">
-                      {user.jerseyNumber}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-white/50 text-xs uppercase tracking-wider">
-                      Jersey Number
-                    </p>
-                    <p className="text-white font-bold text-lg">
-                      #{user.jerseyNumber}
-                    </p>
-                  </div>
-                </div>
-              )}
+        <div className="relative z-10 p-8 flex flex-col lg:flex-row items-center justify-between gap-12">
+          <div className="max-w-2xl">
+            <div
+              className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold mb-4 ${
+                darkMode
+                  ? "bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-400/30"
+                  : "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200"
+              }`}
+            >
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              Active Session
             </div>
 
-            {/* QR Code - intentional & integrated */}
-            {qrDataUrl && (
-              <div className="relative">
-                <div className="absolute inset-0 rounded-3xl bg-white/20 blur-xl" />
-                <div className="relative bg-white p-4 rounded-3xl shadow-2xl">
-                  <img
-                    src={qrDataUrl}
-                    alt="QR Code"
-                    className="w-32 h-32 lg:w-36 lg:h-36 rounded-xl"
-                  />
-                  <p className="text-center text-cyan-600 text-xs font-semibold mt-3">
-                    Scan for attendance
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+            <h1 className="text-3xl sm:text-4xl font-black tracking-tight">
+              <span
+                className={
+                  darkMode
+                    ? "bg-linear-to-r from-sky-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent"
+                    : "bg-linear-to-r from-slate-800 via-slate-500 to-slate-800 bg-clip-text text-transparent"
+                }
+              >
+                Congratulations,
+              </span>{" "}
+              <span
+                className={
+                  darkMode
+                    ? "bg-linear-to-r from-sky-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent"
+                    : "bg-linear-to-r from-slate-800 via-slate-500 to-slate-800 bg-clip-text text-transparent"
+                }
+              >
+                <span className="font-extrabold">
+                  {user?.fullname?.split(" ")[0]}
+                </span>
+              </span>{" "}
+              🎉
+            </h1>
 
-      {/* Section Label */}
-      <h3
-        className={`text-xs uppercase tracking-widest font-semibold ${
-          darkMode ? "text-slate-500" : "text-slate-400"
-        }`}
-      >
-        Overview
-      </h3>
-
-      {/* Stats Row - Unified visual language */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard
-          darkMode={darkMode}
-          icon="⚡"
-          label="Events"
-          value={user?.selectedEvents?.length || 0}
-          subValue="/21"
-          color="cyan"
-        />
-        <StatCard
-          darkMode={darkMode}
-          icon="🏆"
-          label="Certificates"
-          value={user?.selectedEvents?.length || 0}
-          color="amber"
-        />
-        <StatCard
-          darkMode={darkMode}
-          icon="✓"
-          label="Attendance"
-          value={
-            user?.selectedEvents?.filter((e) => e.attendanceMarked)?.length || 0
-          }
-          subValue={`/${user?.selectedEvents?.length || 0}`}
-          color="emerald"
-        />
-        <StatCard
-          darkMode={darkMode}
-          icon="👤"
-          label="Role"
-          value={user?.role}
-          variant="badge"
-          color="violet"
-        />
-      </div>
-
-      {/* Section Label */}
-      <h3
-        className={`text-xs uppercase tracking-widest font-semibold mt-2 ${
-          darkMode ? "text-slate-500" : "text-slate-400"
-        }`}
-      >
-        Quick Actions
-      </h3>
-
-      {/* Quick Actions - Unified with stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <QuickAction
-          darkMode={darkMode}
-          href="/portal/events"
-          icon="🏃"
-          title="Browse Events"
-          desc="View and enroll in events"
-        />
-        <QuickAction
-          darkMode={darkMode}
-          href="/portal/certificates"
-          icon="🏆"
-          title="Your Certificates"
-          desc="View achievements"
-        />
-      </div>
-
-      {/* Section Label */}
-      <h3
-        className={`text-xs uppercase tracking-widest font-semibold mt-2 ${
-          darkMode ? "text-slate-500" : "text-slate-400"
-        }`}
-      >
-        Profile
-      </h3>
-
-      {/* Profile Card - Flat & calm */}
-      <div
-        className={`rounded-2xl overflow-hidden ${
-          darkMode
-            ? "bg-slate-800/50 border border-slate-700/50"
-            : "bg-white border border-slate-200"
-        }`}
-      >
-        <div
-          className={`px-5 py-4 flex items-center gap-3 border-b ${
-            darkMode ? "border-slate-700/50" : "border-slate-100"
-          }`}
-        >
-          <div
-            className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-              darkMode
-                ? "bg-slate-700 text-slate-400"
-                : "bg-slate-100 text-slate-500"
-            }`}
-          >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+            <p
+              className={`mt-2 text-sm ${
+                darkMode ? "text-slate-400" : "text-slate-600"
+              }`}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-              />
-            </svg>
-          </div>
-          <h2
-            className={`font-semibold ${
-              darkMode ? "text-white" : "text-slate-900"
-            }`}
-          >
-            Profile Details
-          </h2>
-        </div>
-        <div className="p-4">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            {[
-              { label: "Full Name", value: user?.fullname },
-              { label: "Username", value: user?.username },
-              { label: "Email", value: user?.email },
-              { label: "Course", value: user?.course },
-              { label: "Branch", value: user?.branch },
-              { label: "Year", value: user?.year },
-              { label: "CRN", value: user?.crn },
-              { label: "Phone", value: user?.phone },
-            ].map((item, i) => (
+              64th Annual Athletic Meet • GNDEC Ludhiana
+            </p>
+
+            <div
+              className={`mt-6 inline-flex items-center gap-4 px-6 py-4 rounded-2xl ${
+                darkMode
+                  ? "bg-slate-800/70 ring-1 ring-white/10"
+                  : "bg-white/80 backdrop-blur ring-1 ring-slate-300 shadow-md"
+              }`}
+            >
               <div
-                key={i}
-                className={`px-4 py-3 rounded-xl ${
-                  darkMode ? "bg-slate-700/30" : "bg-slate-50"
+                className={`w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg ${
+                  darkMode
+                    ? "bg-linear-to-br from-cyan-500 to-blue-500 text-white"
+                    : "bg-black text-white"
                 }`}
               >
-                <p
-                  className={`text-xs mb-1 ${
-                    darkMode ? "text-slate-500" : "text-slate-400"
-                  }`}
-                >
-                  {item.label}
+                #{user?.jerseyNumber}
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wider text-slate-400">
+                  Jersey Number
                 </p>
                 <p
-                  className={`text-sm font-medium truncate ${
+                  className={`font-bold ${
+                    darkMode ? "text-white" : "text-slate-700"
+                  }`}
+                >
+                  Assigned
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {qrCodeDataUrl && (
+            <div
+              className={`relative rounded-2xl p-6 flex flex-col items-center
+      ${
+        darkMode
+          ? "bg-slate-950 border border-white/10 shadow-[0_0_40px_rgba(56,189,248,0.25)]"
+          : "bg-white border border-slate-300 shadow-xl"
+      }
+    `}
+            >
+              {/* INNER QR SURFACE */}
+              <div
+                className={`rounded-xl p-4 transition-all
+        ${
+          darkMode
+            ? "bg-[#04132D] shadow-[0_10px_30px_rgba(56,189,248,0.25)]"
+            : "bg-white shadow-md"
+        }
+      `}
+              >
+                <img
+                  src={qrCodeDataUrl}
+                  alt="Attendance QR"
+                  className="w-40 h-40"
+                />
+              </div>
+
+              {/* LABEL */}
+              <p
+                className={`mt-4 text-sm font-semibold tracking-wide
+        ${darkMode ? "text-sky-400" : "text-slate-800"}
+      `}
+              >
+                Scan for Attendance
+              </p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* EVENTS / ROLE / CERTIFICATES SECTION */}
+      <section className="mt-10 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* EVENTS — PRIMARY */}
+        <div onClick={() => navigate("/portal/events")} className={`lg:col-span-2 cursor-pointer rounded-3xl p-6 sm:p-8 relative overflow-hidden transition-all duration-300 hover:scale-[1.01] ${
+            darkMode
+              ? "bg-linear-to-br from-slate-900 via-slate-900 to-slate-950 ring-1 ring-white/10 shadow-[0_25px_70px_rgba(0,0,0,0.65)]"
+              : "bg-white ring-1 ring-slate-200 shadow-xl"
+          }`}>
+          {/* Ambient glow */}
+          {darkMode && (
+            <>
+              <div className="absolute -top-24 -right-24 w-72 h-72 bg-cyan-500/20 blur-3xl rounded-full" />
+              <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-blue-500/20 blur-3xl rounded-full" />
+            </>
+          )}
+
+          {/* Header */}
+          <div className="relative flex items-center justify-between mb-6">
+            <div className="flex items-center gap-4">
+              <div
+                className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg
+        ${
+          darkMode
+            ? "bg-linear-to-br from-cyan-500 to-blue-600 text-white"
+            : "bg-black text-white"
+        }`}
+              >
+                {/* SVG — UNTOUCHED */}
+                <svg viewBox="0 0 24 24" className="w-7 h-7 fill-current">
+                  <path d="M13.5 5.5a2 2 0 100-4 2 2 0 000 4zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3C14.8 12 16.8 13 19 13v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1L6 8.3V13h2V9.6l1.8-.7" />
+                </svg>
+              </div>
+
+              <div>
+                <p
+                  className={`text-xs uppercase tracking-wide font-bold ${
+                    darkMode ? "text-cyan-400" : "text-slate-500"
+                  }`}
+                >
+                  Your Events
+                </p>
+                <p
+                  className={`text-3xl font-black ${
                     darkMode ? "text-white" : "text-slate-900"
                   }`}
                 >
-                  {item.value || "—"}
+                  {user.selectedEvents.length}
                 </p>
               </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+            </div>
 
-// StatCard - Only icon gets gradient, text stays neutral
-function StatCard({
-  darkMode,
-  icon,
-  label,
-  value,
-  subValue,
-  color,
-  variant = "number",
-}) {
-  const colors = {
-    cyan: {
-      iconBg: "from-cyan-500 to-blue-500",
-      border: darkMode ? "border-cyan-500/20" : "border-cyan-200",
-      bg: darkMode ? "bg-cyan-500/5" : "bg-cyan-50/50",
-      badge: "bg-cyan-500 text-white",
-    },
-    amber: {
-      iconBg: "from-amber-500 to-orange-500",
-      border: darkMode ? "border-amber-500/20" : "border-amber-200",
-      bg: darkMode ? "bg-amber-500/5" : "bg-amber-50/50",
-      badge: "bg-amber-500 text-white",
-    },
-    emerald: {
-      iconBg: "from-emerald-500 to-teal-500",
-      border: darkMode ? "border-emerald-500/20" : "border-emerald-200",
-      bg: darkMode ? "bg-emerald-500/5" : "bg-emerald-50/50",
-      badge: "bg-emerald-500 text-white",
-    },
-    violet: {
-      iconBg: "from-violet-500 to-purple-500",
-      border: darkMode ? "border-violet-500/20" : "border-violet-200",
-      bg: darkMode ? "bg-violet-500/5" : "bg-violet-50/50",
-      badge: "bg-violet-500 text-white",
-    },
-  };
-
-  const c = colors[color];
-
-  return (
-    <div className={`rounded-2xl p-4 border ${c.border} ${c.bg}`}>
-      {/* Only icon gets the gradient */}
-      <div
-        className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 bg-linear-to-br ${c.iconBg} shadow-lg`}
-      >
-        <span className="text-lg">{icon}</span>
-      </div>
-      <p
-        className={`text-xs font-medium mb-1 ${
-          darkMode ? "text-slate-400" : "text-slate-500"
-        }`}
-      >
-        {label}
-      </p>
-      {variant === "badge" ? (
-        <span
-          className={`inline-block px-3 py-1 rounded-lg text-xs font-bold ${c.badge}`}
-        >
-          {value}
-        </span>
-      ) : (
-        <div className="flex items-baseline gap-0.5">
-          <span
-            className={`text-2xl font-black ${
-              darkMode ? "text-white" : "text-slate-900"
-            }`}
-          >
-            {value}
-          </span>
-          {subValue && (
             <span
-              className={`text-sm ${
-                darkMode ? "text-slate-500" : "text-slate-400"
+              className={`text-xs font-semibold ${
+                darkMode ? "text-slate-400" : "text-slate-500"
               }`}
             >
-              {subValue}
+              View all →
             </span>
+          </div>
+
+          {user.selectedEvents.length > 0 ? (
+            <div className="relative">
+              <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide">
+                {user.selectedEvents.map(
+                  (
+                    { eventName, eventType, eventDay, userEventAttendance },
+                    idx
+                  ) => (
+                    <div
+                      key={idx}
+                      className={`snap-start min-w-[85%] sm:min-w-[260px] h-[90px] rounded-xl p-4 shrink-0
+              ${
+                darkMode
+                  ? "bg-slate-950 ring-1 ring-white/10"
+                  : "bg-slate-50 ring-1 ring-slate-200"
+              }`}
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <h3
+                          className={`font-semibold leading-tight line-clamp-1 ${
+                            darkMode ? "text-white" : "text-slate-900"
+                          }`}
+                        >
+                          {eventName}
+                        </h3>
+                        <span
+                          className={`text-[10px] px-2 py-0.5 rounded-full font-semibold
+                  ${
+                    userEventAttendance === "Present"
+                      ? darkMode
+                        ? "bg-emerald-500/15 text-emerald-400"
+                        : "bg-emerald-100 text-emerald-700"
+                      : userEventAttendance === "Absent"
+                      ? darkMode
+                        ? "bg-red-500/15 text-red-400"
+                        : "bg-red-100 text-red-700"
+                      : darkMode
+                      ? "bg-slate-500/15 text-slate-400"
+                      : "bg-slate-100 text-slate-600"
+                  }`}
+                        >
+                          {userEventAttendance || "Pending"}
+                        </span>
+                      </div>
+
+                      <p className="text-sm text-slate-500 line-clamp-1">
+                        {eventType} • {eventDay}
+                      </p>
+                    </div>
+                  )
+                )}
+              </div>
+            </div>
+          ) : (
+            <div
+              className={`mt-4 rounded-2xl border-2 border-dashed py-10 text-center
+      ${
+        darkMode
+          ? "border-slate-700 text-slate-500"
+          : "border-slate-300 text-slate-400"
+      }`}
+            >
+              <p className="font-medium">No events selected yet</p>
+              <p className="text-sm mt-1">Click to browse events</p>
+            </div>
           )}
         </div>
-      )}
-    </div>
-  );
-}
 
-// QuickAction - Using Link, added arrow emphasis
-function QuickAction({ darkMode, href, icon, title, desc }) {
-  return (
-    <Link
-      to={href}
-      className={`group flex items-center gap-4 p-4 rounded-2xl transition-all duration-200 ${
-        darkMode
-          ? "bg-slate-800/50 border border-slate-700/50 hover:border-slate-600 hover:bg-slate-800"
-          : "bg-white border border-slate-200 hover:border-slate-300 hover:shadow-md"
-      }`}
-    >
-      {/* Icon container - simple, not gradient heavy */}
-      <div
-        className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl transition-transform group-hover:scale-105 ${
-          darkMode ? "bg-slate-700" : "bg-slate-100"
+        {/* RIGHT COLUMN */}
+        <div className="flex flex-col gap-6">
+          {/* ROLE */}
+          <div
+            className={`rounded-3xl p-6 relative overflow-hidden
+        ${
+          darkMode
+            ? "bg-linear-to-br from-emerald-900/60 to-slate-900 ring-1 ring-emerald-500/30"
+            : "bg-white ring-1 ring-slate-200"
         }`}
-      >
-        {icon}
-      </div>
-      <div className="flex-1 min-w-0">
-        <h3
-          className={`font-semibold ${
-            darkMode ? "text-white" : "text-slate-900"
+          >
+            {darkMode && (
+              <div className="absolute -top-12 -right-12 w-40 h-40 bg-emerald-500/20 blur-2xl rounded-full" />
+            )}
+
+            <div className="relative flex items-center gap-4">
+              <div
+                className={`w-14 h-14 rounded-2xl flex items-center justify-center
+            ${
+              darkMode
+                ? "bg-linear-to-br from-emerald-500 to-green-600 text-white"
+                : "bg-black text-white"
+            }`}
+              >
+                {/* Shield SVG */}
+                <svg viewBox="0 0 24 24" className="w-7 h-7 fill-current">
+                  <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" />
+                </svg>
+              </div>
+              <div>
+                <p
+                  className={`text-xs uppercase tracking-wide font-bold ${
+                    darkMode ? "text-emerald-400" : "text-slate-500"
+                  }`}
+                >
+                  Role
+                </p>
+                <p
+                  className={`text-2xl font-black ${
+                    darkMode ? "text-white" : "text-slate-900"
+                  }`}
+                >
+                  {user.role}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* CERTIFICATES */}
+          <div
+            onClick={() => navigate("/portal/certificates")}
+            className={`cursor-pointer rounded-3xl p-6 relative overflow-hidden transition-all hover:scale-[1.02]
+        ${
+          darkMode
+            ? "bg-linear-to-br from-amber-900/50 to-slate-900 ring-1 ring-amber-500/30"
+            : "bg-white ring-1 ring-slate-200"
+        }`}
+          >
+            {darkMode && (
+              <div className="absolute -top-12 -right-12 w-40 h-40 bg-amber-500/20 blur-2xl rounded-full" />
+            )}
+
+            <div className="relative flex items-center gap-4">
+              <div
+                className={`w-14 h-14 rounded-2xl flex items-center justify-center
+            ${
+              darkMode
+                ? "bg-linear-to-br from-amber-500 to-orange-500 text-white"
+                : "bg-black text-white"
+            }`}
+              >
+                {/* Trophy SVG */}
+                <svg viewBox="0 0 24 24" className="w-7 h-7 fill-current">
+                  <path d="M19 5h-2V3H7v2H5a2 2 0 00-2 2v1c0 2.5 1.9 4.6 4.4 4.9A5 5 0 0011 15.9V19H7v2h10v-2h-4v-3.1a5 5 0 003.6-3C19.1 12.6 21 10.5 21 8V7a2 2 0 00-2-2z" />
+                </svg>
+              </div>
+              <div>
+                <p
+                  className={`text-xs uppercase tracking-wide font-bold ${
+                    darkMode ? "text-amber-400" : "text-slate-500"
+                  }`}
+                >
+                  Certificates
+                </p>
+                <p
+                  className={`text-2xl font-black ${
+                    darkMode ? "text-white" : "text-slate-900"
+                  }`}
+                >
+                  {user.selectedEvents.length}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* PROFILE SECTION */}
+      <section className="mt-10">
+        <div
+          className={`rounded-3xl p-6 sm:p-8 relative overflow-hidden ${
+            darkMode
+              ? "bg-slate-900 ring-1 ring-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.6)]"
+              : "bg-white ring-1 ring-slate-200 shadow-xl"
           }`}
         >
-          {title}
-        </h3>
-        <p
-          className={`text-sm truncate ${
-            darkMode ? "text-slate-400" : "text-slate-500"
-          }`}
-        >
-          {desc}
-        </p>
-      </div>
-      {/* Arrow - appears on hover */}
-      <svg
-        className={`w-5 h-5 transition-all opacity-0 group-hover:opacity-100 group-hover:translate-x-1 ${
-          darkMode ? "text-slate-400" : "text-slate-400"
-        }`}
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M9 5l7 7-7 7"
-        />
-      </svg>
-    </Link>
+          {darkMode && (
+            <>
+              <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full blur-3xl opacity-20 pointer-events-none bg-cyan-500" />
+              <div className="absolute -bottom-16 -left-16 w-48 h-48 rounded-full blur-2xl opacity-15 pointer-events-none bg-blue-500" />
+            </>
+          )}
+
+          <div className="relative flex items-center justify-between gap-4 mb-6 sm:mb-8">
+            <div className="flex items-center gap-3">
+              <div
+                className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-lg ${
+                  darkMode
+                    ? "bg-linear-to-br from-cyan-500 to-blue-600 text-white"
+                    : "bg-black text-white"
+                }`}
+              >
+                <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current">
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                </svg>
+              </div>
+              <div>
+                <h2
+                  className={`text-lg sm:text-xl font-bold ${
+                    darkMode ? "text-white" : "text-slate-900"
+                  }`}
+                >
+                  Profile Details
+                </h2>
+                <p
+                  className={`text-xs ${
+                    darkMode ? "text-slate-500" : "text-slate-400"
+                  }`}
+                >
+                  Your personal information
+                </p>
+              </div>
+            </div>
+            <div
+              className={`hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${
+                darkMode
+                  ? "bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/30"
+                  : "bg-slate-100 text-slate-600 ring-1 ring-slate-200"
+              }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              Verified
+            </div>
+          </div>
+
+          <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+            <ProfileField
+              label="Full Name"
+              value={user.fullname}
+              accent="red"
+            />
+            <ProfileField
+              label="Username"
+              value={user.username}
+              accent="orange"
+            />
+            <ProfileField label="Email" value={user.email} accent="yellow" />
+            <ProfileField label="Course" value={user.course} accent="emerald" />
+            <ProfileField label="Branch" value={user.branch} accent="blue" />
+            <ProfileField label="Year" value={user.year} accent="purple" />
+            <ProfileField
+              label="URN / CRN"
+              value={`${user.urn || "—"} / ${user.crn || "—"}`}
+              accent="pink"
+            />
+            <ProfileField label="Phone" value={user.phone} accent="indigo" />
+          </div>
+        </div>
+      </section>
+    </>
   );
 }

@@ -323,7 +323,7 @@ export default function HamburgerMenu({ menuOpen, setMenuOpen, user }) {
                 }}
               >
                 <div
-                  className="w-16 h-16 rounded-[16px] flex items-center justify-center font-black text-2xl text-white overflow-hidden relative"
+                  className="w-16 h-16 rounded-2xl flex items-center justify-center font-black text-2xl text-white overflow-hidden relative"
                   style={{
                     background: darkMode
                       ? "linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)"
@@ -501,7 +501,7 @@ export default function HamburgerMenu({ menuOpen, setMenuOpen, user }) {
               />
               {/* Gradient border */}
               <div
-                className="relative p-[2px] rounded-xl"
+                className="relative p-0.5 rounded-xl"
                 style={{
                   background:
                     "linear-gradient(135deg, #06b6d4, #3b82f6, #8b5cf6, #d946ef)",
