@@ -283,7 +283,7 @@ export default function PortalHome() {
             </div>
           ) : (
             <div
-              className={`mt-4 rounded-2xl border-2 border-dashed py-10 text-center
+              className={`mt-4 rounded-2xl border-2 border-dashed py-5 h-[90px] text-center
       ${
         darkMode
           ? "border-slate-700 text-slate-500"
