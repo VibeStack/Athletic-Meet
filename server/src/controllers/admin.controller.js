@@ -19,10 +19,12 @@ export const getAllUsers = asyncHandler(async (req, res) => {
       course: 1,
       year: 1,
       branch: 1,
-      attendance: 1,
+      crn: 1,
+      urn: 1,
+      gender: 1,
       selectedEvents: 1,
     }
-  ).lean();
+  );
 
   const formattedUsers = users.map((u) => ({
     id: u._id,
@@ -31,18 +33,19 @@ export const getAllUsers = asyncHandler(async (req, res) => {
     email: u.email,
     role: u.role,
     jerseyNumber: u.jerseyNumber || null,
-    course: u.course || null,
     year: u.year || null,
+    course: u.course || null,
     branch: u.branch || null,
-    attendance: u.attendance || "Not Marked",
+    crn: u.crn || null,
+    urn: u.urn || null,
+    gender: u.gender || null,
     eventsCount: u.selectedEvents?.length || 0,
   }));
 
   return res.status(200).json(
     new ApiResponse(
-      200,
       {
-        count: formattedUsers.length,
+        usersCount: formattedUsers.length,
         users: formattedUsers,
       },
       "Users fetched successfully"
@@ -259,4 +262,3 @@ export const deleteUser = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, null, "User deleted successfully"));
 });
-

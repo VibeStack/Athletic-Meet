@@ -6,11 +6,6 @@ import Step2LoginSuccess from "./Step2LoginSuccess";
 export default function LoginPage() {
   const methods = useForm({
     mode: "onChange",
-    defaultValues: {
-      username: "Arsh",
-      email: "hackuser1102@gmail.com",
-      password: "12345678",
-    },
   });
   const [step, setStep] = useState(1);
 

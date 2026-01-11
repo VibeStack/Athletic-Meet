@@ -1,471 +1,484 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import React, { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useTheme } from "../ThemeContext";
 
-const courses = [
-  "All Courses",
-  "B.Tech",
-  "M.Tech",
-  "MBA",
-  "MCA",
-  "B.Voc.",
-  "B.Com",
-  "BBA",
-  "BCA",
-  "B.Arch",
-];
-const years = ["All Years", "1st Year", "2nd Year", "3rd Year", "4th Year"];
+// Role badge theme
+const getRoleTheme = (role, gender, darkMode) => {
+  if (role === "Manager") {
+    return darkMode
+      ? "bg-red-500/15 text-red-400 ring-red-500/30"
+      : "bg-red-50 text-red-700 ring-red-200";
+  }
+  if (role === "Admin") {
+    // Admin badge follows gender color
+    if (gender === "Male") {
+      return darkMode
+        ? "bg-sky-500/15 text-sky-400 ring-sky-500/30"
+        : "bg-sky-50 text-sky-700 ring-sky-200";
+    }
+    if (gender === "Female") {
+      return darkMode
+        ? "bg-pink-500/15 text-pink-400 ring-pink-500/30"
+        : "bg-pink-50 text-pink-700 ring-pink-200";
+    }
+    // Admin no gender - emerald
+    return darkMode
+      ? "bg-emerald-500/15 text-emerald-400 ring-emerald-500/30"
+      : "bg-emerald-50 text-emerald-700 ring-emerald-200";
+  }
+  // Student - always black/dark badge
+  return darkMode
+    ? "bg-slate-700/50 text-slate-300 ring-slate-600"
+    : "bg-slate-800 text-slate-100 ring-slate-700";
+};
+
+// Event count color based on role and gender
+const getEventColor = (role, gender, darkMode) => {
+  if (role === "Manager") {
+    return darkMode ? "text-red-400" : "text-red-600";
+  }
+  // Admin and Student follow gender
+  if (gender === "Female") return darkMode ? "text-pink-400" : "text-pink-600";
+  if (gender === "Male") return darkMode ? "text-sky-400" : "text-sky-600";
+  // Incomplete profile - green
+  return darkMode ? "text-emerald-400" : "text-emerald-600";
+};
+
+const getGenderTheme = (gender, darkMode) => {
+  switch (gender) {
+    case "Male":
+      return {
+        rail: darkMode
+          ? "bg-gradient-to-b from-sky-400 to-blue-600"
+          : "bg-gradient-to-b from-sky-500 to-blue-700",
+        glow: "shadow-sky-500/20",
+        events: darkMode ? "text-sky-400" : "text-sky-600",
+      };
+
+    case "Female":
+      return {
+        rail: darkMode
+          ? "bg-gradient-to-b from-pink-400 to-purple-600"
+          : "bg-gradient-to-b from-pink-500 to-purple-700",
+        glow: "shadow-pink-500/20",
+        events: darkMode ? "text-pink-400" : "text-pink-600",
+      };
+
+    default: // null / incomplete profile
+      return {
+        rail: darkMode
+          ? "bg-gradient-to-b from-lime-400 to-emerald-600"
+          : "bg-gradient-to-b from-lime-500 to-emerald-700",
+        glow: "shadow-emerald-500/20",
+        events: darkMode ? "text-emerald-400" : "text-emerald-600",
+      };
+  }
+};
+
+// Jersey badge colors based on role and gender
+const getJerseyBadgeTheme = (role, gender, darkMode) => {
+  if (role === "Manager") {
+    return "bg-gradient-to-br from-red-400 to-red-600 text-white shadow-lg shadow-red-500/30";
+  }
+  // Admin and Student follow gender
+  if (gender === "Male") {
+    return "bg-gradient-to-br from-sky-400 to-blue-600 text-white shadow-lg shadow-sky-500/30";
+  }
+  if (gender === "Female") {
+    return "bg-gradient-to-br from-pink-400 to-pink-600 text-white shadow-lg shadow-pink-500/30";
+  }
+  // Incomplete profile - green
+  return "bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-lg shadow-emerald-500/30";
+};
+
+// Card border colors based on role and gender
+const getCardBorderTheme = (role, gender, darkMode) => {
+  if (role === "Manager") {
+    return darkMode
+      ? "border-red-500/50 hover:border-red-400"
+      : "border-red-400 hover:border-red-500";
+  }
+  // Admin and Student follow gender
+  if (gender === "Male") {
+    return darkMode
+      ? "border-sky-500/50 hover:border-sky-400"
+      : "border-sky-400 hover:border-sky-500";
+  }
+  if (gender === "Female") {
+    return darkMode
+      ? "border-pink-500/50 hover:border-pink-400"
+      : "border-pink-400 hover:border-pink-500";
+  }
+  // Incomplete profile - green
+  return darkMode
+    ? "border-emerald-500/50 hover:border-emerald-400"
+    : "border-emerald-400 hover:border-emerald-500";
+};
 
 export default function UsersPage() {
+  const BASE_URL = import.meta.env.VITE_API_URL;
   const { darkMode } = useTheme();
-  const navigate = useNavigate();
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterCourse, setFilterCourse] = useState("All Courses");
-  const [filterYear, setFilterYear] = useState("All Years");
-  const [showFilters, setShowFilters] = useState(false);
 
-  const API_URL = import.meta.env.VITE_API_URL;
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const [query, setQuery] = useState("");
+
+  const [allUsers, setAllUsers] = useState([]);
+  const [totalUsersCount, setTotalUsersCount] = useState(0);
+  const [visibleUsersCount, setVisibleUsersCount] = useState(totalUsersCount);
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get(`${API_URL}/admin/users`, {
+    const allUsers = async () => {
+      const { data: response } = await axios.get(`${BASE_URL}/admin/users`, {
         withCredentials: true,
       });
-      console.log("API Response:", response.data);
-      // Handle both possible response structures
-      const usersData =
-        response.data.data?.users || response.data.message?.users || [];
-      setUsers(usersData);
-    } catch (error) {
-      console.error("Failed to fetch users:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      console.log(response.data.users);
+      setAllUsers(response.data.users);
+      setTotalUsersCount(response.data.usersCount);
+      setVisibleUsersCount(response.data.usersCount);
+    };
+    allUsers();
+  }, []);
 
-  // Filter users
-  const filteredUsers = users.filter((user) => {
-    const matchesSearch =
-      user.fullname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.jerseyNumber?.toString().includes(searchTerm);
-    const matchesCourse =
-      filterCourse === "All Courses" || user.course === filterCourse;
-    const matchesYear = filterYear === "All Years" || user.year === filterYear;
-    return matchesSearch && matchesCourse && matchesYear;
-  });
+  const filteredUsers = allUsers
+    .map((user) => {
+      let score = 0;
+      if (!query) return { user, score };
 
-  const clearFilters = () => {
-    setSearchTerm("");
-    setFilterCourse("All Courses");
-    setFilterYear("All Years");
-  };
+      if (!isNaN(query)) {
+        const q = query.trim();
 
-  const activeFiltersCount = [
-    filterCourse !== "All Courses",
-    filterYear !== "All Years",
-  ].filter(Boolean).length;
+        if (user.jerseyNumber?.toString() === q) score += 100;
+        else if (user.jerseyNumber?.toString().includes(q)) score += 50;
 
-  const getRoleBadge = (role) => {
-    switch (role) {
-      case "Admin":
-        return darkMode
-          ? "bg-purple-500/20 text-purple-400 border-purple-500/30"
-          : "bg-purple-100 text-purple-700 border-purple-200";
-      case "Manager":
-        return darkMode
-          ? "bg-blue-500/20 text-blue-400 border-blue-500/30"
-          : "bg-blue-100 text-blue-700 border-blue-200";
-      default:
-        return darkMode
-          ? "bg-gray-500/20 text-gray-400 border-gray-500/30"
-          : "bg-gray-100 text-gray-600 border-gray-200";
-    }
-  };
+        if (user.urn?.toString() === q) score += 100;
+        else if (user.urn?.toString().includes(q)) score += 50;
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin h-12 w-12 border-4 border-cyan-400/30 rounded-full border-t-cyan-400 mx-auto mb-4"></div>
-          <p className={darkMode ? "text-gray-400" : "text-gray-600"}>
-            Loading users...
-          </p>
-        </div>
-      </div>
-    );
-  }
+        if (user.crn?.toString() === q) score += 100;
+        else if (user.crn?.toString().includes(q)) score += 50;
+      } else {
+        const q = query.toLowerCase();
+
+        if (
+          user.fullname?.toLowerCase().startsWith(q) ||
+          user.username?.toLowerCase().startsWith(q)
+        )
+          score += 100;
+        else if (
+          user.fullname?.toLowerCase().includes(q) ||
+          user.username?.toLowerCase().includes(q)
+        )
+          score += 50;
+
+        if (user.email?.toLowerCase().startsWith(q)) score += 80;
+        else if (user.email?.toLowerCase().includes(q)) score += 40;
+      }
+
+      return { user, score };
+    })
+    .filter(({ score }) => !query || score > 0)
+    .sort((a, b) => b.score - a.score)
+    .map(({ user }) => user);
+
+  useEffect(() => {
+    setVisibleUsersCount(filteredUsers.length);
+  }, [filteredUsers]);
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1
-            className={`text-2xl font-bold ${
-              darkMode ? "text-white" : "text-gray-900"
-            }`}
-          >
-            Users 👥
-          </h1>
-          <p
-            className={`text-sm mt-1 ${
-              darkMode ? "text-gray-400" : "text-gray-500"
-            }`}
-          >
-            Manage registered students and staff
-          </p>
-        </div>
+    <>
+      <section className="mb-10">
         <div
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl ${
-            darkMode
-              ? "bg-slate-800 border border-slate-700"
-              : "bg-white border border-gray-200 shadow-sm"
-          }`}
+          className={`rounded-3xl px-6 py-6 sm:px-8
+      flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8
+      ${
+        darkMode
+          ? "bg-linear-to-br from-slate-900 to-slate-800 border border-white/10 shadow-lg"
+          : "bg-white/80 border border-slate-200 shadow-sm"
+      }
+    `}
         >
-          <svg
-            className="w-5 h-5 text-cyan-500"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
-            />
-          </svg>
-          <span
-            className={`font-bold ${darkMode ? "text-white" : "text-gray-900"}`}
-          >
-            {filteredUsers.length}
-          </span>
-          <span
-            className={`text-sm ${
-              darkMode ? "text-gray-400" : "text-gray-500"
-            }`}
-          >
-            / {users.length}
-          </span>
-        </div>
-      </div>
-
-      {/* Search and Filter */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <svg
-            className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${
-              darkMode ? "text-gray-500" : "text-gray-400"
-            }`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            />
-          </svg>
-          <input
-            type="text"
-            placeholder="Search by name, email, or jersey..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className={`w-full pl-12 pr-4 py-3 rounded-xl transition-all ${
-              darkMode
-                ? "bg-slate-800 border border-slate-700 text-white placeholder-gray-500 focus:border-cyan-500"
-                : "bg-white border border-gray-200 text-gray-900 placeholder-gray-400 focus:border-cyan-500"
-            } focus:outline-none focus:ring-2 focus:ring-cyan-500/20`}
-          />
-        </div>
-
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className={`px-4 py-3 rounded-xl font-medium flex items-center gap-2 transition-all ${
-            showFilters || activeFiltersCount > 0
-              ? "bg-cyan-500 text-white shadow-lg"
-              : darkMode
-              ? "bg-slate-800 text-gray-300 border border-slate-700 hover:bg-slate-700"
-              : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
-          }`}
-        >
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-            />
-          </svg>
-          Filters
-          {activeFiltersCount > 0 && (
-            <span className="w-5 h-5 bg-white text-cyan-500 rounded-full text-xs font-bold flex items-center justify-center">
-              {activeFiltersCount}
-            </span>
-          )}
-        </button>
-      </div>
-
-      {/* Filters Panel */}
-      {showFilters && (
-        <div
-          className={`rounded-2xl p-5 ${
-            darkMode
-              ? "bg-slate-800/50 border border-slate-700/50"
-              : "bg-white border border-gray-200 shadow-sm"
-          }`}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h3
-              className={`font-semibold ${
-                darkMode ? "text-white" : "text-gray-900"
+          <div>
+            <h2
+              className={`text-3xl font-black ${
+                darkMode ? "text-white" : "text-slate-900"
               }`}
             >
-              Filters
-            </h3>
-            {activeFiltersCount > 0 && (
-              <button
-                onClick={clearFilters}
-                className="text-sm text-red-500 hover:text-red-600 font-medium"
-              >
-                Clear all
-              </button>
-            )}
+              Users
+            </h2>
+            <p
+              className={`${
+                darkMode ? "text-slate-400" : "text-slate-600"
+              } text-sm`}
+            >
+              Showing <span className="font-semibold">{visibleUsersCount}</span>{" "}
+              of <span className="font-semibold">{totalUsersCount}</span> users
+            </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label
-                className={`block text-sm mb-2 ${
-                  darkMode ? "text-gray-400" : "text-gray-500"
-                }`}
-              >
-                Course
-              </label>
-              <select
-                value={filterCourse}
-                onChange={(e) => setFilterCourse(e.target.value)}
-                className={`w-full px-4 py-2.5 rounded-xl transition-all ${
-                  darkMode
-                    ? "bg-slate-700 border border-slate-600 text-white"
-                    : "bg-gray-50 border border-gray-200 text-gray-900"
-                } focus:outline-none focus:border-cyan-500`}
-              >
-                {courses.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label
-                className={`block text-sm mb-2 ${
-                  darkMode ? "text-gray-400" : "text-gray-500"
-                }`}
-              >
-                Year
-              </label>
-              <select
-                value={filterYear}
-                onChange={(e) => setFilterYear(e.target.value)}
-                className={`w-full px-4 py-2.5 rounded-xl transition-all ${
-                  darkMode
-                    ? "bg-slate-700 border border-slate-600 text-white"
-                    : "bg-gray-50 border border-gray-200 text-gray-900"
-                } focus:outline-none focus:border-cyan-500`}
-              >
-                {years.map((y) => (
-                  <option key={y} value={y}>
-                    {y}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* Users Grid */}
-      {filteredUsers.length === 0 ? (
-        <div
-          className={`text-center py-16 rounded-2xl ${
+          <div className="w-full lg:max-w-3xl">
+            <label className="text-[11px] uppercase tracking-widest font-bold text-slate-400">
+              Search Users
+            </label>
+            <div
+              className={`mt-2 rounded-2xl px-4
+          ${
             darkMode
-              ? "bg-slate-800/50 border border-slate-700/50"
-              : "bg-white border border-gray-200"
-          }`}
-        >
-          <svg
-            className={`w-16 h-16 mx-auto mb-4 ${
-              darkMode ? "text-gray-600" : "text-gray-300"
-            }`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
-            />
-          </svg>
-          <p className={darkMode ? "text-gray-400" : "text-gray-500"}>
-            No users found
-          </p>
-          <button
-            onClick={clearFilters}
-            className="mt-2 text-cyan-500 hover:text-cyan-600 text-sm font-medium"
-          >
-            Clear filters
-          </button>
+              ? "bg-slate-900 border border-white/10"
+              : "bg-white border border-slate-300"
+          }
+        `}
+            >
+              <input
+                className="w-full bg-transparent py-3 text-sm focus:outline-none"
+                placeholder="Search by name, email, jersey, URN, CRN…"
+                onChange={(e) => setQuery(e.target.value.toLowerCase())}
+              />
+            </div>
+          </div>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredUsers.map((user) => (
+      </section>
+
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        {filteredUsers.map((user) => {
+          const genderTheme = getGenderTheme(user.gender, darkMode);
+          const roleTheme = getRoleTheme(user.role, user.gender, darkMode);
+          const jerseyTheme = getJerseyBadgeTheme(
+            user.role,
+            user.gender,
+            darkMode
+          );
+          const borderTheme = getCardBorderTheme(
+            user.role,
+            user.gender,
+            darkMode
+          );
+
+          return (
             <div
               key={user.id}
-              onClick={() => navigate(`/portal/admin/users/${user.id}`)}
-              className={`group p-5 rounded-2xl cursor-pointer transition-all duration-200 hover:scale-[1.02] ${
-                darkMode
-                  ? "bg-slate-800/70 border border-slate-700/50 hover:border-cyan-500/50 hover:shadow-lg hover:shadow-cyan-500/10"
-                  : "bg-white border border-gray-200 hover:border-cyan-400 shadow-sm hover:shadow-md"
-              }`}
+              onClick={() => navigate(`${location.pathname}/${user.id}`)}
+              className={`group cursor-pointer rounded-3xl overflow-hidden transition-all duration-300 border-2
+                ${borderTheme}
+                ${
+                  darkMode
+                    ? "bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 hover:shadow-[0_20px_60px_rgba(0,0,0,0.7)]"
+                    : "bg-white hover:shadow-2xl hover:shadow-slate-200/50"
+                }
+                hover:-translate-y-1
+              `}
             >
-              {/* Header: Jersey + Name */}
-              <div className="flex items-start gap-4 mb-4">
-                <div
-                  className={`w-14 h-14 rounded-xl flex items-center justify-center font-bold text-lg ${
-                    darkMode
-                      ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
-                      : "bg-amber-100 text-amber-600 border border-amber-200"
-                  }`}
-                >
-                  {user.jerseyNumber || "—"}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3
-                    className={`font-semibold truncate ${
-                      darkMode ? "text-white" : "text-gray-900"
-                    }`}
+              {/* Header Section */}
+              <div className="p-5 pb-4">
+                <div className="flex items-start gap-4">
+                  {/* Jersey Number Badge */}
+                  <div
+                    className={`relative shrink-0 w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-black transition-transform duration-300 group-hover:scale-105
+                      ${jerseyTheme}
+                    `}
                   >
-                    {user.fullname || user.username}
-                  </h3>
-                  <p
-                    className={`text-sm truncate ${
-                      darkMode ? "text-gray-400" : "text-gray-500"
-                    }`}
-                  >
-                    {user.email}
-                  </p>
-                  {user.role !== "Student" && (
+                    {user.jerseyNumber || "—"}
+                  </div>
+
+                  {/* User Info */}
+                  <div className="flex-1 min-w-0 pt-0.5">
+                    <p
+                      className={`font-bold text-lg leading-tight truncate ${
+                        darkMode ? "text-white" : "text-slate-900"
+                      }`}
+                    >
+                      {user.fullname || user.username}
+                    </p>
+                    <p
+                      className={`text-sm truncate mt-0.5 ${
+                        darkMode ? "text-slate-400" : "text-slate-500"
+                      }`}
+                    >
+                      {user.email}
+                    </p>
+
+                    {/* Role Badge */}
                     <span
-                      className={`inline-flex px-2 py-0.5 mt-1 text-xs font-medium rounded-full border ${getRoleBadge(
-                        user.role
-                      )}`}
+                      className={`inline-flex items-center mt-2 text-xs font-semibold px-2.5 py-1 rounded-full ring-1 ${roleTheme}`}
                     >
                       {user.role}
                     </span>
-                  )}
+                  </div>
                 </div>
               </div>
 
-              {/* Info Grid */}
-              <div className="grid grid-cols-2 gap-2 mb-4">
-                <div
-                  className={`px-3 py-2 rounded-lg ${
-                    darkMode ? "bg-slate-700/50" : "bg-gray-50"
-                  }`}
-                >
-                  <p
-                    className={`text-xs ${
-                      darkMode ? "text-gray-500" : "text-gray-400"
-                    }`}
+              {/* Divider */}
+              <div
+                className={`mx-5 h-px ${
+                  darkMode ? "bg-white/5" : "bg-slate-100"
+                }`}
+              />
+
+              {/* Meta Grid */}
+              <div className="p-5 pt-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div
+                    className={`rounded-xl p-3 transition-colors
+                      ${
+                        darkMode
+                          ? "bg-slate-800/50"
+                          : "bg-slate-50 group-hover:bg-slate-100/80"
+                      }
+                    `}
                   >
-                    Course
-                  </p>
-                  <p
-                    className={`text-sm font-medium truncate ${
-                      darkMode ? "text-gray-200" : "text-gray-700"
-                    }`}
+                    <p
+                      className={`text-[10px] uppercase tracking-wider font-medium ${
+                        darkMode ? "text-slate-500" : "text-slate-400"
+                      }`}
+                    >
+                      Course
+                    </p>
+                    <p
+                      className={`font-semibold mt-0.5 truncate ${
+                        darkMode ? "text-slate-200" : "text-slate-700"
+                      }`}
+                    >
+                      {user.course || "—"}
+                    </p>
+                  </div>
+
+                  <div
+                    className={`rounded-xl p-3 transition-colors
+                      ${
+                        darkMode
+                          ? "bg-slate-800/50"
+                          : "bg-slate-50 group-hover:bg-slate-100/80"
+                      }
+                    `}
                   >
-                    {user.course || "—"}
-                  </p>
-                </div>
-                <div
-                  className={`px-3 py-2 rounded-lg ${
-                    darkMode ? "bg-slate-700/50" : "bg-gray-50"
-                  }`}
-                >
-                  <p
-                    className={`text-xs ${
-                      darkMode ? "text-gray-500" : "text-gray-400"
-                    }`}
+                    <p
+                      className={`text-[10px] uppercase tracking-wider font-medium ${
+                        darkMode ? "text-slate-500" : "text-slate-400"
+                      }`}
+                    >
+                      Branch
+                    </p>
+                    <p
+                      className={`font-semibold mt-0.5 truncate ${
+                        darkMode ? "text-slate-200" : "text-slate-700"
+                      }`}
+                    >
+                      {user.branch || "—"}
+                    </p>
+                  </div>
+
+                  <div
+                    className={`rounded-xl p-3 transition-colors
+                      ${
+                        darkMode
+                          ? "bg-slate-800/50"
+                          : "bg-slate-50 group-hover:bg-slate-100/80"
+                      }
+                    `}
                   >
-                    Year
-                  </p>
-                  <p
-                    className={`text-sm font-medium ${
-                      darkMode ? "text-gray-200" : "text-gray-700"
-                    }`}
+                    <p
+                      className={`text-[10px] uppercase tracking-wider font-medium ${
+                        darkMode ? "text-slate-500" : "text-slate-400"
+                      }`}
+                    >
+                      URN
+                    </p>
+                    <p
+                      className={`font-semibold mt-0.5 truncate text-sm ${
+                        darkMode ? "text-slate-200" : "text-slate-700"
+                      }`}
+                    >
+                      {user.urn || "—"}
+                    </p>
+                  </div>
+
+                  <div
+                    className={`rounded-xl p-3 transition-colors
+                      ${
+                        darkMode
+                          ? "bg-slate-800/50"
+                          : "bg-slate-50 group-hover:bg-slate-100/80"
+                      }
+                    `}
                   >
-                    {user.year || "—"}
-                  </p>
+                    <p
+                      className={`text-[10px] uppercase tracking-wider font-medium ${
+                        darkMode ? "text-slate-500" : "text-slate-400"
+                      }`}
+                    >
+                      CRN
+                    </p>
+                    <p
+                      className={`font-semibold mt-0.5 truncate text-sm ${
+                        darkMode ? "text-slate-200" : "text-slate-700"
+                      }`}
+                    >
+                      {user.crn || "—"}
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              {/* Footer: Events + Arrow */}
-              <div className="flex items-center justify-between">
-                <div
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${
+              {/* Footer - Events */}
+              <div
+                className={`px-5 py-4 flex items-center justify-between border-t transition-colors
+                  ${
                     darkMode
-                      ? "bg-cyan-500/20 text-cyan-400"
-                      : "bg-cyan-50 text-cyan-600"
-                  }`}
-                >
-                  <span className="text-sm font-medium">
+                      ? "border-white/5 bg-slate-800/30"
+                      : "border-slate-100 bg-slate-50/50 group-hover:bg-slate-100/50"
+                  }
+                `}
+              >
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`text-2xl font-black ${getEventColor(
+                      user.role,
+                      user.gender,
+                      darkMode
+                    )}`}
+                  >
                     {user.eventsCount || 0}
                   </span>
-                  <span className="text-xs">events</span>
+                  <span
+                    className={`text-sm font-medium ${
+                      darkMode ? "text-slate-400" : "text-slate-500"
+                    }`}
+                  >
+                    events
+                  </span>
                 </div>
-                <svg
-                  className={`w-5 h-5 transition-transform group-hover:translate-x-1 ${
-                    darkMode
-                      ? "text-gray-600 group-hover:text-cyan-400"
-                      : "text-gray-300 group-hover:text-cyan-500"
-                  }`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+
+                {/* Arrow Indicator */}
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300
+                    ${
+                      darkMode
+                        ? "bg-slate-700/50 text-slate-400 group-hover:bg-slate-700 group-hover:text-white"
+                        : "bg-slate-200/80 text-slate-400 group-hover:bg-slate-300 group-hover:text-slate-600"
+                    }
+                    group-hover:translate-x-1
+                  `}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2.5}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
               </div>
             </div>
-          ))}
-        </div>
-      )}
-    </div>
+          );
+        })}
+      </section>
+    </>
   );
 }
