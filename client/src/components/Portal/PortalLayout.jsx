@@ -67,6 +67,7 @@ export default function PortalLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showLogoutPopup, setShowLogoutPopup] = useState(false);
 
   const BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -91,7 +92,7 @@ export default function PortalLayout() {
     };
 
     getUserDetails();
-  }, [BASE_URL]);
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -108,6 +109,24 @@ export default function PortalLayout() {
       console.error("Logout failed:", err);
     }
   };
+
+  if (loading) return null;
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div
+          className={`px-6 py-4 rounded-2xl font-medium text-center ${
+            darkMode
+              ? "bg-red-500/10 text-red-400 ring-1 ring-red-500/30"
+              : "bg-red-50 text-red-600 ring-1 ring-red-200"
+          }`}
+        >
+          {error}
+        </div>
+      </div>
+    );
+  }
 
   const avatarLetter =
     userDetail?.fullname?.charAt(0) || userDetail?.username?.charAt(0) || "?";
@@ -254,7 +273,7 @@ export default function PortalLayout() {
                     <div className="hidden sm:block w-px h-6 bg-black/10 dark:bg-white/10" />
 
                     <button
-                      onClick={handleLogout}
+                      onClick={() => setShowLogoutPopup(true)}
                       className="flex items-center gap-2 px-3 py-2 rounded-lg text-red-500 font-semibold hover:bg-red-500/10 transition"
                     >
                       <LogoutIcon className="w-4 h-4" />
@@ -274,97 +293,125 @@ export default function PortalLayout() {
         user={userDetail}
       />
 
-      <main className="pt-28">
+      <main className="pt-20">
         <div className="max-w-7xl mx-auto px-4 py-6">
-          {/* LOADING STATE */}
-          {loading && (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
-              {/* Brand Loader */}
-              <div className="relative">
-                <div
-                  className={`w-16 h-16 rounded-2xl flex items-center justify-center font-black text-xl
-              ${
-                darkMode
-                  ? "bg-linear-to-br from-cyan-500 to-blue-600 text-white"
-                  : "text-white"
-              }
-            `}
-                  style={
-                    !darkMode
-                      ? {
-                          background:
-                            "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%)",
-                        }
-                      : {}
-                  }
-                >
-                  A
-                </div>
-
-                {/* Pulse ring */}
-                <span className="absolute inset-0 rounded-2xl animate-ping bg-cyan-500/30" />
-              </div>
-
-              {/* Text */}
-              <div className="text-center space-y-1">
-                <p
-                  className={`text-lg font-semibold ${
-                    darkMode ? "text-cyan-400" : "text-slate-700"
-                  }`}
-                >
-                  Loading your dashboard
-                </p>
-                <p
-                  className={`text-sm ${
-                    darkMode ? "text-slate-500" : "text-slate-400"
-                  }`}
-                >
-                  Preparing profile, events & access
-                </p>
-              </div>
-
-              {/* Skeleton layout */}
-              <div className="w-full max-w-3xl space-y-4 mt-6">
-                <div
-                  className={`h-24 rounded-2xl animate-pulse ${
-                    darkMode ? "bg-slate-800/60" : "bg-slate-200/60"
-                  }`}
-                />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div
-                    className={`h-16 rounded-xl animate-pulse ${
-                      darkMode ? "bg-slate-800/60" : "bg-slate-200/60"
-                    }`}
-                  />
-                  <div
-                    className={`h-16 rounded-xl animate-pulse ${
-                      darkMode ? "bg-slate-800/60" : "bg-slate-200/60"
-                    }`}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ERROR STATE */}
-          {!loading && error && (
-            <div className="flex items-center justify-center min-h-[40vh]">
-              <div
-                className={`px-6 py-4 rounded-2xl font-medium text-center ${
-                  darkMode
-                    ? "bg-red-500/10 text-red-400 ring-1 ring-red-500/30"
-                    : "bg-red-50 text-red-600 ring-1 ring-red-200"
-                }`}
-              >
-                {error}
-              </div>
-            </div>
-          )}
-
-          {/* CONTENT */}
-          {!loading && !error && <Outlet context={{ user: userDetail }} />}
+          <Outlet context={{ user: userDetail }} />
         </div>
       </main>
+
+      {/* ================= LOGOUT CONFIRMATION POPUP ================= */}
+      {showLogoutPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowLogoutPopup(false)}
+          />
+          <div
+            className={`relative w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl ${
+              darkMode
+                ? "bg-slate-900 border border-white/10"
+                : "bg-white border border-slate-200"
+            }`}
+          >
+            {/* Glow based on user role/gender */}
+            {darkMode && (
+              <div
+                className={`absolute -top-20 -right-20 w-40 h-40 rounded-full blur-3xl pointer-events-none ${
+                  userDetail?.role === "Manager"
+                    ? "bg-red-500/20"
+                    : userDetail?.role === "Admin"
+                    ? userDetail?.gender === "Male"
+                      ? "bg-sky-500/20"
+                      : userDetail?.gender === "Female"
+                      ? "bg-pink-500/20"
+                      : "bg-emerald-500/20"
+                    : "bg-slate-500/20"
+                }`}
+              />
+            )}
+
+            <div className="relative p-6 text-center">
+              {/* Icon - Color based on role/gender */}
+              <div
+                className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center ${
+                  userDetail?.role === "Manager"
+                    ? "bg-red-500/10"
+                    : userDetail?.role === "Admin"
+                    ? userDetail?.gender === "Male"
+                      ? "bg-sky-500/10"
+                      : userDetail?.gender === "Female"
+                      ? "bg-pink-500/10"
+                      : "bg-emerald-500/10"
+                    : "bg-slate-500/10"
+                }`}
+              >
+                <LogoutIcon
+                  className={`w-8 h-8 ${
+                    userDetail?.role === "Manager"
+                      ? "text-red-500"
+                      : userDetail?.role === "Admin"
+                      ? userDetail?.gender === "Male"
+                        ? "text-sky-500"
+                        : userDetail?.gender === "Female"
+                        ? "text-pink-500"
+                        : "text-emerald-500"
+                      : darkMode
+                      ? "text-slate-400"
+                      : "text-slate-600"
+                  }`}
+                />
+              </div>
+
+              <h3
+                className={`text-xl font-bold mb-2 ${
+                  darkMode ? "text-white" : "text-slate-900"
+                }`}
+              >
+                Confirm Logout
+              </h3>
+              <p
+                className={`text-sm mb-6 ${
+                  darkMode ? "text-slate-400" : "text-slate-500"
+                }`}
+              >
+                Are you sure you want to logout from your account?
+              </p>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowLogoutPopup(false)}
+                  className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${
+                    darkMode
+                      ? "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                      : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                  }`}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setShowLogoutPopup(false);
+                    handleLogout();
+                  }}
+                  className={`flex-1 py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 ${
+                    userDetail?.role === "Manager"
+                      ? "bg-linear-to-r from-red-500 to-red-600 shadow-red-500/25"
+                      : userDetail?.role === "Admin"
+                      ? userDetail?.gender === "Male"
+                        ? "bg-linear-to-r from-sky-500 to-blue-600 shadow-sky-500/25"
+                        : userDetail?.gender === "Female"
+                        ? "bg-linear-to-r from-pink-500 to-pink-600 shadow-pink-500/25"
+                        : "bg-linear-to-r from-emerald-500 to-emerald-600 shadow-emerald-500/25"
+                      : "bg-linear-to-r from-slate-700 to-slate-800 shadow-slate-500/25"
+                  }`}
+                >
+                  Logout
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

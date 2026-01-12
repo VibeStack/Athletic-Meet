@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+@theme {
+  --breakpoint-xs700: 700px;
+}
+
+
 /* ================================
    THEME SYSTEM - CSS Variables
    ================================ */

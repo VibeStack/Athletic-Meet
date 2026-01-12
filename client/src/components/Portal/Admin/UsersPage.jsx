@@ -1,7 +1,8 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useOutletContext } from "react-router-dom";
 import { useTheme } from "../ThemeContext";
+import LoadingComponent from "../LoadingComponent";
 
 // Role badge theme
 const getRoleTheme = (role, gender, darkMode) => {
@@ -43,37 +44,6 @@ const getEventColor = (role, gender, darkMode) => {
   if (gender === "Male") return darkMode ? "text-sky-400" : "text-sky-600";
   // Incomplete profile - green
   return darkMode ? "text-emerald-400" : "text-emerald-600";
-};
-
-const getGenderTheme = (gender, darkMode) => {
-  switch (gender) {
-    case "Male":
-      return {
-        rail: darkMode
-          ? "bg-gradient-to-b from-sky-400 to-blue-600"
-          : "bg-gradient-to-b from-sky-500 to-blue-700",
-        glow: "shadow-sky-500/20",
-        events: darkMode ? "text-sky-400" : "text-sky-600",
-      };
-
-    case "Female":
-      return {
-        rail: darkMode
-          ? "bg-gradient-to-b from-pink-400 to-purple-600"
-          : "bg-gradient-to-b from-pink-500 to-purple-700",
-        glow: "shadow-pink-500/20",
-        events: darkMode ? "text-pink-400" : "text-pink-600",
-      };
-
-    default: // null / incomplete profile
-      return {
-        rail: darkMode
-          ? "bg-gradient-to-b from-lime-400 to-emerald-600"
-          : "bg-gradient-to-b from-lime-500 to-emerald-700",
-        glow: "shadow-emerald-500/20",
-        events: darkMode ? "text-emerald-400" : "text-emerald-600",
-      };
-  }
 };
 
 // Jersey badge colors based on role and gender
@@ -128,18 +98,27 @@ export default function UsersPage() {
   const [allUsers, setAllUsers] = useState([]);
   const [totalUsersCount, setTotalUsersCount] = useState(0);
   const [visibleUsersCount, setVisibleUsersCount] = useState(totalUsersCount);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const allUsers = async () => {
-      const { data: response } = await axios.get(`${BASE_URL}/admin/users`, {
-        withCredentials: true,
-      });
-      console.log(response.data.users);
-      setAllUsers(response.data.users);
-      setTotalUsersCount(response.data.usersCount);
-      setVisibleUsersCount(response.data.usersCount);
+    const fetchUsers = async () => {
+      try {
+        setIsLoading(true);
+
+        const { data: response } = await axios.get(`${BASE_URL}/admin/users`, {
+          withCredentials: true,
+        });
+
+        setAllUsers(response.data.users);
+        setTotalUsersCount(response.data.usersCount);
+      } catch (err) {
+        console.error("Failed to fetch users", err);
+      } finally {
+        setIsLoading(false);
+      }
     };
-    allUsers();
+
+    fetchUsers();
   }, []);
 
   const filteredUsers = allUsers
@@ -186,7 +165,13 @@ export default function UsersPage() {
     setVisibleUsersCount(filteredUsers.length);
   }, [filteredUsers]);
 
-  return (
+  return isLoading ? (
+    <LoadingComponent
+      title="Users"
+      message="Manage all registered participants, roles, and event activity
+"
+    />
+  ) : (
     <>
       <section className="mb-10">
         <div
@@ -242,7 +227,6 @@ export default function UsersPage() {
 
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {filteredUsers.map((user) => {
-          const genderTheme = getGenderTheme(user.gender, darkMode);
           const roleTheme = getRoleTheme(user.role, user.gender, darkMode);
           const jerseyTheme = getJerseyBadgeTheme(
             user.role,
@@ -258,7 +242,9 @@ export default function UsersPage() {
           return (
             <div
               key={user.id}
-              onClick={() => navigate(`${location.pathname}/${user.id}`)}
+              onClick={() => {
+                navigate(`${location.pathname}/${user.id}`);
+              }}
               className={`group cursor-pointer rounded-3xl overflow-hidden transition-all duration-300 border-2
                 ${borderTheme}
                 ${

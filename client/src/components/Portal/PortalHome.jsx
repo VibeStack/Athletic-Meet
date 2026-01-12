@@ -3,12 +3,14 @@ import { useOutletContext, useNavigate } from "react-router-dom";
 import { useTheme } from "./ThemeContext";
 import { generateQr } from "./generateQr";
 import ProfileField from "./ProfileField";
+import LoadingComponent from "./LoadingComponent";
 
 export default function PortalHome() {
   const { user } = useOutletContext();
   const { darkMode } = useTheme();
   const navigate = useNavigate();
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (!user?.jerseyNumber) {
@@ -26,11 +28,13 @@ export default function PortalHome() {
       darkMode,
       width: 180,
     }).then(setQrCodeDataUrl);
+    setIsLoading(false);
   }, [user?.username, user?.jerseyNumber, user?.selectedEvents, darkMode]);
 
-  return (
+  return isLoading ? (
+    <LoadingComponent title="Loading Dashboard" message="Preparing Your Profile, Events & Access" />
+  ) : (
     <>
-      {/* HERO SECTION */}
       <section
         className={`relative overflow-hidden rounded-3xl transition-all duration-500
           ${
@@ -171,11 +175,14 @@ export default function PortalHome() {
       {/* EVENTS / ROLE / CERTIFICATES SECTION */}
       <section className="mt-10 grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* EVENTS — PRIMARY */}
-        <div onClick={() => navigate("/portal/events")} className={`lg:col-span-2 cursor-pointer rounded-3xl p-6 sm:p-8 relative overflow-hidden transition-all duration-300 hover:scale-[1.01] ${
+        <div
+          onClick={() => navigate("/portal/events")}
+          className={`lg:col-span-2 cursor-pointer rounded-3xl p-6 sm:p-8 relative overflow-hidden transition-all duration-300 hover:scale-[1.01] ${
             darkMode
               ? "bg-linear-to-br from-slate-900 via-slate-900 to-slate-950 ring-1 ring-white/10 shadow-[0_25px_70px_rgba(0,0,0,0.65)]"
               : "bg-white ring-1 ring-slate-200 shadow-xl"
-          }`}>
+          }`}
+        >
           {/* Ambient glow */}
           {darkMode && (
             <>
