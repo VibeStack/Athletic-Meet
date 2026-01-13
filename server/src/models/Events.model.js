@@ -31,7 +31,21 @@ const eventSchema = new mongoose.Schema(
       default: true,
     },
     studentsCount: {
-      
+      present: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
+      absent: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
+      notMarked: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
     },
   },
   {

@@ -162,33 +162,89 @@ export const lockEvents = asyncHandler(async (req, res) => {
   const { sid } = req.signedCookies;
   const { events } = req.body;
 
+  
   if (!sid) {
     throw new ApiError(401, "Session not found");
   }
-
+  
   if (!Array.isArray(events) || events.length === 0) {
     throw new ApiError(400, "Events must be a non-empty array");
   }
-
-  const session = await Session.findById(sid);
-  if (!session) {
-    throw new ApiError(401, "Invalid session");
+  
+  if (events.length > 5) {
+    throw new ApiError(400, "Maximum 5 events can be selected");
   }
+  
+  const mongoSession = await mongoose.startSession();
+  mongoSession.startTransaction();
+  
+  try {
+    const sessionDoc = await Session.findById(sid).session(mongoSession);
+    if (!sessionDoc) {
+      throw new ApiError(401, "Invalid session");
+    }
+    
+    const user = await User.findById(sessionDoc.userId).session(mongoSession);
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+    
+    if (user.isEventsLocked) {
+      throw new ApiError(409, "Events already locked. Contact admin to unlock.");
+    }
+    
+    const eventObjectIds = events.map(
+      (id) => new mongoose.Types.ObjectId(id)
+    );
+    
+    const validEvents = await Event.find({
+      _id: { $in: eventObjectIds },
+      isActive: true,
+    }).session(mongoSession);
+    
+    if (validEvents.length !== events.length) {
+      throw new ApiError(
+        400,
+        "One or more events are invalid or inactive"
+      );
+    }
+    
+    const selectedEventsPayload = eventObjectIds.map((eventId) => ({
+      eventId,
+      status: "notMarked",
+    }));
+    
+    await User.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          selectedEvents: selectedEventsPayload,
+          isEventsLocked: true,
+        },
+      },
+      { session: mongoSession }
+    );
 
-  const user = await User.findById(session.userId);
-  if (!user) {
-    throw new ApiError(404, "User not found");
+    
+    await Event.updateMany(
+      { _id: { $in: eventObjectIds } },
+      {
+        $inc: {
+          "studentsCount.notMarked": 1,
+        },
+      },
+      { session: mongoSession }
+    );
+    
+    await mongoSession.commitTransaction();
+    mongoSession.endSession();
+    
+    return res
+      .status(200)
+      .json(new ApiResponse(null, "Events locked successfully"));
+  } catch (error) {
+    await mongoSession.abortTransaction();
+    mongoSession.endSession();
+    throw error;
   }
-
-  if (user.selectedEvents.length > 0 && user.selectedEvents.length <= 3) {
-    throw new ApiError(409, "Events already locked. Contact admin to unlock.");
-  }
-
-  user.selectedEvents = events.map((eventId) => ({
-    eventId,
-  }));
-  await user.save();
-  return res
-    .status(200)
-    .json(new ApiResponse(user.selectedEvents, "Events locked successfully"));
 });

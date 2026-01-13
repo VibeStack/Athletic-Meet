@@ -149,6 +149,7 @@ export default function UserDetailPage() {
           `${BASE_URL}/admin/user/${userId}`,
           { withCredentials: true }
         );
+        console.log(response.data)
 
         // Access control: Admin cannot view Manager details
         if (currentUser?.role === "Admin" && response.data.role === "Manager") {

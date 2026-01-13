@@ -23,6 +23,8 @@ try {
           "password",
           "role",
           "isUserDetailsComplete",
+          "selectedEvents",
+          "isEventsLocked",
         ],
 
         properties: {
@@ -84,7 +86,7 @@ try {
           },
 
           jerseyNumber: {
-            bsonType: ["int", "double"],
+            bsonType: "int",
             minimum: 1,
             maximum: 1000,
           },
@@ -104,18 +106,26 @@ try {
             items: {
               bsonType: "object",
               required: ["eventId", "status"],
+              additionalProperties: false,
               properties: {
                 eventId: {
                   bsonType: "objectId",
                   description: "Referenced Event ID",
                 },
                 status: {
-                  enum: ["Present", "Absent", "Not Marked"],
+                  bsonType: "string",
+                  enum: ["present", "absent", "notMarked"],
                   description: "Attendance status for the event",
                 },
               },
               additionalProperties: false,
             },
+          },
+
+          isEventsLocked: {
+            bsonType: "bool",
+            description:
+              "Whether event selection or attendance is locked for the user",
           },
 
           createdAt: { bsonType: "date" },
@@ -235,7 +245,15 @@ try {
     validator: {
       $jsonSchema: {
         bsonType: "object",
-        required: ["_id", "name", "type", "category", "day", "isActive"],
+        required: [
+          "_id",
+          "name",
+          "type",
+          "category",
+          "day",
+          "isActive",
+          "studentsCount",
+        ],
 
         properties: {
           _id: {
@@ -266,6 +284,26 @@ try {
           isActive: {
             bsonType: "bool",
             description: "Event active status",
+          },
+
+          studentsCount: {
+            bsonType: "object",
+            required: ["present", "absent", "notMarked"],
+            properties: {
+              present: {
+                bsonType: "int",
+                minimum: 0,
+              },
+              absent: {
+                bsonType: "int",
+                minimum: 0,
+              },
+              notMarked: {
+                bsonType: "int",
+                minimum: 0,
+              },
+            },
+            additionalProperties: false,
           },
 
           __v: {

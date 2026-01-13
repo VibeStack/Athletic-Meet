@@ -3,6 +3,7 @@ import { User } from "../models/User.model.js";
 import { ApiError } from "../utils/ApiError.js";
 
 export const checkAuth = async (req, res, next) => {
+  const isProduction = process.env.NODE_ENV === "production";
   try {
     const { sid } = req.signedCookies;
 
@@ -15,9 +16,11 @@ export const checkAuth = async (req, res, next) => {
       res.clearCookie("sid", {
         httpOnly: true,
         signed: true,
-        sameSite: "none",
-        secure: true,
+        sameSite: isProduction ? "none" : "lax",
+        secure: isProduction,
+        path: "/",
       });
+
       throw new ApiError(401, "Session expired or invalid");
     }
 
@@ -32,8 +35,9 @@ export const checkAuth = async (req, res, next) => {
       res.clearCookie("sid", {
         httpOnly: true,
         signed: true,
-        sameSite: "none",
-        secure: true,
+        sameSite: isProduction ? "none" : "lax",
+        secure: isProduction,
+        path: "/",
       });
       throw new ApiError(401, "User not found");
     }

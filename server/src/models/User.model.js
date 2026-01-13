@@ -105,12 +105,16 @@ const userSchema = new mongoose.Schema(
           },
           status: {
             type: String,
-            enum: ["Present", "Absent", "Not Marked"],
-            default: "Not Marked",
+            enum: ["present", "absent", "notMarked"],
+            default: "notMarked",
           },
         },
       ],
       default: [],
+    },
+    isEventsLocked: {
+      type: Boolean,
+      default: false,
     },
   },
   {
