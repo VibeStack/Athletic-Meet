@@ -108,20 +108,36 @@ export default function EventsPage() {
     return {
       trackCount: enrolled.filter((e) => e.type === "Track").length,
       fieldCount: enrolled.filter((e) => e.type === "Field").length,
+      teamCount: enrolled.filter((e) => e.type === "Team").length,
       total: enrolled.length,
     };
   }, [enrolledEvents, allEvents]);
 
   const canEnrollInEvent = (event) => {
     if (isLocked) return false;
-    if (event.type === "Team") return false;
-    if (enrolledEvents.includes(event.id)) return true;
-    if (enrollmentStats.total >= MAX_EVENTS) return false;
+
+    const enrolled = enrolledEvents.includes(event.id);
+
+    // TEAM EVENTS - No one can self-enroll (Admin/Manager enrolls from UserDetailPage)
+    if (event.type === "Team") {
+      return false; // Always false for self-enrollment, but enrolled ones still show
+    }
+
+    // TRACK / FIELD EVENTS - Max 3 self-enrollment
     const { trackCount, fieldCount } = enrollmentStats;
-    if (event.type === "Track")
-      return trackCount < 2 || (trackCount === 1 && fieldCount === 0);
-    if (event.type === "Field")
-      return fieldCount < 2 || (fieldCount === 1 && trackCount === 0);
+    const trackFieldTotal = trackCount + fieldCount;
+
+    if (enrolled) return true;
+    if (trackFieldTotal >= MAX_EVENTS) return false;
+
+    if (event.type === "Track") {
+      return trackCount < 2 && trackFieldTotal < 3;
+    }
+
+    if (event.type === "Field") {
+      return fieldCount < 2 && trackFieldTotal < 3;
+    }
+
     return false;
   };
 
@@ -194,10 +210,13 @@ export default function EventsPage() {
     const isTeam = event.type === "Team";
     const isDisabled = !canEnroll && !isEnrolled;
 
+    // Team events: greyed unless already enrolled (by Admin/Manager from elsewhere)
+    const isTeamAndNotEnrolled = isTeam && !isEnrolled;
+
     return (
       <div
-        className={`group rounded-xl p-3 sm:p-4 transition-all duration-200 relative ${
-          isTeam
+        className={`group rounded-xl p-3 sm:p-4 transition-all duration-200 relative h-full flex flex-col ${
+          isTeamAndNotEnrolled
             ? darkMode
               ? "bg-slate-900/50 ring-1 ring-dashed ring-slate-700 opacity-60 grayscale-30"
               : "bg-slate-100/80 ring-1 ring-dashed ring-slate-300 opacity-70 grayscale-20"
@@ -208,7 +227,7 @@ export default function EventsPage() {
             : darkMode
             ? "bg-slate-900/80 ring-1 ring-white/8 hover:ring-cyan-500/40"
             : "bg-white ring-1 ring-slate-200 hover:ring-slate-400 shadow-sm hover:shadow-md"
-        } ${isDisabled && !isTeam ? "opacity-50" : ""}`}
+        } ${isDisabled && !isTeamAndNotEnrolled ? "opacity-50" : ""}`}
       >
         {/* Enrolled glow - dark mode */}
         {isEnrolled && darkMode && (
@@ -234,10 +253,11 @@ export default function EventsPage() {
           {event.type}
         </span>
 
-        <div className="relative pr-12 sm:pr-14">
-          <div className="flex items-center gap-1.5 mb-0.5">
+        {/* Content area with fixed height for title */}
+        <div className="relative pr-12 sm:pr-14 flex-1">
+          <div className="flex items-start gap-1.5 mb-0.5 min-h-[36px]">
             <h3
-              className={`font-semibold text-[13px] leading-tight ${
+              className={`font-semibold text-[13px] leading-tight line-clamp-2 ${
                 darkMode ? "text-white" : "text-slate-800"
               }`}
             >
@@ -270,15 +290,16 @@ export default function EventsPage() {
               darkMode ? "text-slate-500" : "text-slate-500"
             }`}
           >
-            {event.category} • {event.day}
+            {event.category} •{" "}
+            {event.day === "Both" ? "Day 1 & 2" : event.day}
           </p>
         </div>
 
         <button
           onClick={() => handleEnroll(event.id)}
           disabled={isLocked || isTeam || isDisabled || enrolling === event.id}
-          className={`mt-3 w-full py-2 rounded-lg text-[11px] font-bold transition-all duration-200 ${
-            isTeam
+          className={`mt-3 w-full py-2 rounded-lg text-[11px] font-bold transition-all duration-200 grid place-items-center ${
+            isTeamAndNotEnrolled
               ? darkMode
                 ? "bg-transparent border border-dashed border-slate-600 text-slate-500 cursor-not-allowed"
                 : "bg-transparent border border-dashed border-slate-300 text-slate-400 cursor-not-allowed"
@@ -293,17 +314,25 @@ export default function EventsPage() {
               : darkMode
               ? "bg-slate-800 text-slate-600 cursor-not-allowed"
               : "bg-slate-100 text-slate-400 cursor-not-allowed"
-          } ${isLocked && !isTeam ? "cursor-not-allowed opacity-60" : ""}`}
+          } ${
+            isLocked || (isTeam && isEnrolled)
+              ? "cursor-not-allowed opacity-60"
+              : ""
+          }`}
         >
-          {enrolling === event.id
-            ? "..."
-            : isLocked && isEnrolled
-            ? "Locked"
-            : isTeam
-            ? "Team Only"
-            : isEnrolled
-            ? "Remove"
-            : "Enroll"}
+          {/* Invisible text to maintain consistent width */}
+          <span className="invisible col-start-1 row-start-1">Team Only</span>
+          <span className="col-start-1 row-start-1">
+            {enrolling === event.id
+              ? "..."
+              : (isLocked && isEnrolled) || (isTeam && isEnrolled)
+              ? "Locked"
+              : isTeamAndNotEnrolled
+              ? "Team Only"
+              : isEnrolled
+              ? "Remove"
+              : "Enroll"}
+          </span>
         </button>
       </div>
     );
@@ -439,9 +468,9 @@ export default function EventsPage() {
             </div>
           </div>
 
-          {/* Stats Counter - NEW COLORS: Red, Green, Golden */}
+          {/* Stats Counter - Centered on mobile */}
           <div
-            className={`flex items-stretch gap-1.5 sm:gap-2 p-1.5 rounded-xl ${
+            className={`flex items-stretch justify-center gap-1.5 sm:gap-2 p-1.5 rounded-xl w-full sm:w-auto ${
               darkMode
                 ? "bg-slate-900/60 ring-1 ring-white/6"
                 : "bg-slate-50 ring-1 ring-slate-200"
@@ -449,19 +478,19 @@ export default function EventsPage() {
           >
             {/* TRACK - RED */}
             <div
-              className={`flex flex-col items-center justify-center px-3 sm:px-4 py-2 rounded-lg min-w-[60px] sm:min-w-[70px] ${
+              className={`flex flex-col items-center justify-center px-2.5 sm:px-4 py-2 rounded-lg min-w-[55px] sm:min-w-[65px] ${
                 darkMode ? "bg-red-500/15" : "bg-red-50"
               }`}
             >
               <span
-                className={`text-lg sm:text-xl font-black leading-none ${
+                className={`text-base sm:text-xl font-black leading-none ${
                   darkMode ? "text-red-400" : "text-red-600"
                 }`}
               >
                 {enrollmentStats.trackCount}
               </span>
               <p
-                className={`text-[9px] mt-0.5 font-bold uppercase tracking-wide ${
+                className={`text-[8px] sm:text-[9px] mt-0.5 font-bold uppercase tracking-wide ${
                   darkMode ? "text-red-400/70" : "text-red-600"
                 }`}
               >
@@ -470,40 +499,61 @@ export default function EventsPage() {
             </div>
             {/* FIELD - PARROT GREEN */}
             <div
-              className={`flex flex-col items-center justify-center px-3 sm:px-4 py-2 rounded-lg min-w-[60px] sm:min-w-[70px] ${
+              className={`flex flex-col items-center justify-center px-2.5 sm:px-4 py-2 rounded-lg min-w-[55px] sm:min-w-[65px] ${
                 darkMode ? "bg-emerald-500/15" : "bg-emerald-50"
               }`}
             >
               <span
-                className={`text-lg sm:text-xl font-black leading-none ${
+                className={`text-base sm:text-xl font-black leading-none ${
                   darkMode ? "text-emerald-400" : "text-emerald-600"
                 }`}
               >
                 {enrollmentStats.fieldCount}
               </span>
               <p
-                className={`text-[9px] mt-0.5 font-bold uppercase tracking-wide ${
+                className={`text-[8px] sm:text-[9px] mt-0.5 font-bold uppercase tracking-wide ${
                   darkMode ? "text-emerald-400/70" : "text-emerald-600"
                 }`}
               >
                 Field
               </p>
             </div>
+            {/* TEAM - PINK */}
+            <div
+              className={`flex flex-col items-center justify-center px-2.5 sm:px-4 py-2 rounded-lg min-w-[55px] sm:min-w-[65px] ${
+                darkMode ? "bg-pink-500/15" : "bg-pink-50"
+              }`}
+            >
+              <span
+                className={`text-base sm:text-xl font-black leading-none ${
+                  darkMode ? "text-pink-400" : "text-pink-600"
+                }`}
+              >
+                {enrollmentStats.teamCount}
+              </span>
+              <p
+                className={`text-[8px] sm:text-[9px] mt-0.5 font-bold uppercase tracking-wide ${
+                  darkMode ? "text-pink-400/70" : "text-pink-600"
+                }`}
+              >
+                Team
+              </p>
+            </div>
             {/* TOTAL - GOLDEN YELLOW */}
             <div
-              className={`flex flex-col items-center justify-center px-3 sm:px-4 py-2 rounded-lg min-w-[60px] sm:min-w-[70px] ${
+              className={`flex flex-col items-center justify-center px-2.5 sm:px-4 py-2 rounded-lg min-w-[55px] sm:min-w-[65px] ${
                 darkMode ? "bg-amber-500/15" : "bg-amber-50"
               }`}
             >
               <span
-                className={`text-lg sm:text-xl font-black leading-none ${
+                className={`text-base sm:text-xl font-black leading-none ${
                   darkMode ? "text-amber-400" : "text-amber-600"
                 }`}
               >
-                {enrollmentStats.total}/{MAX_EVENTS}
+                {enrollmentStats.total}/5
               </span>
               <p
-                className={`text-[9px] mt-0.5 font-bold uppercase tracking-wide ${
+                className={`text-[8px] sm:text-[9px] mt-0.5 font-bold uppercase tracking-wide ${
                   darkMode ? "text-amber-400/70" : "text-amber-600"
                 }`}
               >
@@ -646,12 +696,15 @@ export default function EventsPage() {
             </div>
           </div>
 
-          <div className="p-3 sm:p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
-            {allEvents
-              .filter((e) => enrolledEvents.includes(e.id))
-              .map((event) => (
-                <EventCard key={event.id} event={event} />
-              ))}
+          {/* Grid with 5 equal columns on desktop, centered */}
+          <div className="p-3 sm:p-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 max-w-5xl mx-auto">
+              {allEvents
+                .filter((e) => enrolledEvents.includes(e.id))
+                .map((event) => (
+                  <EventCard key={event.id} event={event} />
+                ))}
+            </div>
           </div>
         </div>
       )}

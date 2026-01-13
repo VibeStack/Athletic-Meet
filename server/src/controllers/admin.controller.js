@@ -309,6 +309,103 @@ export const unlockUserEvents = asyncHandler(async (req, res) => {
   }
 });
 
+export const updateUserEvents = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+  const { updatedEventsIdsArray } = req.body;
+
+  if (!Array.isArray(updatedEventsIdsArray)) {
+    throw new ApiError(400, "updatedEventsIdsArray must be an array");
+  }
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const user = await User.findById(userId).session(session);
+
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+
+    const existingEvents = user.selectedEvents;
+
+    const existingEventIds = existingEvents.map((e) => e.eventId.toString());
+
+    const updatedEventIds = updatedEventsIdsArray.map((id) => id.toString());
+
+    const removedEventIds = existingEventIds.filter(
+      (id) => !updatedEventIds.includes(id)
+    );
+
+    const addedEventIds = updatedEventIds.filter(
+      (id) => !existingEventIds.includes(id)
+    );
+
+    if (removedEventIds.length > 0) {
+      const removedEvents = existingEvents.filter((e) =>
+        removedEventIds.includes(e.eventId.toString())
+      );
+
+      const bulkEventUpdates = removedEvents.map((ev) => ({
+        updateOne: {
+          filter: { _id: ev.eventId },
+          update: {
+            $inc: {
+              [`studentsCount.${ev.status}`]: -1,
+            },
+          },
+        },
+      }));
+
+      await Event.bulkWrite(bulkEventUpdates, { session });
+
+      user.selectedEvents = user.selectedEvents.filter(
+        (e) => !removedEventIds.includes(e.eventId.toString())
+      );
+    }
+
+    if (addedEventIds.length > 0) {
+      const newUserEvents = addedEventIds.map((eventId) => ({
+        eventId,
+        status: "notMarked",
+      }));
+
+      user.selectedEvents.push(...newUserEvents);
+
+      const bulkEventIncrements = addedEventIds.map((eventId) => ({
+        updateOne: {
+          filter: { _id: eventId },
+          update: {
+            $inc: { "studentsCount.notMarked": 1 },
+          },
+        },
+      }));
+
+      await Event.bulkWrite(bulkEventIncrements, { session });
+    }
+
+    await user.save({ session });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        {
+          addedEventIds,
+          removedEventIds,
+        },
+        "User events updated successfully"
+      )
+    );
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
+  }
+});
+
 export const markAttendance = asyncHandler(async (req, res) => {
   const { jerseyNumber, eventId, status } = req.body;
 

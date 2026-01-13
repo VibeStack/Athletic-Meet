@@ -1,10 +1,27 @@
-import React from "react";
+import axios from "axios";
+import React, { useState } from "react";
 
 /* -------------------- SVG Icons -------------------- */
 const ICONS = {
   trophy: (
     <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
       <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z" />
+    </svg>
+  ),
+  track: (
+    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
+      <path d="M13.5 5.5a2 2 0 100-4 2 2 0 000 4zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3C14.8 12 16.8 13 19 13v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1L6 8.3V13h2V9.6l1.8-.7" />
+    </svg>
+  ),
+  field: (
+    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
+      <circle cx="12" cy="5" r="3" />
+      <path d="M12 10c-4 0-7 2-7 5v5h14v-5c0-3-3-5-7-5z" />
+    </svg>
+  ),
+  team: (
+    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
+      <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
     </svg>
   ),
   plus: (
@@ -17,168 +34,572 @@ const ICONS = {
 export default function UserDetailEvents({
   userData,
   darkMode,
-  openAddEventModal,
   markAttendance,
   getStatusDisplay,
 }) {
+  const BASE_URL = import.meta.env.VITE_API_URL;
+  const [allEvents, setAllEvents] = useState([]);
+  const [updatedEventsArray, setupdatedEventsArray] = useState(
+    userData.selectedEvents.map(({ eventId, eventType }) => {
+      return { eventId, eventType };
+    })
+  );
+  const [showAddEventModal, setShowAddEventModal] = useState(false);
+
+  const openAddEventModal = async () => {
+    try {
+      const { data: response } = await axios.get(`${BASE_URL}/user/events`, {
+        withCredentials: true,
+      });
+      const gender = userData.gender === "Male" ? "Boys" : "Girls";
+      setAllEvents(response.data.filter((e) => e.category === gender));
+      setShowAddEventModal(true);
+    } catch (err) {
+      console.error("Failed to fetch events", err);
+    }
+  };
+
+  const updateUserEvents = async () => {
+    try {
+      if (!updatedEventsArray || updatedEventsArray.length === 0) {
+        console.warn("No events to update");
+        return;
+      }
+
+      const updatedEventsIdsArray = updatedEventsArray.map(
+        ({ eventId }) => eventId
+      );
+
+      console.log("Updating events:", updatedEventsIdsArray);
+
+      const { data: response } = await axios.post(
+        `${BASE_URL}/admin/users/${userData.id}/updateEvents`,
+        { updatedEventsIdsArray },
+        { withCredentials: true }
+      );
+
+      console.log("Update success:", response.data);
+    } catch (error) {
+      console.error(
+        "Failed to update user events",
+        error?.response?.data || error.message
+      );
+    }
+    setShowAddEventModal(false)
+  };
+
   return (
-    <section
-      className={`lg:col-span-7 rounded-2xl overflow-hidden ${
-        darkMode
-          ? "bg-slate-900/80 border border-white/10"
-          : "bg-white border border-slate-200 shadow-lg"
-      }`}
-    >
-      <div
-        className={`px-4 py-3 flex items-center justify-between border-b ${
-          darkMode ? "border-white/5" : "border-slate-100"
+    <>
+      <section
+        className={`lg:col-span-7 rounded-2xl overflow-hidden ${
+          darkMode
+            ? "bg-slate-900/80 border border-white/10"
+            : "bg-white border border-slate-200 shadow-lg"
         }`}
       >
-        <div className="flex items-center gap-2.5">
-          <div
-            className={`w-8 h-8 rounded-lg flex items-center justify-center text-white ${
-              darkMode
-                ? "bg-linear-to-br from-orange-500 to-amber-600"
-                : "bg-slate-800"
-            }`}
-          >
-            {ICONS.trophy}
-          </div>
-          <h2
-            className={`font-bold text-sm ${
-              darkMode ? "text-white" : "text-slate-800"
-            }`}
-          >
-            Registered Events
-          </h2>
-          <span
-            className={`text-xs px-2 py-0.5 rounded-md font-bold ${
-              darkMode
-                ? "bg-slate-700 text-slate-300"
-                : "bg-slate-100 text-slate-600"
-            }`}
-          >
-            {userData.selectedEvents?.length || 0}
-          </span>
-        </div>
-
-        <button
-          onClick={openAddEventModal}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-            darkMode
-              ? "bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30"
-              : "bg-slate-800 text-white hover:bg-slate-700"
+        <div
+          className={`px-4 py-3 flex items-center justify-between border-b ${
+            darkMode ? "border-white/5" : "border-slate-100"
           }`}
         >
-          {ICONS.plus}
-          Add Event
-        </button>
-      </div>
-
-      <div className="p-3">
-        {userData.selectedEvents?.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {userData.selectedEvents.map(
-              ({ eventId, eventName, eventType, attendanceStatus }) => {
-                const status = getStatusDisplay(attendanceStatus);
-                return (
-                  <div
-                    key={eventId}
-                    className={`rounded-xl p-4 transition-all ${
-                      darkMode
-                        ? "bg-slate-800/70 border border-white/5 hover:border-white/10"
-                        : "bg-slate-50 border border-slate-100 hover:border-slate-200"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <h3
-                        className={`font-bold text-sm leading-tight ${
-                          darkMode ? "text-white" : "text-slate-900"
-                        }`}
-                      >
-                        {eventName}
-                      </h3>
-                    </div>
-
-                    <span
-                      className={`inline-block text-[10px] px-2 py-0.5 rounded-md font-bold uppercase ${
-                        eventType === "Track"
-                          ? darkMode
-                            ? "bg-orange-500/25 text-orange-400"
-                            : "bg-orange-100 text-orange-600"
-                          : eventType === "Field"
-                          ? darkMode
-                            ? "bg-emerald-500/25 text-emerald-400"
-                            : "bg-emerald-100 text-emerald-600"
-                          : darkMode
-                          ? "bg-blue-500/25 text-blue-400"
-                          : "bg-blue-100 text-blue-600"
-                      }`}
-                    >
-                      {eventType}
-                    </span>
-
-                    <div className="flex gap-2 mt-3">
-                      <button
-                        onClick={() => markAttendance(eventId, "present")}
-                        className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
-                          attendanceStatus === "present"
-                            ? "bg-emerald-500 text-white"
-                            : darkMode
-                            ? "bg-emerald-900/50 text-emerald-400 hover:bg-emerald-900/70"
-                            : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                        }`}
-                      >
-                        Present
-                      </button>
-                      <button
-                        onClick={() => markAttendance(eventId, "absent")}
-                        className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
-                          attendanceStatus === "absent"
-                            ? "bg-red-500 text-white"
-                            : darkMode
-                            ? "bg-red-900/50 text-red-400 hover:bg-red-900/70"
-                            : "bg-red-50 text-red-700 hover:bg-red-100"
-                        }`}
-                      >
-                        Absent
-                      </button>
-                      <button
-                        onClick={() => markAttendance(eventId, "notMarked")}
-                        className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
-                          attendanceStatus === "notMarked"
-                            ? "bg-amber-500 text-white"
-                            : darkMode
-                            ? "bg-amber-900/50 text-amber-400 hover:bg-amber-900/70"
-                            : "bg-amber-50 text-amber-700 hover:bg-amber-100"
-                        }`}
-                      >
-                        Not Marked
-                      </button>
-                    </div>
-                  </div>
-                );
-              }
-            )}
-          </div>
-        ) : (
-          <div
-            className={`text-center py-16 ${
-              darkMode ? "text-slate-500" : "text-slate-400"
-            }`}
-          >
+          <div className="flex items-center gap-2.5">
             <div
-              className={`w-12 h-12 mx-auto mb-3 rounded-xl flex items-center justify-center ${
-                darkMode ? "bg-slate-800" : "bg-slate-100"
+              className={`w-8 h-8 rounded-lg flex items-center justify-center text-white ${
+                darkMode
+                  ? "bg-linear-to-br from-orange-500 to-amber-600"
+                  : "bg-slate-800"
               }`}
             >
               {ICONS.trophy}
             </div>
-            <p className="text-sm font-semibold">No events registered</p>
-            <p className="text-xs mt-1">Click "Add Event" to register.</p>
+            <h2
+              className={`font-bold text-sm ${
+                darkMode ? "text-white" : "text-slate-800"
+              }`}
+            >
+              Registered Events
+            </h2>
+            <span
+              className={`text-xs px-2 py-0.5 rounded-md font-bold ${
+                darkMode
+                  ? "bg-slate-700 text-slate-300"
+                  : "bg-slate-100 text-slate-600"
+              }`}
+            >
+              {userData.selectedEvents?.length || 0}
+            </span>
           </div>
-        )}
-      </div>
-    </section>
+
+          <button
+            onClick={openAddEventModal}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              darkMode
+                ? "bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30"
+                : "bg-slate-800 text-white hover:bg-slate-700"
+            }`}
+          >
+            {ICONS.plus}
+            Add Event
+          </button>
+        </div>
+
+        <div className="p-3">
+          {userData.selectedEvents?.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {userData.selectedEvents.map(
+                ({ eventId, eventName, eventType, attendanceStatus }) => {
+                  getStatusDisplay(attendanceStatus);
+                  return (
+                    <div
+                      key={eventId}
+                      className={`rounded-xl p-4 transition-all ${
+                        darkMode
+                          ? "bg-slate-800/70 border border-white/5 hover:border-white/10"
+                          : "bg-slate-50 border border-slate-100 hover:border-slate-200"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <h3
+                          className={`font-bold text-sm leading-tight ${
+                            darkMode ? "text-white" : "text-slate-900"
+                          }`}
+                        >
+                          {eventName}
+                        </h3>
+                      </div>
+
+                      <span
+                        className={`inline-block text-[10px] px-2 py-0.5 rounded-md font-bold uppercase ${
+                          eventType === "Track"
+                            ? darkMode
+                              ? "bg-orange-500/25 text-orange-400"
+                              : "bg-orange-100 text-orange-600"
+                            : eventType === "Field"
+                            ? darkMode
+                              ? "bg-emerald-500/25 text-emerald-400"
+                              : "bg-emerald-100 text-emerald-600"
+                            : darkMode
+                            ? "bg-blue-500/25 text-blue-400"
+                            : "bg-blue-100 text-blue-600"
+                        }`}
+                      >
+                        {eventType}
+                      </span>
+
+                      <div className="flex gap-2 mt-3">
+                        <button
+                          onClick={() => markAttendance(eventId, "present")}
+                          className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
+                            attendanceStatus === "present"
+                              ? "bg-emerald-500 text-white"
+                              : darkMode
+                              ? "bg-emerald-900/50 text-emerald-400 hover:bg-emerald-900/70"
+                              : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                          }`}
+                        >
+                          Present
+                        </button>
+                        <button
+                          onClick={() => markAttendance(eventId, "absent")}
+                          className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
+                            attendanceStatus === "absent"
+                              ? "bg-red-500 text-white"
+                              : darkMode
+                              ? "bg-red-900/50 text-red-400 hover:bg-red-900/70"
+                              : "bg-red-50 text-red-700 hover:bg-red-100"
+                          }`}
+                        >
+                          Absent
+                        </button>
+                        <button
+                          onClick={() => markAttendance(eventId, "notMarked")}
+                          className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
+                            attendanceStatus === "notMarked"
+                              ? "bg-amber-500 text-white"
+                              : darkMode
+                              ? "bg-amber-900/50 text-amber-400 hover:bg-amber-900/70"
+                              : "bg-amber-50 text-amber-700 hover:bg-amber-100"
+                          }`}
+                        >
+                          Not Marked
+                        </button>
+                      </div>
+                    </div>
+                  );
+                }
+              )}
+            </div>
+          ) : (
+            <div
+              className={`text-center py-16 ${
+                darkMode ? "text-slate-500" : "text-slate-400"
+              }`}
+            >
+              <div
+                className={`w-12 h-12 mx-auto mb-3 rounded-xl flex items-center justify-center ${
+                  darkMode ? "bg-slate-800" : "bg-slate-100"
+                }`}
+              >
+                {ICONS.trophy}
+              </div>
+              <p className="text-sm font-semibold">No events registered</p>
+              <p className="text-xs mt-1">Click "Add Event" to register.</p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ================= ADD EVENT MODAL ================= */}
+      {showAddEventModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowAddEventModal(false)}
+          />
+
+          <div
+            className={`relative w-full max-w-3xl max-h-[80vh] overflow-hidden rounded-2xl ${
+              darkMode
+                ? "bg-slate-900 border border-white/10"
+                : "bg-white border border-slate-200"
+            }`}
+          >
+            <div
+              className={`px-5 py-4 flex items-center justify-between border-b ${
+                darkMode ? "border-white/10" : "border-slate-200"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center text-white ${
+                    darkMode
+                      ? "bg-linear-to-br from-cyan-500 to-blue-600"
+                      : "bg-slate-800"
+                  }`}
+                >
+                  {ICONS.trophy}
+                </div>
+                <div>
+                  <h2
+                    className={`text-lg font-bold ${
+                      darkMode ? "text-white" : "text-slate-800"
+                    }`}
+                  >
+                    Add Event for {userData.username}
+                  </h2>
+                  <p
+                    className={`text-xs ${
+                      darkMode ? "text-slate-400" : "text-slate-500"
+                    }`}
+                  >
+                    Select events to register
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAddEventModal(false)}
+                className={`w-9 h-9 rounded-lg flex items-center justify-center ${
+                  darkMode
+                    ? "hover:bg-white/10 text-slate-400"
+                    : "hover:bg-slate-100 text-slate-500"
+                }`}
+              >
+                {ICONS.close}
+              </button>
+            </div>
+
+            <div className="p-5 overflow-y-auto max-h-[calc(80vh-130px)]">
+              {/* Track Events */}
+              <div className="mb-5">
+                <h3
+                  className={`text-xs font-bold mb-2 flex items-center gap-2 ${
+                    darkMode ? "text-orange-400" : "text-orange-600"
+                  }`}
+                >
+                  <span
+                    className={`w-5 h-5 rounded flex items-center justify-center ${
+                      darkMode ? "bg-orange-500/20" : "bg-orange-100"
+                    }`}
+                  >
+                    {ICONS.track}
+                  </span>
+                  Track Events
+                </h3>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                  {allEvents
+                    .filter((e) => e.type === "Track")
+                    .map((event) => {
+                      const trackCount = updatedEventsArray.filter(
+                        (e) => e.eventType === "Track"
+                      ).length;
+
+                      const fieldCount = updatedEventsArray.filter(
+                        (e) => e.eventType === "Field"
+                      ).length;
+
+                      const tfTotal = trackCount + fieldCount;
+
+                      const isSelected = updatedEventsArray.some(
+                        (e) => e.eventId === event.id
+                      );
+
+                      const isDisabled =
+                        !isSelected && (trackCount >= 2 || tfTotal >= 3);
+
+                      return (
+                        <div
+                          key={event.id}
+                          onClick={() => {
+                            if (isDisabled) return;
+
+                            setupdatedEventsArray((prev) =>
+                              isSelected
+                                ? prev.filter((e) => e.eventId !== event.id)
+                                : [
+                                    ...prev,
+                                    { eventId: event.id, eventType: "Track" },
+                                  ]
+                            );
+                          }}
+                          className={`relative rounded-lg p-2.5 transition-all cursor-pointer ${
+                            isSelected
+                              ? darkMode
+                                ? "bg-emerald-900/50 ring-2 ring-emerald-500"
+                                : "bg-emerald-50 ring-2 ring-emerald-400"
+                              : darkMode
+                              ? "bg-slate-800/80 ring-1 ring-white/10 hover:ring-white/20"
+                              : "bg-slate-50 ring-1 ring-slate-200 hover:ring-slate-300"
+                          } ${
+                            isDisabled ? "opacity-40 pointer-events-none" : ""
+                          }`}
+                        >
+                          <p
+                            className={`font-semibold text-xs ${
+                              darkMode ? "text-white" : "text-slate-800"
+                            }`}
+                          >
+                            {event.name}
+                          </p>
+
+                          <p
+                            className={`text-[9px] ${
+                              darkMode ? "text-slate-500" : "text-slate-500"
+                            }`}
+                          >
+                            {event.day}
+                          </p>
+
+                          {isSelected && (
+                            <span className="absolute bottom-2 right-2 text-[8px] font-bold text-emerald-500">
+                              {ICONS.check} Registered
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+
+              {/* Field Events */}
+              <div className="mb-5">
+                <h3
+                  className={`text-xs font-bold mb-2 flex items-center gap-2 ${
+                    darkMode ? "text-emerald-400" : "text-emerald-600"
+                  }`}
+                >
+                  <span
+                    className={`w-5 h-5 rounded flex items-center justify-center ${
+                      darkMode ? "bg-emerald-500/20" : "bg-emerald-100"
+                    }`}
+                  >
+                    {ICONS.field}
+                  </span>
+                  Field Events
+                </h3>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                  {allEvents
+                    .filter((e) => e.type === "Field")
+                    .map((event) => {
+                      const trackCount = updatedEventsArray.filter(
+                        (e) => e.eventType === "Track"
+                      ).length;
+
+                      const fieldCount = updatedEventsArray.filter(
+                        (e) => e.eventType === "Field"
+                      ).length;
+
+                      const tfTotal = trackCount + fieldCount;
+
+                      const isSelected = updatedEventsArray.some(
+                        (e) => e.eventId === event.id
+                      );
+
+                      const isDisabled =
+                        !isSelected && (fieldCount >= 2 || tfTotal >= 3);
+
+                      return (
+                        <div
+                          key={event.id}
+                          onClick={() => {
+                            if (isDisabled) return;
+
+                            setupdatedEventsArray((prev) =>
+                              isSelected
+                                ? prev.filter((e) => e.eventId !== event.id)
+                                : [
+                                    ...prev,
+                                    { eventId: event.id, eventType: "Field" },
+                                  ]
+                            );
+                          }}
+                          className={`relative rounded-lg p-2.5 transition-all cursor-pointer${
+                            isSelected
+                              ? darkMode
+                                ? "bg-emerald-900/50 ring-2 ring-emerald-500"
+                                : "bg-emerald-50 ring-2 ring-emerald-400"
+                              : darkMode
+                              ? "bg-slate-800/80 ring-1 ring-white/10 hover:ring-white/20"
+                              : "bg-slate-50 ring-1 ring-slate-200 hover:ring-slate-300"
+                          } ${
+                            isDisabled ? "opacity-40 pointer-events-none" : ""
+                          }`}
+                        >
+                          <p
+                            className={`font-semibold text-xs ${
+                              darkMode ? "text-white" : "text-slate-800"
+                            }`}
+                          >
+                            {event.name}
+                          </p>
+
+                          <p className="text-[9px] text-slate-500">
+                            {event.day}
+                          </p>
+
+                          {isSelected && (
+                            <span className="absolute bottom-2 right-2 text-[8px] font-bold text-emerald-500">
+                              {ICONS.check} Registered
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+
+              {/* Team Events */}
+              <div>
+                <h3
+                  className={`text-xs font-bold mb-2 flex items-center gap-2 ${
+                    darkMode ? "text-blue-400" : "text-blue-600"
+                  }`}
+                >
+                  <span
+                    className={`w-5 h-5 rounded flex items-center justify-center ${
+                      darkMode ? "bg-blue-500/20" : "bg-blue-100"
+                    }`}
+                  >
+                    {ICONS.team}
+                  </span>
+                  Team Events
+                </h3>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                  {allEvents
+                    .filter((e) => e.type === "Team")
+                    .map((event) => {
+                      const teamCount = updatedEventsArray.filter(
+                        (e) => e.eventType === "Team"
+                      ).length;
+
+                      const isSelected = updatedEventsArray.some(
+                        (e) => e.eventId === event.id
+                      );
+
+                      const isDisabled = !isSelected && teamCount >= 2;
+
+                      return (
+                        <div
+                          key={event.id}
+                          onClick={() => {
+                            if (isDisabled) return;
+
+                            setupdatedEventsArray((prev) =>
+                              isSelected
+                                ? prev.filter((e) => e.eventId !== event.id)
+                                : [
+                                    ...prev,
+                                    { eventId: event.id, eventType: "Team" },
+                                  ]
+                            );
+                          }}
+                          className={`relative rounded-lg p-2.5 transition-all cursor-pointer ${
+                            isSelected
+                              ? darkMode
+                                ? "bg-emerald-900/50 ring-2 ring-emerald-500"
+                                : "bg-emerald-50 ring-2 ring-emerald-400"
+                              : darkMode
+                              ? "bg-slate-800/80 ring-1 ring-white/10 hover:ring-white/20"
+                              : "bg-slate-50 ring-1 ring-slate-200 hover:ring-slate-300"
+                          }${
+                            isDisabled ? "opacity-40 pointer-events-none" : ""
+                          }`}
+                        >
+                          <p
+                            className={`font-semibold text-xs ${
+                              darkMode ? "text-white" : "text-slate-800"
+                            }`}
+                          >
+                            {event.name}
+                          </p>
+
+                          <p className="text-[9px] text-slate-500">
+                            {event.day}
+                          </p>
+
+                          {isSelected && (
+                            <span className="absolute bottom-2 right-2 text-[8px] font-bold text-emerald-500">
+                              {ICONS.check} Registered
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            </div>
+
+            <div
+              className={`py-2 px-5 flex gap-2 justify-end border-t ${
+                darkMode ? "border-white/10" : "border-slate-200"
+              }`}
+            >
+              <button
+                onClick={updateUserEvents}
+                className={`px-4 py-2 rounded-lg text-sm font-bold ${
+                  darkMode
+                    ? "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                }`}
+              >
+                Update
+              </button>
+              <button
+                onClick={() => setShowAddEventModal(false)}
+                className={`px-4 py-2 rounded-lg text-sm font-bold ${
+                  darkMode
+                    ? "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                }`}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
