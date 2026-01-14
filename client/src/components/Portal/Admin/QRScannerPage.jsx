@@ -505,7 +505,7 @@ export default function QRScannerPage() {
 
         {/* Scanner Area */}
         <div
-          className={`relative aspect-4/3 sm:aspect-video max-h-[500px] w-full ${
+          className={`relative aspect-square sm:aspect-video sm:max-h-[500px] w-full ${
             darkMode ? "bg-slate-950" : "bg-slate-100"
           }`}
         >
