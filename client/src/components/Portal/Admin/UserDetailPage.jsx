@@ -124,29 +124,30 @@ export default function UserDetailPage() {
   // Get current logged-in user
   const { user: currentUser } = useOutletContext();
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const { data: response } = await axios.get(
-          `${BASE_URL}/admin/user/${userId}`,
-          { withCredentials: true }
-        );
+  const fetchUser = async () => {
+    try {
+      const { data: response } = await axios.get(
+        `${BASE_URL}/admin/user/${userId}`,
+        { withCredentials: true }
+      );
 
-        // Access control: Admin cannot view Manager details
-        if (currentUser?.role === "Admin" && response.data.role === "Manager") {
-          setAccessDenied(true);
-          setLoading(false);
-          return;
-        }
-
-        setUserData(response.data);
-        setIsUserEventsLocked(response.data.isEventsLocked);
-      } catch (err) {
-        console.error("Failed to fetch user", err);
-      } finally {
+      // Access control: Admin cannot view Manager details
+      if (currentUser?.role === "Admin" && response.data.role === "Manager") {
+        setAccessDenied(true);
         setLoading(false);
+        return;
       }
-    };
+
+      setUserData(response.data);
+      setIsUserEventsLocked(response.data.isEventsLocked);
+    } catch (err) {
+      console.error("Failed to fetch user", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchUser();
   }, [userId, BASE_URL, currentUser]);
 
@@ -255,6 +256,7 @@ export default function UserDetailPage() {
           lockUserEvents={lockUserEvents}
           unlockUserEvents={unlockUserEvents}
           setShowDeletePopup={setShowDeletePopup}
+          refetchUser={fetchUser}
         />
 
         {/* ================= MAIN CONTENT - 60/40 SPLIT ================= */}
@@ -265,6 +267,7 @@ export default function UserDetailPage() {
             darkMode={darkMode}
             markAttendance={markAttendance}
             getStatusDisplay={getStatusDisplay}
+            refetchUser={fetchUser}
           />
 
           {/* RIGHT: USER INFO - Takes 2/5 width */}

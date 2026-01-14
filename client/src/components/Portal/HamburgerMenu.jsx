@@ -110,7 +110,7 @@ const menuSections = [
     title: "Events",
     items: [
       {
-        label: "Events",
+        label: "Your Events",
         path: "/portal/events",
         roles: ["Student", "Admin", "Manager"],
         gradient: "from-violet-500 to-purple-600",

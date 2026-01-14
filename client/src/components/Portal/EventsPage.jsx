@@ -48,7 +48,7 @@ const SECTION_ICONS = {
 
 export default function EventsPage() {
   const { darkMode } = useTheme();
-  const { user } = useOutletContext();
+  const { user, refetchUserProfile } = useOutletContext();
   const [enrolledEvents, setEnrolledEvents] = useState([]);
   const [isLocked, setIsLocked] = useState(false);
   const [locking, setLocking] = useState(false);
@@ -56,6 +56,11 @@ export default function EventsPage() {
   const [allEvents, setAllEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const BASE_URL = import.meta.env.VITE_API_URL;
+
+  // Refetch user profile on mount to get latest data
+  useEffect(() => {
+    if (refetchUserProfile) refetchUserProfile();
+  }, []);
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -255,7 +260,7 @@ export default function EventsPage() {
 
         {/* Content area with fixed height for title */}
         <div className="relative pr-12 sm:pr-14 flex-1">
-          <div className="flex items-start gap-1.5 mb-0.5 min-h-[36px]">
+          <div className="flex items-start gap-1.5 mb-0.5 min-h-9">
             <h3
               className={`font-semibold text-[13px] leading-tight line-clamp-2 ${
                 darkMode ? "text-white" : "text-slate-800"
@@ -290,8 +295,7 @@ export default function EventsPage() {
               darkMode ? "text-slate-500" : "text-slate-500"
             }`}
           >
-            {event.category} •{" "}
-            {event.day === "Both" ? "Day 1 & 2" : event.day}
+            {event.category} • {event.day === "Both" ? "Day 1 & 2" : event.day}
           </p>
         </div>
 
@@ -748,21 +752,11 @@ export default function EventsPage() {
             <button
               onClick={handleLockEvents}
               disabled={locking}
-              className={`
-    relative flex items-center justify-center gap-2
-    px-5 py-2.5
-    rounded-lg
-    font-bold text-xs
-    w-full sm:w-auto sm:min-w-[140px]
-    h-10
-    transition-all
-    ${
-      darkMode
-        ? "bg-linear-to-r from-amber-500 to-orange-600 text-white hover:brightness-110"
-        : "bg-linear-to-r from-amber-500 to-orange-500 text-white hover:brightness-110"
-    }
-    disabled:opacity-60 disabled:cursor-not-allowed
-  `}
+              className={`relative flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-bold text-xs w-full sm:w-auto sm:min-w-[140px] h-10 transition-all ${
+                darkMode
+                  ? "bg-linear-to-r from-amber-500 to-orange-600 text-white hover:brightness-110"
+                  : "bg-linear-to-r from-amber-500 to-orange-500 text-white hover:brightness-110"
+              } disabled:opacity-60 disabled:cursor-not-allowed`}
             >
               {/* ICON / SPINNER SLOT */}
               <span className="w-4 h-4 flex items-center justify-center">
@@ -825,21 +819,11 @@ export default function EventsPage() {
               <button
                 onClick={handleUnlockEvents}
                 disabled={locking}
-                className={`
-    grid place-items-center
-    px-5 py-2.5
-    rounded-lg
-    font-bold text-xs
-    w-full sm:w-auto
-    h-10
-    transition-all
-    ${
-      darkMode
-        ? "bg-linear-to-r from-orange-500 to-red-600 text-white hover:brightness-110"
-        : "bg-linear-to-r from-orange-500 to-red-500 text-white hover:brightness-110"
-    }
-    disabled:opacity-60 disabled:cursor-not-allowed
-  `}
+                className={` grid place-items-center px-5 py-2.5 rounded-lg font-bold text-xs w-full sm:w-auto h-10 transition-all ${
+                  darkMode
+                    ? "bg-linear-to-r from-orange-500 to-red-600 text-white hover:brightness-110"
+                    : "bg-linear-to-r from-orange-500 to-red-500 text-white hover:brightness-110"
+                } disabled:opacity-60 disabled:cursor-not-allowed`}
               >
                 {/* WIDTH DEFINER (VISIBLE TO LAYOUT, NOT USER) */}
                 <span className="invisible flex items-center gap-2 col-start-1 row-start-1">

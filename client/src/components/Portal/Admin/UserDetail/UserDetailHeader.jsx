@@ -1,4 +1,6 @@
-import React from "react";
+import axios from "axios";
+import React, { useState } from "react";
+import { useOutletContext } from "react-router-dom";
 
 /* -------------------- Color Theme Functions -------------------- */
 const getJerseyBadgeTheme = (role, gender) => {
@@ -67,6 +69,16 @@ const ICONS = {
       <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zM9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z" />
     </svg>
   ),
+  promoteAdmin: (
+    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
+      <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 2.18l7 3.12v5.7c0 4.67-3.13 8.97-7 10.17-3.87-1.2-7-5.5-7-10.17V6.3l7-3.12zm-1 5.82v3H8v2h3v3h2v-3h3v-2h-3V9h-2z" />
+    </svg>
+  ),
+  demoteAdmin: (
+    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
+      <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 2.18l7 3.12v5.7c0 4.67-3.13 8.97-7 10.17-3.87-1.2-7-5.5-7-10.17V6.3l7-3.12zM8 11v2h8v-2H8z" />
+    </svg>
+  ),
 };
 
 export default function UserDetailHeader({
@@ -76,10 +88,44 @@ export default function UserDetailHeader({
   lockUserEvents,
   unlockUserEvents,
   setShowDeletePopup,
+  refetchUser,
 }) {
+  const { user } = useOutletContext();
+  const BASE_URL = import.meta.env.VITE_API_URL;
   const jerseyTheme = getJerseyBadgeTheme(userData.role, userData.gender);
   const roleTheme = getRoleTheme(userData.role, userData.gender, darkMode);
   const lockButtonTheme = getLockButtonTheme(userData.role, userData.gender);
+  const [isUserHavingAdminAccess, setIsUserHavingAdminAccess] = useState(
+    userData.role === "Manager" || userData.role === "Admin" ? true : false
+  );
+
+  const makeAsAdmin = async () => {
+    try {
+      await axios.post(
+        `${BASE_URL}/admin/user/${userData.id}/makeAsAdmin`,
+        null,
+        { withCredentials: true }
+      );
+      setIsUserHavingAdminAccess(true);
+      if (refetchUser) refetchUser();
+    } catch (error) {
+      console.error(error.response?.data?.message || "Something went wrong");
+    }
+  };
+
+  const removeAsAdmin = async () => {
+    try {
+      await axios.post(
+        `${BASE_URL}/admin/user/${userData.id}/removeAsAdmin`,
+        null,
+        { withCredentials: true }
+      );
+      setIsUserHavingAdminAccess(false);
+      if (refetchUser) refetchUser();
+    } catch (error) {
+      console.error(error.response?.data?.message || "Something went wrong");
+    }
+  };
 
   return (
     <section
@@ -165,6 +211,28 @@ export default function UserDetailHeader({
             {ICONS.trash}
             <span>Delete</span>
           </button>
+
+          {user.role === "Manager" && userData.role !== "Manager" && (
+            <>
+              {!isUserHavingAdminAccess ? (
+                <button
+                  onClick={makeAsAdmin}
+                  className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 ${lockButtonTheme}`}
+                >
+                  {ICONS.promoteAdmin}
+                  <span>Make As Admin</span>
+                </button>
+              ) : (
+                <button
+                  onClick={removeAsAdmin}
+                  className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 ${lockButtonTheme}`}
+                >
+                  {ICONS.demoteAdmin}
+                  <span>Remove As Admin</span>
+                </button>
+              )}
+            </>
+          )}
         </div>
       </div>
     </section>

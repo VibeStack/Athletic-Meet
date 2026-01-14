@@ -71,26 +71,26 @@ export default function PortalLayout() {
 
   const BASE_URL = import.meta.env.VITE_API_URL;
 
-  useEffect(() => {
-    const getUserDetails = async () => {
-      try {
-        const { data: response } = await axios.get(`${BASE_URL}/user/profile`, {
-          withCredentials: true,
-        });
+  const getUserDetails = async () => {
+    try {
+      const { data: response } = await axios.get(`${BASE_URL}/user/profile`, {
+        withCredentials: true,
+      });
 
-        if (response?.success) {
-          setUserDetail(response.data);
-        } else {
-          throw new Error(response?.message || "Failed to fetch user");
-        }
-      } catch (err) {
-        console.error("Profile fetch error:", err);
-        setError("Unable to load user profile");
-      } finally {
-        setLoading(false);
+      if (response?.success) {
+        setUserDetail(response.data);
+      } else {
+        throw new Error(response?.message || "Failed to fetch user");
       }
-    };
+    } catch (err) {
+      console.error("Profile fetch error:", err);
+      setError("Unable to load user profile");
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     getUserDetails();
   }, []);
 
@@ -295,7 +295,9 @@ export default function PortalLayout() {
 
       <main className="pt-20">
         <div className="max-w-7xl mx-auto px-4 py-6">
-          <Outlet context={{ user: userDetail }} />
+          <Outlet
+            context={{ user: userDetail, refetchUserProfile: getUserDetails }}
+          />
         </div>
       </main>
 

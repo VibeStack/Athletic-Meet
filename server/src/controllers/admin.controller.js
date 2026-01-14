@@ -406,6 +406,94 @@ export const updateUserEvents = asyncHandler(async (req, res) => {
   }
 });
 
+export const makeAsAdmin = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+
+  if (!userId) {
+    throw {
+      code: 400,
+      message: "User ID is required",
+    };
+  }
+
+  const updatedUser = await User.findOneAndUpdate(
+    { _id: userId, role: "Student" },
+    { $set: { role: "Admin" } },
+    { new: true, runValidators: true }
+  );
+
+  if (!updatedUser) {
+    const existingUser = await User.findById(userId).select("role");
+
+    if (!existingUser) {
+      throw {
+        code: 404,
+        message: "User not found",
+      };
+    }
+
+    if (existingUser.role === "Admin") {
+      throw {
+        code: 409,
+        message: "User is already an Admin",
+      };
+    }
+
+    throw {
+      code: 403,
+      message: "Only students can be promoted to Admin",
+    };
+  }
+
+  res
+    .status(200)
+    .json(new ApiResponse(null, "Student promoted to Admin successfully"));
+});
+
+export const removeAsAdmin = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+
+  if (!userId) {
+    throw {
+      code: 400,
+      message: "User ID is required",
+    };
+  }
+
+  const updatedUser = await User.findOneAndUpdate(
+    { _id: userId, role: "Admin" },
+    { $set: { role: "Student" } },
+    { new: true, runValidators: true }
+  );
+
+  if (!updatedUser) {
+    const existingUser = await User.findById(userId).select("role");
+
+    if (!existingUser) {
+      throw {
+        code: 404,
+        message: "User not found",
+      };
+    }
+
+    if (existingUser.role === "Student") {
+      throw {
+        code: 409,
+        message: "User is already a Student",
+      };
+    }
+
+    throw {
+      code: 403,
+      message: "Only Admin can be demoted to Student",
+    };
+  }
+
+  res
+    .status(200)
+    .json(new ApiResponse(null, "Admin demoted to Student successfully"));
+});
+
 export const markAttendance = asyncHandler(async (req, res) => {
   const { jerseyNumber, eventId, status } = req.body;
 

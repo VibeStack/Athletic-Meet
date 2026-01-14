@@ -48,9 +48,7 @@ export default function UserDetailInfo({ userData, darkMode }) {
       >
         <div
           className={`w-8 h-8 rounded-lg flex items-center justify-center text-white ${
-            darkMode
-              ? "bg-linear-to-br from-violet-500 to-purple-600"
-              : "bg-slate-800"
+            darkMode ? "bg-slate-700" : "bg-slate-800"
           }`}
         >
           {ICONS.user}

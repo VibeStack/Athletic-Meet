@@ -36,6 +36,7 @@ export default function UserDetailEvents({
   darkMode,
   markAttendance,
   getStatusDisplay,
+  refetchUser,
 }) {
   const BASE_URL = import.meta.env.VITE_API_URL;
   const [allEvents, setAllEvents] = useState([]);
@@ -70,22 +71,19 @@ export default function UserDetailEvents({
         ({ eventId }) => eventId
       );
 
-      console.log("Updating events:", updatedEventsIdsArray);
-
-      const { data: response } = await axios.post(
+      await axios.post(
         `${BASE_URL}/admin/users/${userData.id}/updateEvents`,
         { updatedEventsIdsArray },
         { withCredentials: true }
       );
-
-      console.log("Update success:", response.data);
     } catch (error) {
       console.error(
         "Failed to update user events",
         error?.response?.data || error.message
       );
     }
-    setShowAddEventModal(false)
+    setShowAddEventModal(false);
+    if (refetchUser) refetchUser();
   };
 
   return (
@@ -105,9 +103,7 @@ export default function UserDetailEvents({
           <div className="flex items-center gap-2.5">
             <div
               className={`w-8 h-8 rounded-lg flex items-center justify-center text-white ${
-                darkMode
-                  ? "bg-linear-to-br from-orange-500 to-amber-600"
-                  : "bg-slate-800"
+                darkMode ? "bg-slate-700" : "bg-slate-800"
               }`}
             >
               {ICONS.trophy}
@@ -134,7 +130,7 @@ export default function UserDetailEvents({
             onClick={openAddEventModal}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
               darkMode
-                ? "bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30"
+                ? "bg-slate-700 text-white hover:bg-slate-600"
                 : "bg-slate-800 text-white hover:bg-slate-700"
             }`}
           >
@@ -384,7 +380,7 @@ export default function UserDetailEvents({
 
                           <p
                             className={`text-[9px] ${
-                              darkMode ? "text-slate-500" : "text-slate-500"
+                              darkMode ? "text-slate-400" : "text-slate-500"
                             }`}
                           >
                             {event.day}
@@ -454,7 +450,7 @@ export default function UserDetailEvents({
                                   ]
                             );
                           }}
-                          className={`relative rounded-lg p-2.5 transition-all cursor-pointer${
+                          className={`relative rounded-lg p-2.5 transition-all cursor-pointer ${
                             isSelected
                               ? darkMode
                                 ? "bg-emerald-900/50 ring-2 ring-emerald-500"
@@ -474,7 +470,11 @@ export default function UserDetailEvents({
                             {event.name}
                           </p>
 
-                          <p className="text-[9px] text-slate-500">
+                          <p
+                            className={`text-[9px] ${
+                              darkMode ? "text-slate-400" : "text-slate-500"
+                            }`}
+                          >
                             {event.day}
                           </p>
 
@@ -555,7 +555,11 @@ export default function UserDetailEvents({
                             {event.name}
                           </p>
 
-                          <p className="text-[9px] text-slate-500">
+                          <p
+                            className={`text-[9px] ${
+                              darkMode ? "text-slate-400" : "text-slate-500"
+                            }`}
+                          >
                             {event.day}
                           </p>
 

@@ -6,11 +6,16 @@ import ProfileField from "./ProfileField";
 import LoadingComponent from "./LoadingComponent";
 
 export default function PortalHome() {
-  const { user } = useOutletContext();
+  const { user, refetchUserProfile } = useOutletContext();
   const { darkMode } = useTheme();
   const navigate = useNavigate();
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+
+  // Refetch user profile on mount to get latest data
+  useEffect(() => {
+    if (refetchUserProfile) refetchUserProfile();
+  }, []);
 
   useEffect(() => {
     if (!user?.jerseyNumber) {
@@ -32,7 +37,10 @@ export default function PortalHome() {
   }, [user?.username, user?.jerseyNumber, user?.selectedEvents, darkMode]);
 
   return isLoading ? (
-    <LoadingComponent title="Loading Dashboard" message="Preparing Your Profile, Events & Access" />
+    <LoadingComponent
+      title="Loading Dashboard"
+      message="Preparing Your Profile, Events & Access"
+    />
   ) : (
     <>
       <section
