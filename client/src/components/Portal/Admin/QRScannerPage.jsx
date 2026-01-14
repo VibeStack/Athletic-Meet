@@ -175,14 +175,12 @@ export default function QRScannerPage() {
             const isPortrait = viewfinderHeight > viewfinderWidth;
 
             if (isPortrait) {
-              // for mobile
-              return {
-                width: Math.floor(viewfinderWidth * 0.95),
-                height: Math.floor(viewfinderHeight * 0.6),
-              };
+              // for mobile - use almost full width as a square
+              const size = Math.floor(viewfinderWidth * 0.88);
+              return { width: size, height: size };
             }
 
-            // for desktop 
+            // for desktop
             const size = Math.floor(
               Math.min(viewfinderWidth, viewfinderHeight) * 0.85
             );
@@ -541,7 +539,7 @@ export default function QRScannerPage() {
               </div>
 
               {/* QR Frame */}
-              <div className="relative w-24 h-24 mb-6">
+              <div className="relative w-28 h-28 sm:w-32 sm:h-32 mb-6">
                 <div
                   className={`absolute inset-0 rounded-2xl border-2 border-dashed animate-pulse ${
                     darkMode ? "border-cyan-400/40" : "border-slate-400/50"
