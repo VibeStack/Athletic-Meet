@@ -176,7 +176,7 @@ export default function QRScannerPage() {
 
             if (isPortrait) {
               // for mobile - use almost full width as a square
-              const size = Math.floor(viewfinderWidth * 0.88);
+              const size = Math.floor(viewfinderWidth * 0.95);
               return { width: size, height: size };
             }
 
@@ -466,14 +466,24 @@ export default function QRScannerPage() {
           {selectedEventData && (
             <div
               className={`mt-4 px-4 py-3 rounded-xl flex items-center gap-3 ${
-                darkMode
-                  ? "bg-cyan-500/10 ring-1 ring-cyan-500/30"
-                  : "bg-cyan-50 ring-1 ring-cyan-200"
+                selectedCategory === "Girls"
+                  ? darkMode
+                    ? "bg-pink-500/10 ring-1 ring-pink-500/30"
+                    : "bg-pink-50 ring-1 ring-pink-200"
+                  : darkMode
+                  ? "bg-sky-500/10 ring-1 ring-sky-500/30"
+                  : "bg-sky-50 ring-1 ring-sky-200"
               }`}
             >
               <div
                 className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg ${
-                  darkMode ? "bg-cyan-500/20" : "bg-cyan-100"
+                  selectedCategory === "Girls"
+                    ? darkMode
+                      ? "bg-pink-500/20"
+                      : "bg-pink-100"
+                    : darkMode
+                    ? "bg-sky-500/20"
+                    : "bg-sky-100"
                 }`}
               >
                 {selectedEventData.type === "Track"
@@ -485,14 +495,26 @@ export default function QRScannerPage() {
               <div>
                 <p
                   className={`font-semibold text-sm ${
-                    darkMode ? "text-cyan-100" : "text-cyan-900"
+                    selectedCategory === "Girls"
+                      ? darkMode
+                        ? "text-pink-100"
+                        : "text-pink-900"
+                      : darkMode
+                      ? "text-sky-100"
+                      : "text-sky-900"
                   }`}
                 >
                   {selectedEventData.name}
                 </p>
                 <p
                   className={`text-xs ${
-                    darkMode ? "text-cyan-300/70" : "text-cyan-700"
+                    selectedCategory === "Girls"
+                      ? darkMode
+                        ? "text-pink-300/70"
+                        : "text-pink-700"
+                      : darkMode
+                      ? "text-sky-300/70"
+                      : "text-sky-700"
                   }`}
                 >
                   {selectedEventData.type} • {selectedEventData.category} •{" "}
