@@ -7,6 +7,20 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 export const loginUser = asyncHandler(async (req, res) => {
   const isProduction = process.env.NODE_ENV === "production";
   const { username, email, password } = req.body;
+
+  const existingSid = req.signedCookies?.sid;
+  if (existingSid) {
+    await Session.findByIdAndDelete(existingSid);
+
+    res.clearCookie("sid", {
+      httpOnly: true,
+      signed: true,
+      sameSite: isProduction ? "none" : "lax",
+      secure: isProduction,
+      path: "/",
+    });
+  }
+
   const user = await User.findOne({ email });
 
   if (!user) {
