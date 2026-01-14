@@ -25,8 +25,8 @@ export default function UserDetailInfo({ userData, darkMode }) {
   const userInfoItems = [
     { label: "Full Name", value: userData.fullname },
     { label: "Username", value: userData.username },
-    { label: "Branch", value: userData.branch },
     { label: "Course", value: userData.course },
+    { label: "Branch", value: userData.branch },
     { label: "Year", value: userData.year },
     { label: "Gender", value: userData.gender },
     { label: "CRN", value: userData.crn },

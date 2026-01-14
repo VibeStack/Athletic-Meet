@@ -1,6 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 
-const jerseyCounterSchema = new Schema(
+const systemConfigSchema = new Schema(
   {
     _id: {
       type: String,
@@ -15,13 +15,14 @@ const jerseyCounterSchema = new Schema(
       required: true,
       default: [],
     },
+    areCertificatesLocked: {
+      type: Boolean,
+      default: true,
+    },
   },
   {
     timestamps: true,
   }
 );
 
-export const JerseyCounter = mongoose.model(
-  "Jerseycounter",
-  jerseyCounterSchema
-);
+export const SystemConfig = mongoose.model("SystemConfig", systemConfigSchema);

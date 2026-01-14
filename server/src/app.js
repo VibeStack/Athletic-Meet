@@ -5,10 +5,6 @@ import cookieParser from "cookie-parser";
 const app = express();
 
 app.disable("x-powered-by");
-app.use(express.json({ limit: "16kb" }));
-app.use(express.urlencoded({ extended: true, limit: "16kb" }));
-app.use(cookieParser(process.env.MY_SECRET_KEY));
-app.use(express.static("public"));
 
 app.use(
   cors({
@@ -26,12 +22,20 @@ app.use(
   })
 );
 
+app.use(express.json({ limit: "16kb" }));
+app.use(express.urlencoded({ extended: true, limit: "16kb" }));
+app.use(cookieParser(process.env.MY_SECRET_KEY));
+app.use(express.static("public"));
+
 import userRouter from "./routes/user.routes.js";
 import otpRouter from "./routes/emailOtp.routes.js";
 import authLoginRouter from "./routes/authLogin.routes.js";
 import adminRouter from "./routes/admin.routes.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
-import { checkAuth, requireAdminAccess } from "./middlewares/auth.middleware.js";
+import {
+  checkAuth,
+  requireAdminAccess,
+} from "./middlewares/auth.middleware.js";
 
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/otp", otpRouter);

@@ -91,7 +91,7 @@ export default function UserDetailHeader({
   refetchUser,
 }) {
   const { user } = useOutletContext();
-  const BASE_URL = import.meta.env.VITE_API_URL;
+  const API_URL = import.meta.env.VITE_API_URL;
   const jerseyTheme = getJerseyBadgeTheme(userData.role, userData.gender);
   const roleTheme = getRoleTheme(userData.role, userData.gender, darkMode);
   const lockButtonTheme = getLockButtonTheme(userData.role, userData.gender);
@@ -102,7 +102,7 @@ export default function UserDetailHeader({
   const makeAsAdmin = async () => {
     try {
       await axios.post(
-        `${BASE_URL}/admin/user/${userData.id}/makeAsAdmin`,
+        `${API_URL}/admin/user/${userData.id}/makeAsAdmin`,
         null,
         { withCredentials: true }
       );
@@ -116,7 +116,7 @@ export default function UserDetailHeader({
   const removeAsAdmin = async () => {
     try {
       await axios.post(
-        `${BASE_URL}/admin/user/${userData.id}/removeAsAdmin`,
+        `${API_URL}/admin/user/${userData.id}/removeAsAdmin`,
         null,
         { withCredentials: true }
       );

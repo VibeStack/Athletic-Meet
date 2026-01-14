@@ -87,7 +87,7 @@ const getCardBorderTheme = (role, gender, darkMode) => {
 };
 
 export default function UsersPage() {
-  const BASE_URL = import.meta.env.VITE_API_URL;
+  const API_URL = import.meta.env.VITE_API_URL;
   const { darkMode } = useTheme();
 
   const location = useLocation();
@@ -105,7 +105,7 @@ export default function UsersPage() {
       try {
         setIsLoading(true);
 
-        const { data: response } = await axios.get(`${BASE_URL}/admin/users`, {
+        const { data: response } = await axios.get(`${API_URL}/admin/users`, {
           withCredentials: true,
         });
 

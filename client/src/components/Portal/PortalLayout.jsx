@@ -69,11 +69,11 @@ export default function PortalLayout() {
   const [error, setError] = useState(null);
   const [showLogoutPopup, setShowLogoutPopup] = useState(false);
 
-  const BASE_URL = import.meta.env.VITE_API_URL;
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const getUserDetails = async () => {
     try {
-      const { data: response } = await axios.get(`${BASE_URL}/user/profile`, {
+      const { data: response } = await axios.get(`${API_URL}/user/profile`, {
         withCredentials: true,
       });
 
@@ -97,7 +97,7 @@ export default function PortalLayout() {
   const handleLogout = async () => {
     try {
       const { data: response } = await axios.post(
-        `${BASE_URL}/auth/logout`,
+        `${API_URL}/auth/logout`,
         {},
         { withCredentials: true }
       );

@@ -5,6 +5,7 @@ export default function InputField({
   id,
   type = "text",
   register,
+  inputMode,
   rules,
   errors,
   placeholder,
@@ -37,6 +38,7 @@ export default function InputField({
           id={id}
           type={inputType}
           placeholder={placeholder}
+          inputMode={inputMode}
           className={`w-full px-4 py-3 border-2 rounded-xl bg-white
             focus:outline-none focus:ring-0
             placeholder:text-sm placeholder:text-gray-400 

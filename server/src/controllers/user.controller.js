@@ -4,18 +4,32 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import { Event } from "../models/Events.model.js";
 import { Session } from "../models/Session.model.js";
-import { JerseyCounter } from "../models/JerseyCounter.model.js";
+import { SystemConfig } from "../models/SystemConfig.model.js";
+import mongoose from "mongoose";
 
 const getNextJerseyNumber = async (session) => {
-  const counter = await JerseyCounter.findOne(
-    { _id: "GLOBAL" },
-    { freeJerseyNumbers: { $slice: 1 } }
-  ).session(session);
+  let counter = await SystemConfig.findById("GLOBAL").session(session);
 
-  if (counter?.freeJerseyNumbers?.length > 0) {
+  if (!counter) {
+    const created = await SystemConfig.create(
+      [
+        {
+          _id: "GLOBAL",
+          lastAssignedJerseyNumber: 1,
+          freeJerseyNumbers: [],
+          areCertificatesLocked: false,
+        },
+      ],
+      { session }
+    );
+
+    return created[0].lastAssignedJerseyNumber;
+  }
+
+  if (counter.freeJerseyNumbers.length > 0) {
     const reused = counter.freeJerseyNumbers[0];
 
-    await JerseyCounter.updateOne(
+    await SystemConfig.updateOne(
       { _id: "GLOBAL" },
       { $pull: { freeJerseyNumbers: reused } },
       { session }
@@ -24,27 +38,18 @@ const getNextJerseyNumber = async (session) => {
     return reused;
   }
 
-  const updated = await JerseyCounter.findOneAndUpdate(
-    { _id: "GLOBAL" },
-    { $inc: { lastAssignedJerseyNumber: 1 } },
-    {
-      new: true,
-      upsert: true,
-      setDefaultsOnInsert: true,
-      session,
-    }
-  );
+  counter.lastAssignedJerseyNumber += 1;
+  await counter.save({ session });
 
-  return updated.lastAssignedJerseyNumber;
+  return counter.lastAssignedJerseyNumber;
 };
-
-import mongoose from "mongoose";
 
 export const registerUser = asyncHandler(async (req, res) => {
   const session = await mongoose.startSession();
-  session.startTransaction();
 
   try {
+    session.startTransaction();
+
     const {
       username,
       email,
@@ -58,9 +63,9 @@ export const registerUser = asyncHandler(async (req, res) => {
       phone,
     } = req.body;
 
-    const user = await User.findOne({ $or: [{ email }, { username }] }).session(
-      session
-    );
+    const user = await User.findOne({
+      $or: [{ email }, { username }],
+    }).session(session);
 
     if (!user) {
       throw new ApiError(400, "Invalid registration attempt");
@@ -71,8 +76,7 @@ export const registerUser = asyncHandler(async (req, res) => {
     }
 
     if (user.isUserDetailsComplete === "true") {
-      await session.abortTransaction();
-      session.endSession();
+      await session.commitTransaction();
       return res
         .status(200)
         .json(new ApiResponse(null, "Account already exists"));
@@ -88,21 +92,24 @@ export const registerUser = asyncHandler(async (req, res) => {
     user.phone = phone;
 
     user.jerseyNumber = await getNextJerseyNumber(session);
-
     user.isUserDetailsComplete = "true";
 
     await user.save({ session });
+    console.log(user);
 
     await session.commitTransaction();
-    session.endSession();
 
     return res
       .status(200)
       .json(new ApiResponse(null, "Registration completed successfully"));
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
+    console.log(JSON.stringify(error.errInfo, null, 2));
+    if (session.inTransaction()) {
+      await session.abortTransaction();
+    }
     throw error;
+  } finally {
+    session.endSession();
   }
 });
 
@@ -162,58 +169,55 @@ export const lockEvents = asyncHandler(async (req, res) => {
   const { sid } = req.signedCookies;
   const { events } = req.body;
 
-  
   if (!sid) {
     throw new ApiError(401, "Session not found");
   }
-  
+
   if (!Array.isArray(events) || events.length === 0) {
     throw new ApiError(400, "Events must be a non-empty array");
   }
-  
+
   if (events.length > 5) {
     throw new ApiError(400, "Maximum 5 events can be selected");
   }
-  
+
   const mongoSession = await mongoose.startSession();
   mongoSession.startTransaction();
-  
+
   try {
     const sessionDoc = await Session.findById(sid).session(mongoSession);
     if (!sessionDoc) {
       throw new ApiError(401, "Invalid session");
     }
-    
+
     const user = await User.findById(sessionDoc.userId).session(mongoSession);
     if (!user) {
       throw new ApiError(404, "User not found");
     }
-    
+
     if (user.isEventsLocked) {
-      throw new ApiError(409, "Events already locked. Contact admin to unlock.");
+      throw new ApiError(
+        409,
+        "Events already locked. Contact admin to unlock."
+      );
     }
-    
-    const eventObjectIds = events.map(
-      (id) => new mongoose.Types.ObjectId(id)
-    );
-    
+
+    const eventObjectIds = events.map((id) => new mongoose.Types.ObjectId(id));
+
     const validEvents = await Event.find({
       _id: { $in: eventObjectIds },
       isActive: true,
     }).session(mongoSession);
-    
+
     if (validEvents.length !== events.length) {
-      throw new ApiError(
-        400,
-        "One or more events are invalid or inactive"
-      );
+      throw new ApiError(400, "One or more events are invalid or inactive");
     }
-    
+
     const selectedEventsPayload = eventObjectIds.map((eventId) => ({
       eventId,
       status: "notMarked",
     }));
-    
+
     await User.updateOne(
       { _id: user._id },
       {
@@ -225,7 +229,6 @@ export const lockEvents = asyncHandler(async (req, res) => {
       { session: mongoSession }
     );
 
-    
     await Event.updateMany(
       { _id: { $in: eventObjectIds } },
       {
@@ -235,10 +238,10 @@ export const lockEvents = asyncHandler(async (req, res) => {
       },
       { session: mongoSession }
     );
-    
+
     await mongoSession.commitTransaction();
     mongoSession.endSession();
-    
+
     return res
       .status(200)
       .json(new ApiResponse(null, "Events locked successfully"));

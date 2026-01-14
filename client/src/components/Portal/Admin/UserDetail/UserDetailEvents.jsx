@@ -38,7 +38,7 @@ export default function UserDetailEvents({
   getStatusDisplay,
   refetchUser,
 }) {
-  const BASE_URL = import.meta.env.VITE_API_URL;
+  const API_URL = import.meta.env.VITE_API_URL;
   const [allEvents, setAllEvents] = useState([]);
   const [updatedEventsArray, setupdatedEventsArray] = useState(
     userData.selectedEvents.map(({ eventId, eventType }) => {
@@ -49,7 +49,7 @@ export default function UserDetailEvents({
 
   const openAddEventModal = async () => {
     try {
-      const { data: response } = await axios.get(`${BASE_URL}/user/events`, {
+      const { data: response } = await axios.get(`${API_URL}/user/events`, {
         withCredentials: true,
       });
       const gender = userData.gender === "Male" ? "Boys" : "Girls";
@@ -72,7 +72,7 @@ export default function UserDetailEvents({
       );
 
       await axios.post(
-        `${BASE_URL}/admin/users/${userData.id}/updateEvents`,
+        `${API_URL}/admin/users/${userData.id}/updateEvents`,
         { updatedEventsIdsArray },
         { withCredentials: true }
       );

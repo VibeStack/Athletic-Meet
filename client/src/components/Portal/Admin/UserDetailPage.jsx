@@ -110,7 +110,7 @@ const ICONS = {
 };
 
 export default function UserDetailPage() {
-  const BASE_URL = import.meta.env.VITE_API_URL;
+  const API_URL = import.meta.env.VITE_API_URL;
   const { darkMode } = useTheme();
   const { userId } = useParams();
   const navigate = useNavigate();
@@ -127,7 +127,7 @@ export default function UserDetailPage() {
   const fetchUser = async () => {
     try {
       const { data: response } = await axios.get(
-        `${BASE_URL}/admin/user/${userId}`,
+        `${API_URL}/admin/user/${userId}`,
         { withCredentials: true }
       );
 
@@ -149,12 +149,12 @@ export default function UserDetailPage() {
 
   useEffect(() => {
     fetchUser();
-  }, [userId, BASE_URL, currentUser]);
+  }, [userId, API_URL, currentUser]);
 
   const lockUserEvents = async () => {
     try {
       await axios.post(
-        `${BASE_URL}/admin/users/${userData.id}/events/lock`,
+        `${API_URL}/admin/users/${userData.id}/events/lock`,
         {},
         { withCredentials: true }
       );
@@ -167,7 +167,7 @@ export default function UserDetailPage() {
   const unlockUserEvents = async () => {
     try {
       await axios.post(
-        `${BASE_URL}/admin/users/${userData.id}/events/unlock`,
+        `${API_URL}/admin/users/${userData.id}/events/unlock`,
         {},
         { withCredentials: true }
       );
@@ -179,7 +179,7 @@ export default function UserDetailPage() {
 
   const deleteUser = async () => {
     try {
-      await axios.delete(`${BASE_URL}/admin/user/${userData.id}`, {
+      await axios.delete(`${API_URL}/admin/user/${userData.id}`, {
         withCredentials: true,
       });
       navigate(-1);
@@ -191,7 +191,7 @@ export default function UserDetailPage() {
   const markAttendance = async (eventId, status) => {
     try {
       await axios.post(
-        `${BASE_URL}/admin/user/event/attendance`,
+        `${API_URL}/admin/user/event/attendance`,
         { jerseyNumber: userData.jerseyNumber, eventId, status },
         { withCredentials: true }
       );

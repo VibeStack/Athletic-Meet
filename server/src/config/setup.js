@@ -54,7 +54,7 @@ try {
           },
 
           gender: {
-            enum: ["Male", "Female", "Other"],
+            enum: ["Male", "Female"],
           },
 
           course: {
@@ -71,25 +71,17 @@ try {
             ],
           },
 
-          branch: { bsonType: "string" },
+          branch: { bsonType: ["string", "null"] },
 
-          crn: { bsonType: "string" },
-          urn: { bsonType: "string" },
+          crn: { bsonType: ["int", "null"] },
+          urn: { bsonType: ["int", "null"] },
 
           year: {
             enum: ["1st Year", "2nd Year", "3rd Year", "4th Year"],
           },
 
-          phone: {
-            bsonType: "string",
-            pattern: "^[6-9][0-9]{9}$",
-          },
-
-          jerseyNumber: {
-            bsonType: "int",
-            minimum: 1,
-            maximum: 1000,
-          },
+          phone: { bsonType: ["double", "int", "null"] },
+          jerseyNumber: { bsonType: ["int", "null"] },
 
           isUserDetailsComplete: {
             enum: ["false", "partial", "true"],
@@ -116,6 +108,11 @@ try {
                   bsonType: "string",
                   enum: ["present", "absent", "notMarked"],
                   description: "Attendance status for the event",
+                },
+                position: {
+                  bsonType: "int",
+                  enum: [0, 1, 2, 3],
+                  description: "Event result position (0 = no position)",
                 },
               },
               additionalProperties: false,
@@ -163,7 +160,7 @@ try {
   });
 
   await db.command({
-    [command]: "jerseycounters",
+    [command]: "systemconfigs",
     validator: {
       $jsonSchema: {
         bsonType: "object",
@@ -188,6 +185,9 @@ try {
               bsonType: "int",
               minimum: 1,
             },
+          },
+          areCertificatesLocked: {
+            bsonType: "bool",
           },
 
           createdAt: {

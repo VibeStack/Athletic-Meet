@@ -82,7 +82,8 @@ export default function Step3PersonalDetails({ nextStep }) {
 
       const { data: response } = await axios.post(
         `${API_URL}/user/register`,
-        fullUserData
+        fullUserData,
+        { withCredentials: true }
       );
 
       if (response.message === "Registration completed successfully") {
@@ -189,19 +190,35 @@ export default function Step3PersonalDetails({ nextStep }) {
           <InputField
             label="College Roll Number (CRN)"
             id="crn"
+            type="tel"
             placeholder="Enter your CRN"
             register={register}
-            rules={{ required: { value: true, message: "CRN is required" } }}
+            rules={{
+              required: { value: true, message: "CRN is required" },
+              pattern: {
+                value: /^\d+$/,
+                message: "CRN must contain only numbers",
+              },
+            }}
             errors={errors}
+            inputMode="numeric"
           />
 
           <InputField
             label="University Roll Number (URN)"
             id="urn"
+            type="tel"
             placeholder="Enter your URN"
             register={register}
-            rules={{ required: { value: true, message: "URN is required" } }}
+            rules={{
+              required: { value: true, message: "URN is required" },
+              pattern: {
+                value: /^\d+$/,
+                message: "URN must contain only numbers",
+              },
+            }}
             errors={errors}
+            inputMode="numeric"
           />
         </div>
 
@@ -218,7 +235,7 @@ export default function Step3PersonalDetails({ nextStep }) {
           <InputField
             label="Phone Number"
             id="phone"
-            type="text"
+            type="tel"
             placeholder="Enter 10-digit phone number"
             register={register}
             rules={{
@@ -229,6 +246,7 @@ export default function Step3PersonalDetails({ nextStep }) {
               },
             }}
             errors={errors}
+            inputMode="numeric"
           />
         </div>
       </div>

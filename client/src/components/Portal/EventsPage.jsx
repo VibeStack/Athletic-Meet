@@ -55,7 +55,7 @@ export default function EventsPage() {
   const [enrolling, setEnrolling] = useState(null);
   const [allEvents, setAllEvents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const BASE_URL = import.meta.env.VITE_API_URL;
+  const API_URL = import.meta.env.VITE_API_URL;
 
   // Refetch user profile on mount to get latest data
   useEffect(() => {
@@ -65,7 +65,7 @@ export default function EventsPage() {
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const { data: response } = await axios.get(`${BASE_URL}/user/events`, {
+        const { data: response } = await axios.get(`${API_URL}/user/events`, {
           withCredentials: true,
         });
 
@@ -102,7 +102,7 @@ export default function EventsPage() {
     };
 
     fetchInitialData();
-  }, [user.gender, user.selectedEvents, BASE_URL]);
+  }, [user.gender, user.selectedEvents, API_URL]);
 
   const trackEvents = allEvents.filter((e) => e.type === "Track");
   const fieldEvents = allEvents.filter((e) => e.type === "Field");
@@ -169,7 +169,7 @@ export default function EventsPage() {
     setLocking(true);
     try {
       const response = await axios.post(
-        `${BASE_URL}/user/events/lock`,
+        `${API_URL}/user/events/lock`,
         { events: enrolledEvents },
         { withCredentials: true }
       );
@@ -190,7 +190,7 @@ export default function EventsPage() {
     setLocking(true);
     try {
       await axios.post(
-        `${BASE_URL}/admin/users/${user.id}/events/unlock`,
+        `${API_URL}/admin/users/${user.id}/events/unlock`,
         {},
         { withCredentials: true }
       );

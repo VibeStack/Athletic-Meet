@@ -58,14 +58,12 @@ const userSchema = new mongoose.Schema(
       trim: true,
     },
     crn: {
-      type: String,
-      trim: true,
+      type: Number,
       unique: true,
       sparse: true,
     },
     urn: {
-      type: String,
-      trim: true,
+      type: Number,
       unique: true,
       sparse: true,
     },
@@ -74,8 +72,7 @@ const userSchema = new mongoose.Schema(
       enum: ["1st Year", "2nd Year", "3rd Year", "4th Year"],
     },
     phone: {
-      type: String,
-      trim: true,
+      type: Number,
       match: [/^[6-9]\d{9}$/, "Enter a valid 10-digit phone number"],
     },
     jerseyNumber: {
@@ -107,6 +104,18 @@ const userSchema = new mongoose.Schema(
             type: String,
             enum: ["present", "absent", "notMarked"],
             default: "notMarked",
+          },
+          position: {
+            type: Number,
+            enum: [0, 1, 2, 3],
+            default: 0,
+            validate: {
+              validator: function (value) {
+                if (value > 0) return this.status === "present";
+                return true;
+              },
+              message:"Position can only be assigned if student is present"
+            },
           },
         },
       ],

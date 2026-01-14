@@ -1,6 +1,6 @@
 import { Session } from "../models/Session.model.js";
 import { User } from "../models/User.model.js";
-import { JerseyCounter } from "../models/JerseyCounter.model.js";
+import { SystemConfig } from "../models/SystemConfig.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -625,7 +625,7 @@ export const deleteUser = asyncHandler(async (req, res) => {
   await Session.deleteMany({ userId: user._id });
 
   if (user.jerseyNumber !== null && user.jerseyNumber !== undefined) {
-    await JerseyCounter.findByIdAndUpdate(
+    await SystemConfig.findByIdAndUpdate(
       "GLOBAL",
       { $push: { freeJerseyNumbers: user.jerseyNumber } },
       { new: true }
