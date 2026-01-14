@@ -172,8 +172,20 @@ export default function QRScannerPage() {
         {
           fps: 10,
           qrbox: (viewfinderWidth, viewfinderHeight) => {
-            const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-            const size = Math.floor(minEdge * 0.9);
+            const isPortrait = viewfinderHeight > viewfinderWidth;
+
+            if (isPortrait) {
+              // for mobile
+              return {
+                width: Math.floor(viewfinderWidth * 0.95),
+                height: Math.floor(viewfinderHeight * 0.6),
+              };
+            }
+
+            // for desktop 
+            const size = Math.floor(
+              Math.min(viewfinderWidth, viewfinderHeight) * 0.85
+            );
             return { width: size, height: size };
           },
         },
