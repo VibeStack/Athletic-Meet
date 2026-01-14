@@ -1,6 +1,13 @@
 import axios from "axios";
 import React, { useState } from "react";
+import { useOutletContext } from "react-router-dom";
 
+const roleAccessPoints = (role) => {
+  if (role === "Manager") return 3;
+  if (role === "Admin") return 2;
+  if (role === "Student") return 1;
+  else 0;
+};
 /* -------------------- SVG Icons -------------------- */
 const ICONS = {
   trophy: (
@@ -38,6 +45,7 @@ export default function UserDetailEvents({
   getStatusDisplay,
   refetchUser,
 }) {
+  const { user } = useOutletContext();
   const API_URL = import.meta.env.VITE_API_URL;
   const [allEvents, setAllEvents] = useState([]);
   const [updatedEventsArray, setupdatedEventsArray] = useState(
@@ -100,7 +108,7 @@ export default function UserDetailEvents({
             darkMode ? "border-white/5" : "border-slate-100"
           }`}
         >
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-4">
             <div
               className={`w-8 h-8 rounded-lg flex items-center justify-center text-white ${
                 darkMode ? "bg-slate-700" : "bg-slate-800"
@@ -109,7 +117,7 @@ export default function UserDetailEvents({
               {ICONS.trophy}
             </div>
             <h2
-              className={`font-bold text-sm ${
+              className={`font-bold text-[12px] sm:text-sm ${
                 darkMode ? "text-white" : "text-slate-800"
               }`}
             >
@@ -126,17 +134,21 @@ export default function UserDetailEvents({
             </span>
           </div>
 
-          <button
-            onClick={openAddEventModal}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-              darkMode
-                ? "bg-slate-700 text-white hover:bg-slate-600"
-                : "bg-slate-800 text-white hover:bg-slate-700"
-            }`}
-          >
-            {ICONS.plus}
-            Add Event
-          </button>
+          {(userData.id === user.id ||
+            roleAccessPoints(user.role) > roleAccessPoints(userData.role)) &&
+            userData.isUserDetailsComplete === "true" && (
+              <button
+                onClick={openAddEventModal}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition-all ${
+                  darkMode
+                    ? "bg-slate-700 text-white hover:bg-slate-600"
+                    : "bg-slate-800 text-white hover:bg-slate-700"
+                }`}
+              >
+                {ICONS.plus}
+                Add Event
+              </button>
+            )}
         </div>
 
         <div className="p-3">

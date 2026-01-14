@@ -95,7 +95,6 @@ export const registerUser = asyncHandler(async (req, res) => {
     user.isUserDetailsComplete = "true";
 
     await user.save({ session });
-    console.log(user);
 
     await session.commitTransaction();
 

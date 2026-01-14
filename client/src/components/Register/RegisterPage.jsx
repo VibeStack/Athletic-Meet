@@ -9,19 +9,6 @@ import Step4Success from "./Step4Success";
 export default function RegisterPage() {
   const methods = useForm({
     mode: "onChange",
-    defaultValues:{
-      username:"Arsh",
-      email:"hackuser1102@gmail.com",
-      password:"12345678",
-      fullname:"Arshdeep Anand",
-      gender:"Male",
-      course:"B.Tech",
-      branch:"CSE",
-      crn:"2315025",
-      urn:"2302481",
-      year:"3rd Year",
-      phone:"8544953527",
-    }
   });
   const [step, setStep] = useState(1);
 

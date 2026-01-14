@@ -216,7 +216,7 @@ export default function UsersPage() {
         `}
             >
               <input
-                className="w-full bg-transparent py-3 text-sm focus:outline-none"
+                className="w-full bg-transparent py-3 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none"
                 placeholder="Search by name, email, jersey, URN, CRN…"
                 onChange={(e) => setQuery(e.target.value.toLowerCase())}
               />

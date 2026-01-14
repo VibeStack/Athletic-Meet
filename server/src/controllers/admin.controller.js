@@ -8,6 +8,33 @@ import { courseBranchMap } from "../utils/courseBranchMap.js";
 import { Event } from "../models/Events.model.js";
 import mongoose from "mongoose";
 
+const roleAccessPoints = (role) => {
+  if (role === "Manager") return 3;
+  if (role === "Admin") return 2;
+  if (role === "Student") return 1;
+  else 0;
+};
+
+const canModifyDetails = (
+  { headId, headRole },
+  { userId, userRole = null }
+) => {
+  if (headId === userId && (headRole === "Manager" || headRole === "Admin"))
+    return true;
+  if (
+    roleAccessPoints(headRole) > roleAccessPoints(userRole) &&
+    userRole !== null &&
+    headRole !== "Student"
+  )
+    return true;
+  return false;
+};
+
+const canDeleteUser = (headRole, userRole = null) => {
+  if (roleAccessPoints(headRole) > roleAccessPoints(userRole)) return true;
+  return false;
+};
+
 export const getAllUsers = asyncHandler(async (req, res) => {
   const users = await User.find(
     {},
@@ -162,6 +189,7 @@ export const changeUserDetails = asyncHandler(async (req, res) => {
 
 export const lockUserEvents = asyncHandler(async (req, res) => {
   const { userId } = req.params;
+  const head = req.user;
 
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -172,61 +200,54 @@ export const lockUserEvents = asyncHandler(async (req, res) => {
       throw new ApiError(404, "User not found");
     }
 
+    if (
+      !canModifyDetails(
+        { headId: head.id, headRole: head.role },
+        { userId: user.id, userRole: user.role }
+      )
+    ) {
+      throw new ApiError(403, "You are not allowed to lock this user's events");
+    }
+
     if (user.isEventsLocked) {
+      await session.commitTransaction();
       return res
         .status(200)
         .json(new ApiResponse(null, "Events already locked"));
     }
 
-    const selectedEvents = user.selectedEvents || [];
+    if (user.selectedEvents.length > 0) {
+      const eventIds = user.selectedEvents.map((e) => e.eventId);
 
-    if (selectedEvents.length === 0) {
-      user.isEventsLocked = true;
-      await user.save({ session });
-
-      await session.commitTransaction();
-      session.endSession();
-
-      return res
-        .status(200)
-        .json(new ApiResponse(null, "Events locked successfully"));
-    }
-
-    const eventIdsToInit = [];
-
-    for (const ev of selectedEvents) {
-      if (!ev.status || ev.status !== "notMarked") {
-        ev.status = "notMarked";
-        eventIdsToInit.push(ev.eventId);
-      }
-    }
-
-    if (eventIdsToInit.length > 0) {
       await Event.updateMany(
-        { _id: { $in: eventIdsToInit } },
+        { _id: { $in: eventIds } },
         { $inc: { "studentsCount.notMarked": 1 } },
         { session }
       );
+
+      user.selectedEvents.forEach((ev) => {
+        ev.status = "notMarked";
+      });
     }
 
     user.isEventsLocked = true;
     await user.save({ session });
 
     await session.commitTransaction();
-    session.endSession();
-
     return res
       .status(200)
       .json(new ApiResponse(null, "Events locked successfully"));
   } catch (error) {
     await session.abortTransaction();
-    session.endSession();
     throw error;
+  } finally {
+    session.endSession();
   }
 });
 
 export const unlockUserEvents = asyncHandler(async (req, res) => {
   const { userId } = req.params;
+  const head = req.user;
 
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -237,57 +258,35 @@ export const unlockUserEvents = asyncHandler(async (req, res) => {
       throw new ApiError(404, "User not found");
     }
 
-    const selectedEvents = user.selectedEvents || [];
-
-    if (selectedEvents.length === 0) {
-      user.isEventsLocked = false;
-      await user.save({ session });
-
-      await session.commitTransaction();
-      session.endSession();
-
-      return res
-        .status(200)
-        .json(new ApiResponse(null, "Events unlocked successfully"));
+    if (
+      !canModifyDetails(
+        { headId: head.id, headRole: head.role },
+        { userId: user.id, userRole: user.role }
+      )
+    ) {
+      throw new ApiError(
+        403,
+        "You are not allowed to unlock this user's events"
+      );
     }
 
-    const allNotMarked = selectedEvents.every(
-      (ev) => ev.status === "notMarked"
-    );
+    if (user.selectedEvents.length > 0) {
+      const buckets = { notMarked: [], present: [], absent: [] };
 
-    if (allNotMarked) {
-      await Event.updateMany(
-        { _id: { $in: selectedEvents.map((e) => e.eventId) } },
-        { $inc: { "studentsCount.notMarked": -1 } },
-        { session }
-      );
-    } else {
-      const statusBuckets = {
-        notMarked: [],
-        present: [],
-        absent: [],
-      };
+      user.selectedEvents.forEach((ev) => {
+        buckets[ev.status]?.push(ev.eventId);
+      });
 
-      for (const ev of selectedEvents) {
-        if (statusBuckets[ev.status]) {
-          statusBuckets[ev.status].push(ev.eventId);
-        }
-      }
-
-      const bulkOps = [];
-
-      for (const [status, ids] of Object.entries(statusBuckets)) {
-        if (ids.length === 0) continue;
-
-        bulkOps.push({
+      const bulkOps = Object.entries(buckets)
+        .filter(([_, ids]) => ids.length > 0)
+        .map(([status, ids]) => ({
           updateMany: {
             filter: { _id: { $in: ids } },
             update: { $inc: { [`studentsCount.${status}`]: -1 } },
           },
-        });
-      }
+        }));
 
-      if (bulkOps.length > 0) {
+      if (bulkOps.length) {
         await Event.bulkWrite(bulkOps, { session });
       }
     }
@@ -297,20 +296,21 @@ export const unlockUserEvents = asyncHandler(async (req, res) => {
     await user.save({ session });
 
     await session.commitTransaction();
-    session.endSession();
 
     return res
       .status(200)
       .json(new ApiResponse(null, "Events unlocked successfully"));
   } catch (error) {
     await session.abortTransaction();
-    session.endSession();
     throw error;
+  } finally {
+    session.endSession();
   }
 });
 
 export const updateUserEvents = asyncHandler(async (req, res) => {
   const { userId } = req.params;
+  const head = req.user;
   const { updatedEventsIdsArray } = req.body;
 
   if (!Array.isArray(updatedEventsIdsArray)) {
@@ -322,9 +322,19 @@ export const updateUserEvents = asyncHandler(async (req, res) => {
 
   try {
     const user = await User.findById(userId).session(session);
-
     if (!user) {
       throw new ApiError(404, "User not found");
+    }
+    if (
+      !canModifyDetails(
+        { headId: head.id, headRole: head.role },
+        { userId: user.id, userRole: user.role }
+      )
+    ) {
+      throw new ApiError(
+        403,
+        "You are not allowed to update this user's events"
+      );
     }
 
     const existingEvents = user.selectedEvents;
@@ -387,7 +397,6 @@ export const updateUserEvents = asyncHandler(async (req, res) => {
     await user.save({ session });
 
     await session.commitTransaction();
-    session.endSession();
 
     return res.status(200).json(
       new ApiResponse(
@@ -401,8 +410,9 @@ export const updateUserEvents = asyncHandler(async (req, res) => {
     );
   } catch (error) {
     await session.abortTransaction();
-    session.endSession();
     throw error;
+  } finally {
+    session.endSession();
   }
 });
 
@@ -417,7 +427,7 @@ export const makeAsAdmin = asyncHandler(async (req, res) => {
   }
 
   const updatedUser = await User.findOneAndUpdate(
-    { _id: userId, role: "Student" },
+    { _id: userId, role: "Student", isUserDetailsComplete: "true" },
     { $set: { role: "Admin" } },
     { new: true, runValidators: true }
   );
@@ -461,7 +471,7 @@ export const removeAsAdmin = asyncHandler(async (req, res) => {
   }
 
   const updatedUser = await User.findOneAndUpdate(
-    { _id: userId, role: "Admin" },
+    { _id: userId, role: "Admin", isUserDetailsComplete: "true" },
     { $set: { role: "Student" } },
     { new: true, runValidators: true }
   );
@@ -496,6 +506,7 @@ export const removeAsAdmin = asyncHandler(async (req, res) => {
 
 export const markAttendance = asyncHandler(async (req, res) => {
   const { jerseyNumber, eventId, status } = req.body;
+  const head = req.user;
 
   if (!jerseyNumber || !eventId || !status) {
     throw new ApiError(400, "jerseyNumber, eventId and status are required");
@@ -513,6 +524,17 @@ export const markAttendance = asyncHandler(async (req, res) => {
     const user = await User.findOne({ jerseyNumber }).session(session);
     if (!user) throw new ApiError(404, "User not found");
 
+    if (
+      !(
+        head.role === "Manager" ||
+        (head.role === "Admin" && user.role !== "Manager")
+      )
+    ) {
+      throw new ApiError(
+        403,
+        "You are not allowed to mark attendance for this user"
+      );
+    }
     if (!user.isEventsLocked) {
       throw new ApiError(400, "User events are not locked");
     }
@@ -616,20 +638,25 @@ export const getAttendanceStats = asyncHandler(async (req, res) => {
 
 export const deleteUser = asyncHandler(async (req, res) => {
   const { userId } = req.params;
+  const head = req.user;
 
-  const user = await User.findByIdAndDelete(userId);
-
+  const user = await User.findById(userId);
   if (!user) {
     throw new ApiError(404, "User not found");
   }
+
+  if (!canDeleteUser(head.role, user?.role)) {
+    throw new ApiError(403, "You are not allowed to delete this user");
+  }
+
+  await User.deleteOne({ _id: user._id });
+
   await Session.deleteMany({ userId: user._id });
 
   if (user.jerseyNumber !== null && user.jerseyNumber !== undefined) {
-    await SystemConfig.findByIdAndUpdate(
-      "GLOBAL",
-      { $push: { freeJerseyNumbers: user.jerseyNumber } },
-      { new: true }
-    );
+    await SystemConfig.findByIdAndUpdate("GLOBAL", {
+      $push: { freeJerseyNumbers: user.jerseyNumber },
+    });
   }
 
   return res

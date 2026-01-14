@@ -47,6 +47,13 @@ const getRoleTheme = (role, gender, darkMode) => {
     : "bg-slate-200 text-slate-700 ring-slate-300";
 };
 
+const roleAccessPoints = (role) => {
+  if (role === "Manager") return 3;
+  if (role === "Admin") return 2;
+  if (role === "Student") return 1;
+  else 0;
+};
+
 /* -------------------- SVG Icons -------------------- */
 const ICONS = {
   lock: (
@@ -70,13 +77,41 @@ const ICONS = {
     </svg>
   ),
   promoteAdmin: (
-    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
-      <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 2.18l7 3.12v5.7c0 4.67-3.13 8.97-7 10.17-3.87-1.2-7-5.5-7-10.17V6.3l7-3.12zm-1 5.82v3H8v2h3v3h2v-3h3v-2h-3V9h-2z" />
+    <svg
+      viewBox="0 0 24 24"
+      className="w-5 h-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      {/* Shield */}
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 3l7 4v5c0 4.5-3.2 8.3-7 9-3.8-.7-7-4.5-7-9V7l7-4z"
+      />
+
+      {/* Check */}
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.5l2 2 4-4" />
     </svg>
   ),
   demoteAdmin: (
-    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
-      <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 2.18l7 3.12v5.7c0 4.67-3.13 8.97-7 10.17-3.87-1.2-7-5.5-7-10.17V6.3l7-3.12zM8 11v2h8v-2H8z" />
+    <svg
+      viewBox="0 0 24 24"
+      className="w-5 h-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      {/* Shield */}
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 3l7 4v5c0 4.5-3.2 8.3-7 9-3.8-.7-7-4.5-7-9V7l7-4z"
+      />
+
+      {/* Minus */}
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6" />
     </svg>
   ),
 };
@@ -189,50 +224,58 @@ export default function UserDetailHeader({
           </div>
         </div>
 
-        {/* Right: Action Buttons - Lock/Unlock + Delete */}
-        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
-          <button
-            onClick={isUserEventsLocked ? unlockUserEvents : lockUserEvents}
-            className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-all sm:min-w-40 shadow-lg hover:brightness-110 whitespace-nowrap ${lockButtonTheme}`}
-          >
-            {isUserEventsLocked ? ICONS.unlock : ICONS.lock}
-            <span className="hidden sm:inline">
-              {isUserEventsLocked ? "Unlock Events" : "Lock Events"}
-            </span>
-            <span className="sm:hidden">
-              {isUserEventsLocked ? "Unlock" : "Lock"}
-            </span>
-          </button>
-
-          <button
-            onClick={() => setShowDeletePopup(true)}
-            className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 ${lockButtonTheme}`}
-          >
-            {ICONS.trash}
-            <span>Delete</span>
-          </button>
-
-          {user.role === "Manager" && userData.role !== "Manager" && (
-            <>
-              {!isUserHavingAdminAccess ? (
+        {/* Right: Action Buttons */}
+        <div className="flex flex-col gap-2 sm:gap-3 w-full sm:w-auto">
+          {/* Lock/Unlock + Delete Row */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* {user.id === userData.id} */}
+            {(userData.id === user.id ||
+              roleAccessPoints(user.role) > roleAccessPoints(userData.role)) &&
+              userData.isUserDetailsComplete === "true" && (
                 <button
-                  onClick={makeAsAdmin}
-                  className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 ${lockButtonTheme}`}
+                  onClick={
+                    isUserEventsLocked ? unlockUserEvents : lockUserEvents
+                  }
+                  className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-all sm:min-w-40 shadow-lg hover:brightness-110 whitespace-nowrap ${lockButtonTheme}`}
                 >
-                  {ICONS.promoteAdmin}
-                  <span>Make As Admin</span>
-                </button>
-              ) : (
-                <button
-                  onClick={removeAsAdmin}
-                  className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 ${lockButtonTheme}`}
-                >
-                  {ICONS.demoteAdmin}
-                  <span>Remove As Admin</span>
+                  {isUserEventsLocked ? ICONS.unlock : ICONS.lock}
+                  <span className="hidden sm:inline">
+                    {isUserEventsLocked ? "Unlock Events" : "Lock Events"}
+                  </span>
+                  <span className="sm:hidden">
+                    {isUserEventsLocked ? "Unlock" : "Lock"}
+                  </span>
                 </button>
               )}
-            </>
-          )}
+
+            {roleAccessPoints(user.role) > roleAccessPoints(userData.role) && (
+              <button
+                onClick={() => setShowDeletePopup(true)}
+                className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 ${lockButtonTheme}`}
+              >
+                {ICONS.trash}
+                <span>Delete</span>
+              </button>
+            )}
+          </div>
+
+          {/* Make/Remove Admin Button - Full Width Below */}
+          {roleAccessPoints(userData.role) < 3 &&
+            userData.isUserDetailsComplete === "true" && (
+              <button
+                onClick={isUserHavingAdminAccess ? removeAsAdmin : makeAsAdmin}
+                className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 ${lockButtonTheme}`}
+              >
+                {isUserHavingAdminAccess
+                  ? ICONS.demoteAdmin
+                  : ICONS.promoteAdmin}
+                <span>
+                  {isUserHavingAdminAccess
+                    ? "Remove As Admin"
+                    : "Make As Admin"}
+                </span>
+              </button>
+            )}
         </div>
       </div>
     </section>
