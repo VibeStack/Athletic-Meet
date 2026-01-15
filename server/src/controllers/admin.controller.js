@@ -257,10 +257,9 @@ export const unlockUserEvents = asyncHandler(async (req, res) => {
     if (!user) {
       throw new ApiError(404, "User not found");
     }
-
     if (
       !canModifyDetails(
-        { headId: head.id, headRole: head.role },
+        { headId: head.id || head._id.toString(), headRole: head.role },
         { userId: user.id, userRole: user.role }
       )
     ) {
@@ -327,7 +326,7 @@ export const updateUserEvents = asyncHandler(async (req, res) => {
     }
     if (
       !canModifyDetails(
-        { headId: head.id, headRole: head.role },
+        { headId: head.id || head._id.toString(), headRole: head.role },
         { userId: user.id, userRole: user.role }
       )
     ) {

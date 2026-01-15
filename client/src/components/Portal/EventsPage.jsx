@@ -802,7 +802,7 @@ export default function EventsPage() {
                 }`}
               >
                 {user.role === "Admin" || user.role === "Manager"
-                  ? "Events Locked (Admin Override)"
+                  ? "Events Locked (Admin Access Required to Override)"
                   : "Events Locked Successfully"}
               </p>
               <p
