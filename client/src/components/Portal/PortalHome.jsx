@@ -4,9 +4,29 @@ import { useTheme } from "../../context/ThemeContext";
 import { generateQr } from "./generateQr";
 import ProfileField from "./ProfileField";
 import LoadingComponent from "./LoadingComponent";
+import { useUserDetail } from "../../context/UserDetailContext";
+
+const attendanceBadgeMap = {
+  present: {
+    label: "Present",
+    dark: "bg-emerald-500/15 text-emerald-400",
+    light: "bg-emerald-100 text-emerald-700",
+  },
+  absent: {
+    label: "Absent",
+    dark: "bg-red-500/15 text-red-400",
+    light: "bg-red-100 text-red-700",
+  },
+  notMarked: {
+    label: "Not Marked",
+    dark: "bg-slate-500/15 text-slate-400",
+    light: "bg-slate-100 text-slate-600",
+  },
+};
 
 export default function PortalHome() {
   const { user } = useOutletContext();
+  const { userEventsList } = useUserDetail();
   const { darkMode } = useTheme();
   const navigate = useNavigate();
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState("");
@@ -195,15 +215,14 @@ export default function PortalHome() {
           )}
 
           {/* Header */}
-          <div className="relative flex items-center justify-between mb-6">
+          <div className="relative flex items-center justify-between mb-2">
             <div className="flex items-center gap-4">
               <div
-                className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg
-        ${
-          darkMode
-            ? "bg-linear-to-br from-cyan-500 to-blue-600 text-white"
-            : "bg-black text-white"
-        }`}
+                className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg ${
+                  darkMode
+                    ? "bg-linear-to-br from-cyan-500 to-blue-600 text-white"
+                    : "bg-black text-white"
+                }`}
               >
                 {/* SVG — UNTOUCHED */}
                 <svg viewBox="0 0 24 24" className="w-7 h-7 fill-current">
@@ -224,7 +243,7 @@ export default function PortalHome() {
                     darkMode ? "text-white" : "text-slate-900"
                   }`}
                 >
-                  {user.selectedEvents.length}
+                  {userEventsList.length}
                 </p>
               </div>
             </div>
@@ -238,22 +257,21 @@ export default function PortalHome() {
             </span>
           </div>
 
-          {user.selectedEvents.length > 0 ? (
+          {userEventsList.length > 0 ? (
             <div className="relative">
-              <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide">
-                {user.selectedEvents.map(
+              <div className="flex gap-4 overflow-x-auto overflow-y-hidden pb-4 scrollbar-slim">
+                {userEventsList.map(
                   (
                     { eventName, eventType, eventDay, userEventAttendance },
                     idx
                   ) => (
                     <div
                       key={idx}
-                      className={`snap-start min-w-[85%] sm:min-w-[260px] h-[90px] rounded-xl p-4 shrink-0
-              ${
-                darkMode
-                  ? "bg-slate-950 ring-1 ring-white/10"
-                  : "bg-slate-50 ring-1 ring-slate-200"
-              }`}
+                      className={`snap-start min-w-[85%] sm:min-w-[260px] h-[90px] rounded-xl p-4 shrink-0 ${
+                        darkMode
+                          ? "bg-slate-950 ring-1 ring-white/10"
+                          : "bg-slate-50 ring-1 ring-slate-200"
+                      }`}
                     >
                       <div className="flex justify-between items-start mb-2">
                         <h3
@@ -263,24 +281,22 @@ export default function PortalHome() {
                         >
                           {eventName}
                         </h3>
-                        <span
-                          className={`text-[10px] px-2 py-0.5 rounded-full font-semibold
-                  ${
-                    userEventAttendance === "Present"
-                      ? darkMode
-                        ? "bg-emerald-500/15 text-emerald-400"
-                        : "bg-emerald-100 text-emerald-700"
-                      : userEventAttendance === "Absent"
-                      ? darkMode
-                        ? "bg-red-500/15 text-red-400"
-                        : "bg-red-100 text-red-700"
-                      : darkMode
-                      ? "bg-slate-500/15 text-slate-400"
-                      : "bg-slate-100 text-slate-600"
-                  }`}
-                        >
-                          {userEventAttendance || "Pending"}
-                        </span>
+                        {(() => {
+                          const status = userEventAttendance || "notMarked";
+                          const badge =
+                            attendanceBadgeMap[status] ||
+                            attendanceBadgeMap.notMarked;
+
+                          return (
+                            <span
+                              className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
+                                darkMode ? badge.dark : badge.light
+                              }`}
+                            >
+                              {badge.label}
+                            </span>
+                          );
+                        })()}
                       </div>
 
                       <p className="text-sm text-slate-500 line-clamp-1">
@@ -310,12 +326,11 @@ export default function PortalHome() {
         <div className="flex flex-col gap-6">
           {/* ROLE */}
           <div
-            className={`rounded-3xl p-6 relative overflow-hidden
-        ${
-          darkMode
-            ? "bg-linear-to-br from-emerald-900/60 to-slate-900 ring-1 ring-emerald-500/30"
-            : "bg-white ring-1 ring-slate-200"
-        }`}
+            className={`rounded-3xl p-6 relative overflow-hidden ${
+              darkMode
+                ? "bg-linear-to-br from-emerald-900/60 to-slate-900 ring-1 ring-emerald-500/30"
+                : "bg-white ring-1 ring-slate-200"
+            }`}
           >
             {darkMode && (
               <div className="absolute -top-12 -right-12 w-40 h-40 bg-emerald-500/20 blur-2xl rounded-full" />
@@ -395,7 +410,7 @@ export default function PortalHome() {
                     darkMode ? "text-white" : "text-slate-900"
                   }`}
                 >
-                  {user.selectedEvents.length}
+                  {userEventsList.length}
                 </p>
               </div>
             </div>

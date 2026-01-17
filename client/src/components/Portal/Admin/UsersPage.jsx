@@ -108,8 +108,10 @@ export default function UsersPage() {
         const { data: response } = await axios.get(`${API_URL}/admin/users`, {
           withCredentials: true,
         });
-
-        setAllUsers(response.data.users);
+        const sortedUsers = response.data.users.sort(
+          (a, b) => a.jerseyNumber - b.jerseyNumber
+        );
+        setAllUsers(sortedUsers);
         setTotalUsersCount(response.data.usersCount);
       } catch (err) {
         console.error("Failed to fetch users", err);

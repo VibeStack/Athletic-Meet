@@ -82,6 +82,67 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* Custom Scrollbar - Light Mode */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Custom Scrollbar - Dark Mode */
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.5);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.8);
+}
+
+/* Slim Scrollbar - Fixed 4px height, no resize on hover */
+.scrollbar-slim::-webkit-scrollbar {
+  height: 4px !important;
+  width: 4px !important;
+}
+
+.scrollbar-slim::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.3);
+  border-radius: 10px;
+}
+
+.scrollbar-slim::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.5);
+}
+
+.dark .scrollbar-slim::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.4);
+}
+
+.dark .scrollbar-slim::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.6);
+}
+
+/* Firefox Scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.dark * {
+  scrollbar-color: rgba(100, 116, 139, 0.5) transparent;
+}
+
 /* ================================
    UTILITY CLASSES
    ================================ */
