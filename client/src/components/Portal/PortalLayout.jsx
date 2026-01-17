@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useTheme } from "../../context/ThemeContext";
+import { useUserDetail } from "../../context/UserDetailContext";
 import HamburgerMenu from "./HamburgerMenu";
 
 const HamburgerIcon = ({ className }) => (
@@ -62,36 +63,20 @@ const LogoutIcon = ({ className }) => (
 export default function PortalLayout() {
   const navigate = useNavigate();
   const { darkMode, toggleTheme } = useTheme();
+  const { userDetail, fetchUserDetails } = useUserDetail();
 
-  const [userDetail, setUserDetail] = useState({});
   const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [showLogoutPopup, setShowLogoutPopup] = useState(false);
 
   const API_URL = import.meta.env.VITE_API_URL;
 
-  const getUserDetails = async () => {
-    try {
-      const { data: response } = await axios.get(`${API_URL}/user/profile`, {
-        withCredentials: true,
-      });
-
-      if (response?.success) {
-        setUserDetail(response.data);
-      } else {
-        throw new Error(response?.message || "Failed to fetch user");
-      }
-    } catch (err) {
-      console.error("Profile fetch error:", err);
-      setError("Unable to load user profile");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    getUserDetails();
+    const loadUser = async () => {
+      await fetchUserDetails();
+      setLoading(false);
+    };
+    loadUser();
   }, []);
 
   const handleLogout = async () => {
@@ -111,22 +96,6 @@ export default function PortalLayout() {
   };
 
   if (loading) return null;
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div
-          className={`px-6 py-4 rounded-2xl font-medium text-center ${
-            darkMode
-              ? "bg-red-500/10 text-red-400 ring-1 ring-red-500/30"
-              : "bg-red-50 text-red-600 ring-1 ring-red-200"
-          }`}
-        >
-          {error}
-        </div>
-      </div>
-    );
-  }
 
   const avatarLetter =
     userDetail?.fullname?.charAt(0) || userDetail?.username?.charAt(0) || "?";

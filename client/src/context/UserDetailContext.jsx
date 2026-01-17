@@ -14,6 +14,7 @@ export function UserDetailProvider({ children }) {
       const { data: response } = await axios.get(`${API_URL}/user/profile`, {
         withCredentials: true,
       });
+      console.log(response);
 
       if (response?.success) {
         setUserDetail(response.data);
