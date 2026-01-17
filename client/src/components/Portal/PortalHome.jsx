@@ -1,21 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { useOutletContext, useNavigate } from "react-router-dom";
-import { useTheme } from "./ThemeContext";
+import { useTheme } from "../../context/ThemeContext";
 import { generateQr } from "./generateQr";
 import ProfileField from "./ProfileField";
 import LoadingComponent from "./LoadingComponent";
 
 export default function PortalHome() {
-  const { user, refetchUserProfile } = useOutletContext();
+  const { user } = useOutletContext();
   const { darkMode } = useTheme();
   const navigate = useNavigate();
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-
-  // Refetch user profile on mount to get latest data
-  useEffect(() => {
-    if (refetchUserProfile) refetchUserProfile();
-  }, []);
 
   useEffect(() => {
     if (!user?.jerseyNumber) {

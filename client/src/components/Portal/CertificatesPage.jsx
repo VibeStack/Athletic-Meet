@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useAuth } from "./AuthContext";
-import { useTheme } from "./ThemeContext";
+import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
 
 const mockCertificates = [
   {

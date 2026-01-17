@@ -1,20 +1,7 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 import { useEffect } from "react";
-
-// Loading spinner component
-function LoadingSpinner() {
-  return (
-    <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-blue-900 flex items-center justify-center">
-      <div className="relative">
-        <div className="w-16 h-16 border-4 border-cyan-400/30 rounded-full animate-spin border-t-cyan-400"></div>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-8 h-8 bg-cyan-400/20 rounded-full animate-pulse"></div>
-        </div>
-      </div>
-    </div>
-  );
-}
+import LoadingComponent from "../components/Portal/LoadingComponent";
 
 // Access Denied component
 function AccessDenied() {
@@ -75,9 +62,15 @@ export default function ProtectedRoute({ children, allowedRoles = [] }) {
     }
   }, [authChecked, checkAuth]);
 
-  // Show loading while checking auth
+  // Show shimmer loading while checking auth
   if (loading) {
-    return <LoadingSpinner />;
+    return (
+      <LoadingComponent
+        title="Authenticating"
+        message="Verifying your access..."
+        fullScreen
+      />
+    );
   }
 
   // Not authenticated - redirect to login

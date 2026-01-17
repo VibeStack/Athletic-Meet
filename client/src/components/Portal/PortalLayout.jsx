@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { useTheme } from "./ThemeContext";
+import { useTheme } from "../../context/ThemeContext";
 import HamburgerMenu from "./HamburgerMenu";
 
 const HamburgerIcon = ({ className }) => (
@@ -295,9 +295,7 @@ export default function PortalLayout() {
 
       <main className="pt-20">
         <div className="max-w-7xl mx-auto px-4 py-6">
-          <Outlet
-            context={{ user: userDetail, refetchUserProfile: getUserDetails }}
-          />
+          <Outlet context={{ user: userDetail }} />
         </div>
       </main>
 

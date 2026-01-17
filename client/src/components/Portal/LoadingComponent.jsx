@@ -1,72 +1,140 @@
 import React from "react";
-import { useTheme } from "./ThemeContext";
 
-export default function LoadingComponent({ title, message }) {
-  const { darkMode } = useTheme();
+// LoadingComponent that works both inside and outside ThemeProvider
+// Uses darkMode prop if provided, otherwise defaults to dark mode for auth loading
+export default function LoadingComponent({
+  title,
+  message,
+  fullScreen = false,
+  darkMode = true,
+}) {
+  const containerClass = fullScreen ? "min-h-screen" : "min-h-[60vh]";
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
-      {/* Brand Loader */}
+    <div
+      className={`flex flex-col items-center justify-center ${containerClass} gap-6 px-4 ${
+        fullScreen
+          ? darkMode
+            ? "bg-slate-950"
+            : "bg-linear-to-br from-cyan-50 via-white to-blue-50"
+          : ""
+      }`}
+    >
+      {/* Brand Logo with Shimmer */}
       <div className="relative">
         <div
-          className={`w-16 h-16 rounded-2xl flex items-center justify-center font-black text-xl
-              ${
-                darkMode
-                  ? "bg-linear-to-br from-cyan-500 to-blue-600 text-white"
-                  : "text-white"
-              }
-            `}
-          style={
-            !darkMode
-              ? {
-                  background:
-                    "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%)",
-                }
-              : {}
-          }
+          className={`w-16 h-16 rounded-2xl flex items-center justify-center font-black text-xl overflow-hidden ${
+            darkMode
+              ? "bg-linear-to-br from-cyan-500 to-blue-600 text-white"
+              : "bg-linear-to-br from-slate-800 via-slate-700 to-slate-900 text-white"
+          }`}
         >
-          A
+          <span className="relative z-10">A</span>
+          {/* Shimmer effect */}
+          <div
+            className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite]"
+            style={{
+              background:
+                "linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)",
+            }}
+          />
         </div>
-
-        {/* Pulse ring */}
-        <span className="absolute inset-0 rounded-2xl animate-ping bg-cyan-500/30" />
       </div>
 
       {/* Text */}
-      <div className="text-center space-y-1">
-        <p
-          className={`text-lg font-semibold ${
-            darkMode ? "text-cyan-400" : "text-slate-700"
-          }`}
-        >
-          {title}
-        </p>
-        <p
-          className={`text-sm ${
-            darkMode ? "text-slate-500" : "text-slate-400"
-          }`}
-        >
-          {message}
-        </p>
-      </div>
+      {(title || message) && (
+        <div className="text-center space-y-1">
+          {title && (
+            <p
+              className={`text-lg font-semibold ${
+                darkMode ? "text-cyan-400" : "text-slate-700"
+              }`}
+            >
+              {title}
+            </p>
+          )}
+          {message && (
+            <p
+              className={`text-sm ${
+                darkMode ? "text-slate-500" : "text-slate-400"
+              }`}
+            >
+              {message}
+            </p>
+          )}
+        </div>
+      )}
 
-      {/* Skeleton layout */}
-      <div className="w-full max-w-3xl space-y-4 mt-6">
+      {/* Shimmer Skeleton Cards */}
+      <div className="w-full max-w-3xl space-y-4 mt-2">
+        {/* Large card skeleton */}
         <div
-          className={`h-24 rounded-2xl animate-pulse ${
-            darkMode ? "bg-slate-800/60" : "bg-slate-200/60"
+          className={`relative h-28 rounded-2xl overflow-hidden ${
+            darkMode ? "bg-slate-800/50" : "bg-slate-100"
           }`}
-        />
+        >
+          <div
+            className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite]"
+            style={{
+              background: darkMode
+                ? "linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent)"
+                : "linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)",
+            }}
+          />
+        </div>
+
+        {/* Two smaller cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div
-            className={`h-16 rounded-xl animate-pulse ${
-              darkMode ? "bg-slate-800/60" : "bg-slate-200/60"
+            className={`relative h-20 rounded-xl overflow-hidden ${
+              darkMode ? "bg-slate-800/50" : "bg-slate-100"
             }`}
-          />
+          >
+            <div
+              className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite]"
+              style={{
+                background: darkMode
+                  ? "linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent)"
+                  : "linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)",
+              }}
+            />
+          </div>
           <div
-            className={`h-16 rounded-xl animate-pulse ${
-              darkMode ? "bg-slate-800/60" : "bg-slate-200/60"
+            className={`relative h-20 rounded-xl overflow-hidden ${
+              darkMode ? "bg-slate-800/50" : "bg-slate-100"
             }`}
-          />
+          >
+            <div
+              className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite]"
+              style={{
+                background: darkMode
+                  ? "linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent)"
+                  : "linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)",
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Three small items */}
+        <div className="grid grid-cols-3 gap-3">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className={`relative h-12 rounded-lg overflow-hidden ${
+                darkMode ? "bg-slate-800/50" : "bg-slate-100"
+              }`}
+            >
+              <div
+                className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite]"
+                style={{
+                  background: darkMode
+                    ? "linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent)"
+                    : "linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)",
+                  animationDelay: `${i * 0.1}s`,
+                }}
+              />
+            </div>
+          ))}
         </div>
       </div>
     </div>

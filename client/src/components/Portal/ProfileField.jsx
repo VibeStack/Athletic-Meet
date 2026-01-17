@@ -1,5 +1,5 @@
 import React from "react";
-import { useTheme } from "./ThemeContext";
+import { useTheme } from "../../context/ThemeContext";
 
 /**
  * Premium Profile Field — stronger typography, dashboard-aligned

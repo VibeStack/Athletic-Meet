@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useTheme } from "../ThemeContext";
+import { useTheme } from "../../../context/ThemeContext";
 
 export default function CertificateControlsPage() {
   const { darkMode } = useTheme();

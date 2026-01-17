@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { useTheme } from "./ThemeContext";
+import { useTheme } from "../../context/ThemeContext";
 
 // ========== CUSTOM SVG ICONS ==========
 const DashboardIcon = ({ className }) => (

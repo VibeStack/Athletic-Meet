@@ -7,9 +7,9 @@ import GalleryPage from "./components/LandingPage/GalleryPage";
 import ScrollToTop from "./components/LandingPage/ScrollToTop";
 
 // Portal Components
-import { AuthProvider } from "./components/Portal/AuthContext";
-import { ThemeProvider } from "./components/Portal/ThemeContext";
-import ProtectedRoute from "./components/Portal/ProtectedRoute";
+import { AuthProvider } from "./context/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
+import ProtectedRoute from "./context/ProtectedRoute";
 import PortalLayout from "./components/Portal/PortalLayout";
 import PortalHome from "./components/Portal/PortalHome";
 import EventsPage from "./components/Portal/EventsPage";

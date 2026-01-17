@@ -1,7 +1,7 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate, useOutletContext } from "react-router-dom";
-import { useTheme } from "../ThemeContext";
+import { useTheme } from "../../../context/ThemeContext";
 import LoadingComponent from "../LoadingComponent";
 
 // Role badge theme

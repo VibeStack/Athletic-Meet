@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import axios from "axios";
-import { useTheme } from "../ThemeContext";
+import { useTheme } from "../../../context/ThemeContext";
+import LoadingComponent from "../LoadingComponent";
 
 /* -------------------- SVG Icons -------------------- */
 const ICONS = {
@@ -280,14 +281,7 @@ export default function QRScannerPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin h-12 w-12 border-4 border-cyan-400/30 rounded-full border-t-cyan-400 mx-auto mb-4"></div>
-          <p className={darkMode ? "text-slate-400" : "text-slate-600"}>
-            Loading events...
-          </p>
-        </div>
-      </div>
+      <LoadingComponent title="Loading Scanner" message="Fetching events..." />
     );
   }
 

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useTheme } from "./ThemeContext";
+import { useTheme } from "../../context/ThemeContext";
 import axios from "axios";
 import { useOutletContext } from "react-router-dom";
 import LoadingComponent from "./LoadingComponent";
@@ -48,7 +48,7 @@ const SECTION_ICONS = {
 
 export default function EventsPage() {
   const { darkMode } = useTheme();
-  const { user, refetchUserProfile } = useOutletContext();
+  const { user } = useOutletContext();
   const [enrolledEvents, setEnrolledEvents] = useState([]);
   const [isLocked, setIsLocked] = useState(false);
   const [locking, setLocking] = useState(false);
@@ -56,11 +56,6 @@ export default function EventsPage() {
   const [allEvents, setAllEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const API_URL = import.meta.env.VITE_API_URL;
-
-  // Refetch user profile on mount to get latest data
-  useEffect(() => {
-    if (refetchUserProfile) refetchUserProfile();
-  }, []);
 
   useEffect(() => {
     const fetchInitialData = async () => {

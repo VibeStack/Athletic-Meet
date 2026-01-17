@@ -2,7 +2,6 @@ import {
   createContext,
   useContext,
   useState,
-  useEffect,
   useCallback,
 } from "react";
 import axios from "axios";
@@ -65,9 +64,6 @@ export function AuthProvider({ children }) {
     setAuthChecked(false);
     return checkAuth();
   }, [checkAuth]);
-
-  // Auth check removed - now using lazy auth pattern
-  // Auth will only be checked when navigating to protected routes
 
   const value = {
     user,

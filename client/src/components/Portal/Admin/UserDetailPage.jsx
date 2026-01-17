@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useTheme } from "../ThemeContext";
+import { useTheme } from "../../../context/ThemeContext";
 import axios from "axios";
 import { useNavigate, useOutletContext, useParams } from "react-router-dom";
 import LoadingComponent from "../LoadingComponent";

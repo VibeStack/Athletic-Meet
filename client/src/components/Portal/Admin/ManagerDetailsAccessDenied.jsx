@@ -1,5 +1,5 @@
 import React from "react";
-import { useTheme } from "../ThemeContext";
+import { useTheme } from "../../../context/ThemeContext";
 import { useNavigate } from "react-router-dom";
 
 export default function ManagerDetailsAccessDenied() {
