@@ -47,13 +47,6 @@ const getRoleTheme = (role, gender, darkMode) => {
     : "bg-slate-200 text-slate-700 ring-slate-300";
 };
 
-const roleAccessPoints = (role) => {
-  if (role === "Manager") return 3;
-  if (role === "Admin") return 2;
-  if (role === "Student") return 1;
-  else 0;
-};
-
 /* -------------------- SVG Icons -------------------- */
 const ICONS = {
   lock: (
@@ -84,14 +77,11 @@ const ICONS = {
       stroke="currentColor"
       strokeWidth="2"
     >
-      {/* Shield */}
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
         d="M12 3l7 4v5c0 4.5-3.2 8.3-7 9-3.8-.7-7-4.5-7-9V7l7-4z"
       />
-
-      {/* Check */}
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.5l2 2 4-4" />
     </svg>
   ),
@@ -103,14 +93,11 @@ const ICONS = {
       stroke="currentColor"
       strokeWidth="2"
     >
-      {/* Shield */}
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
         d="M12 3l7 4v5c0 4.5-3.2 8.3-7 9-3.8-.7-7-4.5-7-9V7l7-4z"
       />
-
-      {/* Minus */}
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6" />
     </svg>
   ),
@@ -127,19 +114,73 @@ export default function UserDetailHeader({
 }) {
   const { user } = useOutletContext();
   const API_URL = import.meta.env.VITE_API_URL;
-  const jerseyTheme = getJerseyBadgeTheme(studentUserData.role, studentUserData.gender);
-  const roleTheme = getRoleTheme(studentUserData.role, studentUserData.gender, darkMode);
-  const lockButtonTheme = getLockButtonTheme(studentUserData.role, studentUserData.gender);
-  const [isUserHavingAdminAccess, setIsUserHavingAdminAccess] = useState(
-    studentUserData.role === "Manager" || studentUserData.role === "Admin" ? true : false
+  const jerseyTheme = getJerseyBadgeTheme(
+    studentUserData.role,
+    studentUserData.gender,
   );
+  const roleTheme = getRoleTheme(
+    studentUserData.role,
+    studentUserData.gender,
+    darkMode,
+  );
+  const lockButtonTheme = getLockButtonTheme(
+    studentUserData.role,
+    studentUserData.gender,
+  );
+  const [isUserHavingAdminAccess, setIsUserHavingAdminAccess] = useState(
+    studentUserData.role === "Manager" || studentUserData.role === "Admin",
+  );
+
+  // ========== VISIBILITY LOGIC ==========
+  const viewerId = user.id || user._id;
+  const viewerRole = user.role;
+  const targetId = studentUserData.id;
+  const targetRole = studentUserData.role;
+  const isDetailsComplete = studentUserData.isUserDetailsComplete === "true";
+  const isSelf = viewerId === targetId;
+
+  // Helper to check if viewer has higher role
+  const isViewerHigherRole = () => {
+    const roleRank = { Manager: 3, Admin: 2, Student: 1 };
+    return (roleRank[viewerRole] || 0) > (roleRank[targetRole] || 0);
+  };
+
+  // Determine button visibility
+  let canShowLockUnlock = false;
+  let canShowDelete = false;
+  let canShowMakeRemoveAdmin = false;
+
+  if (!isDetailsComplete) {
+    // Incomplete details: Only delete is visible (for higher roles)
+    canShowDelete = isViewerHigherRole();
+  } else if (viewerRole === "Manager") {
+    // Manager can see all buttons for anyone
+    canShowLockUnlock = true;
+    canShowDelete = !isSelf; // Can't delete self
+    canShowMakeRemoveAdmin = targetRole !== "Manager"; // Can't change Manager role
+  } else if (viewerRole === "Admin") {
+    if (isSelf) {
+      // Admin viewing own profile: only lock/unlock
+      canShowLockUnlock = true;
+    } else if (targetRole === "Admin" || targetRole === "Manager") {
+      // Admin viewing other Admin/Manager: no buttons
+      canShowLockUnlock = false;
+      canShowDelete = false;
+      canShowMakeRemoveAdmin = false;
+    } else if (targetRole === "Student") {
+      // Admin viewing Student: lock/unlock + delete
+      canShowLockUnlock = true;
+      canShowDelete = true;
+    }
+  }
+  // Students can't see any admin buttons
 
   const makeAsAdmin = async () => {
     try {
       await axios.post(
         `${API_URL}/admin/user/${studentUserData.id}/makeAsAdmin`,
         null,
-        { withCredentials: true }
+        { withCredentials: true },
       );
       setIsUserHavingAdminAccess(true);
       if (refetchUser) refetchUser();
@@ -153,7 +194,7 @@ export default function UserDetailHeader({
       await axios.post(
         `${API_URL}/admin/user/${studentUserData.id}/removeAsAdmin`,
         null,
-        { withCredentials: true }
+        { withCredentials: true },
       );
       setIsUserHavingAdminAccess(false);
       if (refetchUser) refetchUser();
@@ -228,27 +269,22 @@ export default function UserDetailHeader({
         <div className="flex flex-col gap-2 sm:gap-3 w-full sm:w-auto">
           {/* Lock/Unlock + Delete Row */}
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* {user.id === studentUserData.id} */}
-            {(studentUserData.id === user.id ||
-              roleAccessPoints(user.role) > roleAccessPoints(studentUserData.role)) &&
-              studentUserData.isUserDetailsComplete === "true" && (
-                <button
-                  onClick={
-                    isUserEventsLocked ? unlockUserEvents : lockUserEvents
-                  }
-                  className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-all sm:min-w-40 shadow-lg hover:brightness-110 whitespace-nowrap ${lockButtonTheme}`}
-                >
-                  {isUserEventsLocked ? ICONS.unlock : ICONS.lock}
-                  <span className="hidden sm:inline">
-                    {isUserEventsLocked ? "Unlock Events" : "Lock Events"}
-                  </span>
-                  <span className="sm:hidden">
-                    {isUserEventsLocked ? "Unlock" : "Lock"}
-                  </span>
-                </button>
-              )}
+            {canShowLockUnlock && (
+              <button
+                onClick={isUserEventsLocked ? unlockUserEvents : lockUserEvents}
+                className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-all sm:min-w-40 shadow-lg hover:brightness-110 whitespace-nowrap ${lockButtonTheme}`}
+              >
+                {isUserEventsLocked ? ICONS.unlock : ICONS.lock}
+                <span className="hidden sm:inline">
+                  {isUserEventsLocked ? "Unlock Events" : "Lock Events"}
+                </span>
+                <span className="sm:hidden">
+                  {isUserEventsLocked ? "Unlock" : "Lock"}
+                </span>
+              </button>
+            )}
 
-            {roleAccessPoints(user.role) > roleAccessPoints(studentUserData.role) && (
+            {canShowDelete && (
               <button
                 onClick={() => setShowDeletePopup(true)}
                 className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 ${lockButtonTheme}`}
@@ -259,23 +295,18 @@ export default function UserDetailHeader({
             )}
           </div>
 
-          {/* Make/Remove Admin Button - Full Width Below */}
-          {roleAccessPoints(studentUserData.role) < 3 &&
-            studentUserData.isUserDetailsComplete === "true" && (
-              <button
-                onClick={isUserHavingAdminAccess ? removeAsAdmin : makeAsAdmin}
-                className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 ${lockButtonTheme}`}
-              >
-                {isUserHavingAdminAccess
-                  ? ICONS.demoteAdmin
-                  : ICONS.promoteAdmin}
-                <span>
-                  {isUserHavingAdminAccess
-                    ? "Remove As Admin"
-                    : "Make As Admin"}
-                </span>
-              </button>
-            )}
+          {/* Make/Remove Admin Button - Only for Manager */}
+          {canShowMakeRemoveAdmin && (
+            <button
+              onClick={isUserHavingAdminAccess ? removeAsAdmin : makeAsAdmin}
+              className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 ${lockButtonTheme}`}
+            >
+              {isUserHavingAdminAccess ? ICONS.demoteAdmin : ICONS.promoteAdmin}
+              <span>
+                {isUserHavingAdminAccess ? "Remove As Admin" : "Make As Admin"}
+              </span>
+            </button>
+          )}
         </div>
       </div>
     </section>

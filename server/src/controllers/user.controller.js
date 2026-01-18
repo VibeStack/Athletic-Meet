@@ -147,8 +147,10 @@ export const getCurrentUser = asyncHandler(async (req, res) => {
 });
 
 export const getEvents = asyncHandler(async (req, res) => {
-  const events = await Event.find({ isActive: true }).select(
-    "_id name type category day"
+  // Return ALL events with isActive status (not just active ones)
+  // This allows frontend to show enrolled events even if they're deactivated
+  const events = await Event.find({}).select(
+    "_id name type category day isActive studentsCount"
   );
 
   const formattedEvents = events.map((event) => ({
@@ -157,6 +159,12 @@ export const getEvents = asyncHandler(async (req, res) => {
     type: event.type,
     category: event.category,
     day: event.day,
+    isActive: event.isActive,
+    studentsCount: event.studentsCount || {
+      present: 0,
+      absent: 0,
+      notMarked: 0,
+    },
   }));
 
   res
@@ -253,8 +261,8 @@ export const lockEvents = asyncHandler(async (req, res) => {
         eventName: e.name,
         eventType: e.type,
         eventDay: e.day,
-        isEventActive:e.isActive,
-        userEventAttendance:"notMarked"
+        isEventActive: e.isActive,
+        userEventAttendance: "notMarked",
       };
     });
 
@@ -354,4 +362,64 @@ export const unlockEvents = asyncHandler(async (req, res) => {
     mongoSession.endSession();
     throw error;
   }
+});
+
+// Get user certificates
+export const getCertificates = asyncHandler(async (req, res) => {
+  const user = req.user;
+
+  if (!user) {
+    throw new ApiError(401, "Not authenticated");
+  }
+
+  // Get global certificate lock status
+  let config = await SystemConfig.findById("GLOBAL");
+  const areCertificatesLocked = config?.areCertificatesLocked ?? true;
+
+  // If locked, just return the status
+  if (areCertificatesLocked) {
+    return res.status(200).json(
+      new ApiResponse(
+        {
+          areCertificatesLocked: true,
+          certificates: [],
+        },
+        "Certificates are currently locked"
+      )
+    );
+  }
+
+  // Get user with populated events
+  const userWithEvents = await User.findById(user._id)
+    .populate({
+      path: "selectedEvents.eventId",
+      select: "name type category day",
+    })
+    .lean();
+
+  if (!userWithEvents) {
+    throw new ApiError(404, "User not found");
+  }
+
+  // Format certificates from user's selected events
+  const certificates = (userWithEvents.selectedEvents || []).map((event) => ({
+    eventId: event.eventId?._id,
+    eventName: event.eventId?.name || "Unknown Event",
+    eventType: event.eventId?.type || "Unknown",
+    eventDay: event.eventId?.day || "Unknown",
+    // Position from event results (if applicable)
+    // For now, assuming participation. Winner logic can be added later.
+    position: null, // 1, 2, 3 for winners or null for participation
+    certificateType: "Participation", // "Winner" if position is 1,2,3
+  }));
+
+  return res.status(200).json(
+    new ApiResponse(
+      {
+        areCertificatesLocked: false,
+        certificates,
+      },
+      "Certificates fetched successfully"
+    )
+  );
 });

@@ -1,478 +1,714 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useTheme } from "../../../context/ThemeContext";
+import axios from "axios";
+import LoadingComponent from "../LoadingComponent";
 
-// Event data with lock status - organized better
-const initialEvents = {
-  "Day 1": {
-    "Track Events": [
-      {
-        id: 1,
-        name: "100m Sprint",
-        emoji: "⚡",
-        locked: false,
-        participants: 65,
-      },
-      {
-        id: 2,
-        name: "200m Sprint",
-        emoji: "🏃",
-        locked: false,
-        participants: 47,
-      },
-      {
-        id: 3,
-        name: "400m Race",
-        emoji: "🏃‍♂️",
-        locked: false,
-        participants: 49,
-      },
-      {
-        id: 4,
-        name: "800m Race",
-        emoji: "🏃‍♀️",
-        locked: false,
-        participants: 47,
-      },
-    ],
-    "Field Events": [
-      {
-        id: 5,
-        name: "Long Jump",
-        emoji: "🦘",
-        locked: false,
-        participants: 52,
-      },
-      {
-        id: 6,
-        name: "High Jump",
-        emoji: "🔝",
-        locked: false,
-        participants: 38,
-      },
-    ],
-  },
-  "Day 2": {
-    "Track Events": [
-      {
-        id: 7,
-        name: "1500m Race",
-        emoji: "🎽",
-        locked: false,
-        participants: 23,
-      },
-      {
-        id: 8,
-        name: "5000m Race",
-        emoji: "🏅",
-        locked: false,
-        participants: 49,
-      },
-    ],
-    "Field Events": [
-      {
-        id: 9,
-        name: "Triple Jump",
-        emoji: "🥉",
-        locked: false,
-        participants: 41,
-      },
-      {
-        id: 10,
-        name: "Shot Put",
-        emoji: "🏋️",
-        locked: false,
-        participants: 35,
-      },
-      {
-        id: 11,
-        name: "Discus Throw",
-        emoji: "🥏",
-        locked: false,
-        participants: 29,
-      },
-      {
-        id: 12,
-        name: "Javelin Throw",
-        emoji: "🎯",
-        locked: false,
-        participants: 33,
-      },
-    ],
-  },
+/* -------------------- Icons -------------------- */
+const ICONS = {
+  lock: (
+    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
+      <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
+    </svg>
+  ),
+  unlock: (
+    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
+      <path d="M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h1.9c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10z" />
+    </svg>
+  ),
+  track: (
+    <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current">
+      <path d="M13.5 5.5a2 2 0 100-4 2 2 0 000 4zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3C14.8 12 16.8 13 19 13v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1L6 8.3V13h2V9.6l1.8-.7" />
+    </svg>
+  ),
+  field: (
+    <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current">
+      <circle cx="12" cy="5" r="3" />
+      <path d="M12 10c-4 0-7 2-7 5v5h14v-5c0-3-3-5-7-5z" />
+    </svg>
+  ),
+  team: (
+    <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current">
+      <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
+    </svg>
+  ),
+  info: (
+    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+    </svg>
+  ),
+  controls: (
+    <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current">
+      <path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z" />
+    </svg>
+  ),
+  check: (
+    <svg
+      viewBox="0 0 24 24"
+      className="w-3.5 h-3.5 fill-none stroke-current stroke-3"
+    >
+      <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
 };
 
 export default function EventControlsPage() {
-  const [events, setEvents] = useState(initialEvents);
+  const { darkMode } = useTheme();
+  const API_URL = import.meta.env.VITE_API_URL;
+
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(null);
+  const [error, setError] = useState(null);
 
-  // Get all events flat for counting
-  const getAllEvents = () => {
-    const allEvents = [];
-    Object.entries(events).forEach(([day, categories]) => {
-      Object.entries(categories).forEach(([category, eventList]) => {
-        eventList.forEach((event) =>
-          allEvents.push({ ...event, day, category })
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        setLoading(true);
+        const { data: response } = await axios.get(
+          `${API_URL}/manager/allEvents`,
+          { withCredentials: true },
         );
-      });
-    });
-    return allEvents;
+
+        if (response.success) {
+          setEvents(response.data.events);
+        }
+      } catch (err) {
+        console.error("Failed to fetch events", err);
+        setError("Failed to load events. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEvents();
+  }, [API_URL]);
+
+  // Group events by day and type
+  const groupedEvents = events.reduce((acc, event) => {
+    const day = event.day === "Both" ? "Both Days" : event.day;
+    const type = event.type;
+
+    if (!acc[day]) acc[day] = {};
+    if (!acc[day][type]) acc[day][type] = [];
+    acc[day][type].push(event);
+
+    return acc;
+  }, {});
+
+  // Day order for consistent display
+  const dayOrder = ["Day 1", "Day 2", "Both Days"];
+
+  // Stats
+  const activeCount = events.filter((e) => e.isActive).length;
+  const inactiveCount = events.filter((e) => !e.isActive).length;
+
+  // API Helper Functions
+  const toggleSingleEventAPI = (eventId) => {
+    return axios.post(
+      `${API_URL}/manager/event/toggle`,
+      { eventId },
+      { withCredentials: true },
+    );
   };
 
-  const allEvents = getAllEvents();
-  const lockedCount = allEvents.filter((e) => e.locked).length;
-  const openCount = allEvents.filter((e) => !e.locked).length;
+  const activateEventsAPI = (eventIds) => {
+    return axios.post(
+      `${API_URL}/manager/events/activate`,
+      { eventIds },
+      { withCredentials: true },
+    );
+  };
 
-  const toggleEventLock = async (day, category, eventId) => {
-    setUpdating(eventId);
-    await new Promise((resolve) => setTimeout(resolve, 300));
+  const deactivateEventsAPI = (eventIds) => {
+    return axios.post(
+      `${API_URL}/manager/events/deactivate`,
+      { eventIds },
+      { withCredentials: true },
+    );
+  };
 
-    setEvents((prev) => ({
-      ...prev,
-      [day]: {
-        ...prev[day],
-        [category]: prev[day][category].map((e) =>
-          e.id === eventId ? { ...e, locked: !e.locked } : e
+  // Helper to get event IDs for a day
+  const getDayEventIds = (day) =>
+    events
+      .filter((e) => e.day === day || (day === "Both Days" && e.day === "Both"))
+      .map((e) => e.id);
+
+  // Helper to get event IDs for a type in a day
+  const getTypeEventIds = (day, type) =>
+    events
+      .filter(
+        (e) =>
+          (e.day === day || (day === "Both Days" && e.day === "Both")) &&
+          e.type === type,
+      )
+      .map((e) => e.id);
+
+  // Toggle single event
+  const toggleEvent = async (eventId, currentStatus) => {
+    try {
+      setUpdating(eventId);
+
+      await toggleSingleEventAPI(eventId);
+
+      setEvents((prev) =>
+        prev.map((e) =>
+          e.id === eventId ? { ...e, isActive: !currentStatus } : e,
         ),
-      },
-    }));
-    setUpdating(null);
+      );
+    } catch (err) {
+      console.error("Failed to toggle event", err);
+      alert("❌ Failed to toggle event. Please try again.");
+    } finally {
+      setUpdating(null);
+    }
   };
 
-  const lockAllDay = async (day) => {
-    const dayEvents = getAllEvents().filter((e) => e.day === day);
-    const allLocked = dayEvents.every((e) => e.locked);
+  // Toggle all events for a day
+  const toggleDay = async (day) => {
+    const eventIds = getDayEventIds(day);
+    const allActive = events
+      .filter((e) => e.day === day || (day === "Both Days" && e.day === "Both"))
+      .every((e) => e.isActive);
 
-    setUpdating(`day-${day}`);
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    try {
+      setUpdating(`day-${day}`);
 
-    setEvents((prev) => ({
-      ...prev,
-      [day]: Object.fromEntries(
-        Object.entries(prev[day]).map(([cat, eventList]) => [
-          cat,
-          eventList.map((e) => ({ ...e, locked: !allLocked })),
-        ])
-      ),
-    }));
-    setUpdating(null);
+      if (allActive) {
+        await deactivateEventsAPI(eventIds);
+      } else {
+        await activateEventsAPI(eventIds);
+      }
+
+      setEvents((prev) =>
+        prev.map((e) =>
+          eventIds.includes(e.id) ? { ...e, isActive: !allActive } : e,
+        ),
+      );
+    } catch (err) {
+      console.error("Failed to toggle day", err);
+      alert("❌ Failed to toggle day. Please try again.");
+    } finally {
+      setUpdating(null);
+    }
   };
 
-  const lockAllCategory = async (day, category) => {
-    const categoryEvents = events[day][category];
-    const allLocked = categoryEvents.every((e) => e.locked);
+  // Toggle all events for a type in a day
+  const toggleTypeInDay = async (day, type) => {
+    const eventIds = getTypeEventIds(day, type);
+    const allActive = events
+      .filter((e) => eventIds.includes(e.id))
+      .every((e) => e.isActive);
 
-    setUpdating(`${day}-${category}`);
-    await new Promise((resolve) => setTimeout(resolve, 400));
+    try {
+      setUpdating(`${day}-${type}`);
 
-    setEvents((prev) => ({
-      ...prev,
-      [day]: {
-        ...prev[day],
-        [category]: prev[day][category].map((e) => ({
-          ...e,
-          locked: !allLocked,
-        })),
-      },
-    }));
-    setUpdating(null);
+      if (allActive) {
+        await deactivateEventsAPI(eventIds);
+      } else {
+        await activateEventsAPI(eventIds);
+      }
+
+      setEvents((prev) =>
+        prev.map((e) =>
+          eventIds.includes(e.id) ? { ...e, isActive: !allActive } : e,
+        ),
+      );
+    } catch (err) {
+      console.error("Failed to toggle type in day", err);
+      alert("❌ Failed to toggle events. Please try again.");
+    } finally {
+      setUpdating(null);
+    }
   };
+
+  // Get type icon
+  const getTypeIcon = (type) => {
+    if (type === "Track") return ICONS.track;
+    if (type === "Field") return ICONS.field;
+    return ICONS.team;
+  };
+
+  // Get type colors matching EventsPage
+  const getTypeBadgeColors = (type) => {
+    if (type === "Track") {
+      return darkMode
+        ? "bg-orange-500/25 text-orange-400"
+        : "bg-orange-100 text-orange-600";
+    }
+    if (type === "Field") {
+      return darkMode
+        ? "bg-emerald-500/25 text-emerald-400"
+        : "bg-emerald-100 text-emerald-600";
+    }
+    return darkMode
+      ? "bg-blue-500/25 text-blue-400"
+      : "bg-blue-100 text-blue-600";
+  };
+
+  // Get type gradient for icon background
+  const getTypeGradient = (type) => {
+    if (type === "Track") return "bg-linear-to-br from-orange-500 to-red-600";
+    if (type === "Field")
+      return "bg-linear-to-br from-emerald-500 to-green-600";
+    return "bg-linear-to-br from-blue-500 to-cyan-600";
+  };
+
+  // Loading state
+  if (loading) {
+    return (
+      <LoadingComponent
+        title="Event Controls"
+        message="Loading event management..."
+        darkMode={darkMode}
+      />
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div
+        className={`rounded-2xl p-8 text-center ${
+          darkMode
+            ? "bg-red-950/50 ring-1 ring-red-500/30"
+            : "bg-red-50 ring-1 ring-red-200"
+        }`}
+      >
+        <p className={darkMode ? "text-red-400" : "text-red-600"}>{error}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-            Event Controls
-          </h1>
-          <p className="text-gray-500 mt-1">
-            Lock and unlock events to control enrollment
-          </p>
-        </div>
-
-        {/* Quick Stats */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-4 py-2 bg-green-50 rounded-xl border border-green-200">
-            <span className="w-2.5 h-2.5 bg-green-500 rounded-full"></span>
-            <span className="text-green-700 font-bold">{openCount}</span>
-            <span className="text-green-600 text-sm">Open</span>
+    <div className="space-y-4 sm:space-y-5">
+      {/* Header Section */}
+      <div
+        className={`relative overflow-hidden rounded-2xl p-4 sm:p-5 lg:p-6 ${
+          darkMode
+            ? "bg-linear-to-br from-[#0c1929] via-[#0f172a] to-[#0c1525] ring-1 ring-white/8 shadow-[0_0_80px_-20px_rgba(168,85,247,0.25)]"
+            : "bg-linear-to-br from-slate-50 via-white to-slate-100 ring-1 ring-slate-200 shadow-lg"
+        }`}
+      >
+        {/* Background glow effects */}
+        {darkMode && (
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <div className="absolute -top-32 -right-32 w-80 h-80 rounded-full blur-3xl opacity-25 bg-purple-500" />
+            <div className="absolute -bottom-32 -left-32 w-72 h-72 rounded-full blur-3xl opacity-20 bg-violet-600" />
           </div>
-          <div className="flex items-center gap-2 px-4 py-2 bg-red-50 rounded-xl border border-red-200">
-            <span className="w-2.5 h-2.5 bg-red-500 rounded-full"></span>
-            <span className="text-red-700 font-bold">{lockedCount}</span>
-            <span className="text-red-600 text-sm">Locked</span>
+        )}
+
+        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div
+              className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center text-white ${
+                darkMode
+                  ? "bg-linear-to-br from-purple-500 to-violet-600"
+                  : "bg-slate-900"
+              }`}
+            >
+              {ICONS.controls}
+            </div>
+            <div>
+              <h1
+                className={`text-lg sm:text-xl lg:text-2xl font-black tracking-tight ${
+                  darkMode
+                    ? "bg-linear-to-r from-purple-400 via-violet-400 to-fuchsia-400 bg-clip-text text-transparent"
+                    : "text-slate-800"
+                }`}
+              >
+                Event Controls
+              </h1>
+              <p
+                className={`text-[11px] sm:text-xs ${
+                  darkMode ? "text-slate-500" : "text-slate-500"
+                }`}
+              >
+                Manage event enrollment status
+              </p>
+            </div>
+          </div>
+
+          {/* Stats Counter */}
+          <div
+            className={`flex items-stretch justify-center gap-1.5 sm:gap-2 p-1.5 rounded-xl w-full sm:w-auto ${
+              darkMode
+                ? "bg-slate-900/60 ring-1 ring-white/6"
+                : "bg-slate-50 ring-1 ring-slate-200"
+            }`}
+          >
+            <div
+              className={`flex flex-col items-center justify-center px-2.5 sm:px-4 py-2 rounded-lg min-w-[55px] sm:min-w-[65px] ${
+                darkMode ? "bg-emerald-500/15" : "bg-emerald-50"
+              }`}
+            >
+              <span
+                className={`text-base sm:text-xl font-black leading-none ${
+                  darkMode ? "text-emerald-400" : "text-emerald-600"
+                }`}
+              >
+                {activeCount}
+              </span>
+              <p
+                className={`text-[8px] sm:text-[9px] mt-0.5 font-bold uppercase tracking-wide ${
+                  darkMode ? "text-emerald-400/70" : "text-emerald-600"
+                }`}
+              >
+                Active
+              </p>
+            </div>
+            <div
+              className={`flex flex-col items-center justify-center px-2.5 sm:px-4 py-2 rounded-lg min-w-[55px] sm:min-w-[65px] ${
+                darkMode ? "bg-red-500/15" : "bg-red-50"
+              }`}
+            >
+              <span
+                className={`text-base sm:text-xl font-black leading-none ${
+                  darkMode ? "text-red-400" : "text-red-600"
+                }`}
+              >
+                {inactiveCount}
+              </span>
+              <p
+                className={`text-[8px] sm:text-[9px] mt-0.5 font-bold uppercase tracking-wide ${
+                  darkMode ? "text-red-400/70" : "text-red-600"
+                }`}
+              >
+                Inactive
+              </p>
+            </div>
+            <div
+              className={`flex flex-col items-center justify-center px-2.5 sm:px-4 py-2 rounded-lg min-w-[55px] sm:min-w-[65px] ${
+                darkMode ? "bg-purple-500/15" : "bg-purple-50"
+              }`}
+            >
+              <span
+                className={`text-base sm:text-xl font-black leading-none ${
+                  darkMode ? "text-purple-400" : "text-purple-600"
+                }`}
+              >
+                {events.length}
+              </span>
+              <p
+                className={`text-[8px] sm:text-[9px] mt-0.5 font-bold uppercase tracking-wide ${
+                  darkMode ? "text-purple-400/70" : "text-purple-600"
+                }`}
+              >
+                Total
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Day-wise Cards */}
-      {Object.entries(events).map(([day, categories]) => {
-        const dayEvents = getAllEvents().filter((e) => e.day === day);
-        const dayLocked = dayEvents.every((e) => e.locked);
-        const dayLockedCount = dayEvents.filter((e) => e.locked).length;
-
-        return (
-          <div
-            key={day}
-            className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden"
+      {/* Info Banner */}
+      <div
+        className={`rounded-xl p-3 sm:p-4 flex items-start gap-3 ${
+          darkMode
+            ? "bg-linear-to-r from-purple-950/40 to-slate-900/60 ring-1 ring-purple-500/20"
+            : "bg-linear-to-r from-purple-50 to-slate-50 ring-1 ring-purple-200"
+        }`}
+      >
+        <div
+          className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center shrink-0 ${
+            darkMode
+              ? "bg-purple-500/20 text-purple-400"
+              : "bg-purple-100 text-purple-600"
+          }`}
+        >
+          {ICONS.info}
+        </div>
+        <div>
+          <p
+            className={`font-bold text-sm ${
+              darkMode ? "text-white" : "text-slate-800"
+            }`}
           >
-            {/* Day Header */}
+            Event Control Rules
+          </p>
+          <ul
+            className={`text-[11px] sm:text-xs mt-1.5 space-y-1 ${
+              darkMode ? "text-purple-300/80" : "text-purple-700"
+            }`}
+          >
+            <li className="flex items-start gap-2">
+              <span
+                className={`font-bold ${
+                  darkMode ? "text-purple-400" : "text-purple-600"
+                }`}
+              >
+                •
+              </span>
+              <span>
+                <strong
+                  className={darkMode ? "text-emerald-400" : "text-emerald-700"}
+                >
+                  Active events
+                </strong>{" "}
+                are visible and open for student enrollment
+              </span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span
+                className={`font-bold ${
+                  darkMode ? "text-purple-400" : "text-purple-600"
+                }`}
+              >
+                •
+              </span>
+              <span>
+                <strong className={darkMode ? "text-red-400" : "text-red-600"}>
+                  Inactive events
+                </strong>{" "}
+                are hidden from students and closed for registration
+              </span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      {/* Day-wise Cards */}
+      {dayOrder
+        .filter((day) => groupedEvents[day])
+        .map((day) => {
+          const dayData = groupedEvents[day];
+          const dayEvents = events.filter(
+            (e) => e.day === day || (day === "Both Days" && e.day === "Both"),
+          );
+          const dayAllActive = dayEvents.every((e) => e.isActive);
+          const dayActiveCount = dayEvents.filter((e) => e.isActive).length;
+
+          return (
             <div
-              className={`p-5 border-b border-gray-100 ${
-                dayLocked
-                  ? "bg-red-50"
-                  : "bg-linear-to-r from-cyan-50 to-blue-50"
+              key={day}
+              className={`rounded-2xl overflow-hidden ${
+                darkMode
+                  ? "bg-[#0f172a]/90 ring-1 ring-white/8 shadow-[0_0_60px_-15px_rgba(168,85,247,0.15)]"
+                  : "bg-white ring-1 ring-slate-200 shadow-lg"
               }`}
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
+              {/* Day Header */}
+              <div
+                className={`px-4 sm:px-5 py-3 sm:py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b ${
+                  darkMode ? "border-white/6" : "border-slate-100"
+                }`}
+              >
+                <div className="flex items-center gap-3">
                   <div
-                    className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${
-                      dayLocked ? "bg-red-100" : "bg-white shadow-sm"
+                    className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center text-lg font-black text-white ${
+                      dayAllActive
+                        ? "bg-linear-to-br from-emerald-500 to-green-600"
+                        : "bg-linear-to-br from-red-500 to-rose-600"
                     }`}
                   >
-                    {day === "Day 1" ? "1️⃣" : "2️⃣"}
+                    {day === "Day 1" ? "1" : day === "Day 2" ? "2" : "∞"}
                   </div>
                   <div>
-                    <h2 className="text-gray-900 font-bold text-xl">{day}</h2>
-                    <p className="text-gray-500 text-sm">
-                      {dayEvents.length} events • {dayLockedCount} locked
+                    <h2
+                      className={`font-bold text-sm sm:text-base ${
+                        darkMode ? "text-white" : "text-slate-800"
+                      }`}
+                    >
+                      {day}
+                    </h2>
+                    <p
+                      className={`text-[11px] ${
+                        darkMode ? "text-slate-500" : "text-slate-500"
+                      }`}
+                    >
+                      {dayEvents.length} events • {dayActiveCount} active
                     </p>
                   </div>
                 </div>
 
                 <button
-                  onClick={() => lockAllDay(day)}
+                  onClick={() => toggleDay(day)}
                   disabled={updating === `day-${day}`}
-                  className={`px-4 py-2.5 rounded-xl font-semibold text-sm transition-all flex items-center gap-2 shadow-sm ${
-                    dayLocked
-                      ? "bg-green-500 text-white hover:bg-green-600"
-                      : "bg-red-500 text-white hover:bg-red-600"
-                  } disabled:opacity-50`}
+                  className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 shadow-lg min-w-[140px] ${
+                    dayAllActive
+                      ? darkMode
+                        ? "bg-linear-to-r from-red-500 to-rose-600 text-white shadow-red-500/25 hover:brightness-110"
+                        : "bg-linear-to-r from-red-500 to-rose-500 text-white shadow-red-500/20 hover:brightness-110"
+                      : darkMode
+                        ? "bg-linear-to-r from-emerald-500 to-green-600 text-white shadow-emerald-500/25 hover:brightness-110"
+                        : "bg-linear-to-r from-emerald-500 to-green-500 text-white shadow-emerald-500/20 hover:brightness-110"
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
-                  {updating === `day-${day}` ? (
-                    <svg
-                      className="w-4 h-4 animate-spin"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                      ></path>
-                    </svg>
-                  ) : dayLocked ? (
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"
-                      />
-                    </svg>
-                  ) : (
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                      />
-                    </svg>
-                  )}
-                  {dayLocked ? "Unlock All" : "Lock All"}
+                  <span className="w-5 h-5 flex items-center justify-center shrink-0">
+                    {updating === `day-${day}` ? (
+                      <span className="animate-spin h-4 w-4 border-2 border-white/30 rounded-full border-t-white" />
+                    ) : dayAllActive ? (
+                      ICONS.lock
+                    ) : (
+                      ICONS.unlock
+                    )}
+                  </span>
+                  <span className="whitespace-nowrap">
+                    {dayAllActive ? "Deactivate All" : "Activate All"}
+                  </span>
                 </button>
               </div>
-            </div>
 
-            {/* Categories */}
-            <div className="p-5 space-y-6">
-              {Object.entries(categories).map(([category, eventList]) => {
-                const categoryLocked = eventList.every((e) => e.locked);
+              {/* Types */}
+              <div className="p-3 sm:p-4 space-y-5">
+                {["Track", "Field", "Team"]
+                  .filter((type) => dayData[type])
+                  .map((type) => {
+                    const typeEvents = dayData[type];
+                    const typeAllActive = typeEvents.every((e) => e.isActive);
 
-                return (
-                  <div key={category}>
-                    {/* Category Header */}
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xl">
-                          {category === "Track Events" ? "🏃" : "🥏"}
-                        </span>
-                        <h3 className="text-gray-800 font-semibold">
-                          {category}
-                        </h3>
-                        <span className="text-gray-400 text-sm">
-                          ({eventList.length})
-                        </span>
-                      </div>
-                      <button
-                        onClick={() => lockAllCategory(day, category)}
-                        disabled={updating === `${day}-${category}`}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                          categoryLocked
-                            ? "bg-green-100 text-green-700 hover:bg-green-200"
-                            : "bg-red-100 text-red-700 hover:bg-red-200"
-                        } disabled:opacity-50`}
-                      >
-                        {updating === `${day}-${category}`
-                          ? "..."
-                          : categoryLocked
-                          ? "Unlock"
-                          : "Lock"}{" "}
-                        Category
-                      </button>
-                    </div>
-
-                    {/* Events Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                      {eventList.map((event) => (
-                        <div
-                          key={event.id}
-                          className={`relative p-4 rounded-xl border-2 transition-all ${
-                            event.locked
-                              ? "bg-red-50 border-red-200"
-                              : "bg-white border-gray-200 hover:border-cyan-300 hover:shadow-sm"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-2">
-                              <span className="text-2xl">{event.emoji}</span>
-                              <div>
-                                <h4 className="text-gray-900 font-medium text-sm">
-                                  {event.name}
-                                </h4>
-                                <p className="text-gray-400 text-xs">
-                                  {event.participants} participants
-                                </p>
-                              </div>
+                    return (
+                      <div key={type}>
+                        {/* Type Header */}
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <div
+                              className={`w-8 h-8 rounded-lg flex items-center justify-center text-white ${getTypeGradient(
+                                type,
+                              )}`}
+                            >
+                              {getTypeIcon(type)}
                             </div>
+                            <h3
+                              className={`font-bold text-sm ${
+                                darkMode ? "text-white" : "text-slate-800"
+                              }`}
+                            >
+                              {type} Events
+                            </h3>
+                            <span
+                              className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${getTypeBadgeColors(
+                                type,
+                              )}`}
+                            >
+                              {typeEvents.length}
+                            </span>
                           </div>
-
                           <button
-                            onClick={() =>
-                              toggleEventLock(day, category, event.id)
-                            }
-                            disabled={updating === event.id}
-                            className={`w-full py-2 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 ${
-                              event.locked
-                                ? "bg-red-500 text-white hover:bg-red-600"
-                                : "bg-green-500 text-white hover:bg-green-600"
+                            onClick={() => toggleTypeInDay(day, type)}
+                            disabled={updating === `${day}-${type}`}
+                            className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
+                              typeAllActive
+                                ? darkMode
+                                  ? "bg-red-500/15 text-red-400 ring-1 ring-red-500/30 hover:bg-red-500/25"
+                                  : "bg-red-50 text-red-600 ring-1 ring-red-200 hover:bg-red-100"
+                                : darkMode
+                                  ? "bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/30 hover:bg-emerald-500/25"
+                                  : "bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200 hover:bg-emerald-100"
                             } disabled:opacity-50`}
                           >
-                            {updating === event.id ? (
-                              <svg
-                                className="w-4 h-4 animate-spin"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                              >
-                                <circle
-                                  className="opacity-25"
-                                  cx="12"
-                                  cy="12"
-                                  r="10"
-                                  stroke="currentColor"
-                                  strokeWidth="4"
-                                ></circle>
-                                <path
-                                  className="opacity-75"
-                                  fill="currentColor"
-                                  d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                                ></path>
-                              </svg>
-                            ) : event.locked ? (
-                              <>
-                                <svg
-                                  className="w-4 h-4"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                                  />
-                                </svg>
-                                Locked
-                              </>
-                            ) : (
-                              <>
-                                <svg
-                                  className="w-4 h-4"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"
-                                  />
-                                </svg>
-                                Open
-                              </>
-                            )}
+                            {updating === `${day}-${type}`
+                              ? "..."
+                              : typeAllActive
+                                ? "Deactivate"
+                                : "Activate"}
                           </button>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        );
-      })}
 
-      {/* Info Box */}
-      <div className="bg-linear-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-5 flex items-start gap-4">
-        <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
-          <svg
-            className="w-5 h-5 text-blue-600"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-        </div>
-        <div>
-          <h4 className="text-blue-900 font-semibold mb-1">
-            About Event Locking
-          </h4>
-          <p className="text-blue-700 text-sm">
-            When an event is locked, students cannot enroll or unenroll from it.
-            Use this to close enrollment after an event has been conducted. You
-            can lock events individually, by category, or all events for an
-            entire day.
-          </p>
-        </div>
-      </div>
+                        {/* Events Grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
+                          {typeEvents.map((event) => (
+                            <div
+                              key={event.id}
+                              className={`group relative p-3 sm:p-4 rounded-xl transition-all duration-200 h-full flex flex-col ${
+                                event.isActive
+                                  ? darkMode
+                                    ? "bg-emerald-950/60 ring-2 ring-emerald-500/60"
+                                    : "bg-emerald-50 ring-2 ring-emerald-400"
+                                  : darkMode
+                                    ? "bg-red-950/40 ring-1 ring-red-500/40"
+                                    : "bg-red-50 ring-1 ring-red-200"
+                              }`}
+                            >
+                              {/* Glow effect for active events */}
+                              {event.isActive && darkMode && (
+                                <div className="absolute -top-6 -right-6 w-20 h-20 bg-emerald-500/25 blur-2xl rounded-full pointer-events-none" />
+                              )}
+
+                              {/* Type Badge */}
+                              <span
+                                className={`absolute top-2.5 right-2.5 sm:top-3 sm:right-3 text-[9px] px-2 py-0.5 rounded font-bold uppercase tracking-wider ${getTypeBadgeColors(
+                                  event.type,
+                                )}`}
+                              >
+                                {event.type}
+                              </span>
+
+                              <div className="relative pr-12 sm:pr-14 flex-1">
+                                <div className="flex items-start gap-1.5 mb-0.5 min-h-9">
+                                  <h4
+                                    className={`font-semibold text-[13px] leading-tight line-clamp-2 ${
+                                      darkMode ? "text-white" : "text-slate-800"
+                                    }`}
+                                  >
+                                    {event.name}
+                                  </h4>
+                                  {event.isActive && (
+                                    <span
+                                      className={`w-5 h-5 flex items-center justify-center rounded-full shrink-0 ${
+                                        darkMode
+                                          ? "bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"
+                                          : "bg-emerald-500 shadow-md"
+                                      }`}
+                                    >
+                                      {ICONS.check}
+                                    </span>
+                                  )}
+                                </div>
+                                <p
+                                  className={`text-[11px] ${
+                                    darkMode
+                                      ? "text-slate-500"
+                                      : "text-slate-500"
+                                  }`}
+                                >
+                                  {event.category}
+                                </p>
+                              </div>
+
+                              <button
+                                onClick={() =>
+                                  toggleEvent(event.id, event.isActive)
+                                }
+                                disabled={updating === event.id}
+                                className={`mt-3 w-full py-2 rounded-lg text-[11px] font-bold transition-all duration-200 flex items-center justify-center gap-2 ${
+                                  event.isActive
+                                    ? darkMode
+                                      ? "bg-linear-to-r from-rose-600 to-red-600 text-white hover:from-rose-500 hover:to-red-500"
+                                      : "bg-linear-to-r from-rose-500 to-red-500 text-white hover:from-rose-600 hover:to-red-600"
+                                    : darkMode
+                                      ? "bg-linear-to-r from-emerald-600 to-green-600 text-white hover:brightness-110"
+                                      : "bg-linear-to-r from-emerald-500 to-green-500 text-white hover:brightness-110"
+                                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                              >
+                                <span className="w-5 h-5 flex items-center justify-center shrink-0">
+                                  {updating === event.id ? (
+                                    <span className="animate-spin h-4 w-4 border-2 border-white/30 rounded-full border-t-white" />
+                                  ) : event.isActive ? (
+                                    ICONS.lock
+                                  ) : (
+                                    ICONS.unlock
+                                  )}
+                                </span>
+                                <span className="whitespace-nowrap">
+                                  {event.isActive ? "Deactivate" : "Activate"}
+                                </span>
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          );
+        })}
     </div>
   );
 }

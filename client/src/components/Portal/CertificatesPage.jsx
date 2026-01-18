@@ -1,375 +1,525 @@
-import { useState } from "react";
-import { useAuth } from "../../context/AuthContext";
+import { useState, useEffect } from "react";
 import { useTheme } from "../../context/ThemeContext";
+import { useOutletContext } from "react-router-dom";
+import axios from "axios";
+import LoadingComponent from "./LoadingComponent";
 
-const mockCertificates = [
-  {
-    id: 1,
-    type: "Participation",
-    event: "100m Sprint",
-    date: "2025-02-20",
-    locked: true,
-  },
-  {
-    id: 2,
-    type: "Winner",
-    event: "Long Jump",
-    date: "2025-02-21",
-    position: "1st",
-    locked: true,
-  },
-  {
-    id: 3,
-    type: "Runner-up",
-    event: "200m Race",
-    date: "2025-02-20",
-    position: "2nd",
-    locked: true,
-  },
-];
+/* -------------------- Icons -------------------- */
+const ICONS = {
+  trophy: (
+    <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current">
+      <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z" />
+    </svg>
+  ),
+  medal: (
+    <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+    </svg>
+  ),
+  download: (
+    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
+      <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z" />
+    </svg>
+  ),
+  lock: (
+    <svg viewBox="0 0 24 24" className="w-16 h-16 fill-current">
+      <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
+    </svg>
+  ),
+  certificate: (
+    <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current">
+      <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z" />
+    </svg>
+  ),
+};
 
 export default function CertificatesPage() {
-  const { user } = useAuth();
   const { darkMode } = useTheme();
-  const [certificates] = useState(mockCertificates);
-  const [previewCert, setPreviewCert] = useState(null);
+  const { user } = useOutletContext();
+  const [loading, setLoading] = useState(true);
+  const [areCertificatesLocked, setAreCertificatesLocked] = useState(true);
+  const [certificates, setCertificates] = useState([]);
   const [downloading, setDownloading] = useState(null);
+  const API_URL = import.meta.env.VITE_API_URL;
 
-  const handleDownload = async (certId) => {
-    setDownloading(certId);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setDownloading(null);
-  };
+  useEffect(() => {
+    const fetchCertificates = async () => {
+      try {
+        const { data: response } = await axios.get(
+          `${API_URL}/user/certificates`,
+          { withCredentials: true },
+        );
 
-  const getTypeStyles = (type) => {
-    switch (type) {
-      case "Winner":
-        return {
-          emoji: "🏆",
-          gradient: "from-amber-500 to-orange-500",
-          bg: darkMode
-            ? "from-amber-900/40 to-orange-900/40"
-            : "from-amber-50 to-orange-50",
-          border: darkMode ? "border-amber-500/40" : "border-amber-200",
-        };
-      case "Runner-up":
-        return {
-          emoji: "🥈",
-          gradient: "from-slate-400 to-gray-500",
-          bg: darkMode
-            ? "from-slate-800/60 to-gray-800/40"
-            : "from-slate-50 to-gray-50",
-          border: darkMode ? "border-slate-500/40" : "border-slate-200",
-        };
-      default:
-        return {
-          emoji: "🏅",
-          gradient: "from-indigo-500 to-purple-500",
-          bg: darkMode
-            ? "from-indigo-900/40 to-purple-900/40"
-            : "from-indigo-50 to-purple-50",
-          border: darkMode ? "border-indigo-500/40" : "border-indigo-200",
-        };
+        if (response.success) {
+          setAreCertificatesLocked(response.data.areCertificatesLocked);
+          setCertificates(response.data.certificates || []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch certificates", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCertificates();
+  }, [API_URL]);
+
+  const handleDownload = async (cert, type) => {
+    const downloadId = `${cert.eventId}-${type}`;
+    setDownloading(downloadId);
+
+    try {
+      // Call the certificate generation API
+      const response = await fetch(
+        `${API_URL}/certificate/download/${cert.eventId}/${type}`,
+        {
+          method: "GET",
+          credentials: "include",
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to generate certificate");
+      }
+
+      // Get the blob from response
+      const blob = await response.blob();
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `Certificate_${cert.eventName.replace(/\s+/g, "_")}_${type}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Failed to download certificate:", err);
+      alert(err.message || "Failed to download certificate");
+    } finally {
+      setDownloading(null);
     }
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1
-            className={`text-2xl font-bold ${
-              darkMode ? "text-white" : "text-gray-900"
-            }`}
-          >
-            Certificates 🏅
-          </h1>
-          <p
-            className={`text-sm mt-1 ${
-              darkMode ? "text-gray-400" : "text-gray-500"
-            }`}
-          >
-            Your achievements and participation records
-          </p>
-        </div>
+  const getTypeColors = (type) => {
+    if (type === "Track") {
+      return {
+        gradient: "from-orange-500 to-red-600",
+        bg: darkMode ? "bg-orange-500/15" : "bg-orange-50",
+        text: darkMode ? "text-orange-400" : "text-orange-600",
+        ring: darkMode ? "ring-orange-500/30" : "ring-orange-200",
+      };
+    }
+    if (type === "Field") {
+      return {
+        gradient: "from-emerald-500 to-green-600",
+        bg: darkMode ? "bg-emerald-500/15" : "bg-emerald-50",
+        text: darkMode ? "text-emerald-400" : "text-emerald-600",
+        ring: darkMode ? "ring-emerald-500/30" : "ring-emerald-200",
+      };
+    }
+    return {
+      gradient: "from-blue-500 to-cyan-600",
+      bg: darkMode ? "bg-blue-500/15" : "bg-blue-50",
+      text: darkMode ? "text-blue-400" : "text-blue-600",
+      ring: darkMode ? "ring-blue-500/30" : "ring-blue-200",
+    };
+  };
+
+  if (loading) {
+    return (
+      <LoadingComponent
+        darkMode={darkMode}
+        title="Loading Certificates"
+        message="Fetching your certificates..."
+      />
+    );
+  }
+
+  // When locked - show beautiful locked message
+  if (areCertificatesLocked) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center p-4">
         <div
-          className={`flex items-center gap-3 px-4 py-3 rounded-xl ${
+          className={`max-w-md w-full text-center p-8 sm:p-12 rounded-3xl ${
             darkMode
-              ? "bg-linear-to-br from-amber-900/40 to-orange-900/40 border border-amber-500/30"
-              : "bg-linear-to-br from-amber-50 to-orange-50 border border-amber-200"
+              ? "bg-linear-to-br from-slate-900 via-slate-800/80 to-slate-900 ring-2 ring-red-500/30 shadow-[0_0_100px_-20px_rgba(239,68,68,0.25)]"
+              : "bg-linear-to-br from-white via-red-50/30 to-white ring-2 ring-red-200 shadow-xl"
           }`}
         >
-          <span className="text-2xl">📜</span>
-          <div>
-            <span
-              className={`text-xl font-bold ${
-                darkMode ? "text-amber-400" : "text-amber-600"
-              }`}
-            >
-              {certificates.length}
-            </span>
-            <p
-              className={`text-xs ${
-                darkMode ? "text-amber-300" : "text-amber-500"
-              }`}
-            >
-              Certificates
-            </p>
+          <div
+            className={`w-24 h-24 mx-auto mb-6 rounded-2xl flex items-center justify-center ${
+              darkMode
+                ? "bg-linear-to-br from-red-500/20 to-rose-500/20 text-red-400"
+                : "bg-linear-to-br from-red-100 to-rose-100 text-red-500"
+            }`}
+          >
+            {ICONS.lock}
+          </div>
+
+          <h1
+            className={`text-2xl sm:text-3xl font-black mb-3 ${
+              darkMode
+                ? "bg-linear-to-r from-red-400 to-rose-400 bg-clip-text text-transparent"
+                : "text-red-600"
+            }`}
+          >
+            Certificates Locked
+          </h1>
+
+          <p
+            className={`text-sm sm:text-base mb-6 ${
+              darkMode ? "text-slate-400" : "text-slate-600"
+            }`}
+          >
+            Certificates are currently unavailable. They will be accessible once
+            all events are completed and results are finalized.
+          </p>
+
+          <div
+            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold ${
+              darkMode
+                ? "bg-red-500/10 text-red-400 ring-1 ring-red-500/20"
+                : "bg-red-100 text-red-600 ring-1 ring-red-200"
+            }`}
+          >
+            <span className="text-lg">🔒</span>
+            Please check back later
           </div>
         </div>
       </div>
+    );
+  }
 
-      {/* Lock Notice */}
-      {certificates.some((c) => c.locked) && (
+  // No certificates
+  if (certificates.length === 0) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center p-4">
         <div
-          className={`rounded-xl p-4 flex items-start gap-4 ${
+          className={`max-w-md w-full text-center p-8 sm:p-12 rounded-3xl ${
             darkMode
-              ? "bg-linear-to-r from-red-900/30 to-orange-900/30 border border-red-500/30"
-              : "bg-linear-to-r from-red-50 to-orange-50 border border-red-200"
-          }`}
-        >
-          <span className="text-2xl">🔒</span>
-          <div>
-            <p
-              className={`font-bold ${
-                darkMode ? "text-red-400" : "text-red-600"
-              }`}
-            >
-              Certificates are currently locked
-            </p>
-            <p
-              className={`text-sm mt-1 ${
-                darkMode ? "text-red-200" : "text-red-500"
-              }`}
-            >
-              They will be available after all events conclude and results are
-              finalized.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Certificates Grid */}
-      {certificates.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {certificates.map((cert) => {
-            const styles = getTypeStyles(cert.type);
-            return (
-              <div
-                key={cert.id}
-                className={`rounded-2xl overflow-hidden transition-all hover:scale-[1.02] ${
-                  darkMode ? "bg-slate-800/50" : "bg-white shadow-md"
-                } border ${styles.border}`}
-              >
-                {/* Card Header with gradient */}
-                <div className={`p-5 bg-linear-to-br ${styles.bg}`}>
-                  <div className="flex items-start justify-between mb-4">
-                    <div
-                      className={`w-16 h-16 rounded-xl bg-linear-to-br ${styles.gradient} flex items-center justify-center text-3xl shadow-lg`}
-                    >
-                      {styles.emoji}
-                    </div>
-                    {cert.locked && (
-                      <span
-                        className={`flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-lg ${
-                          darkMode
-                            ? "bg-red-500/20 text-red-400 border border-red-500/30"
-                            : "bg-red-100 text-red-600 border border-red-200"
-                        }`}
-                      >
-                        🔒 Locked
-                      </span>
-                    )}
-                  </div>
-
-                  <span
-                    className={`inline-block px-3 py-1 text-xs font-bold rounded-full text-white bg-linear-to-r ${styles.gradient}`}
-                  >
-                    {cert.type}
-                  </span>
-                </div>
-
-                {/* Card Body */}
-                <div className="p-5">
-                  <h3
-                    className={`font-bold text-lg mb-2 ${
-                      darkMode ? "text-white" : "text-gray-900"
-                    }`}
-                  >
-                    {cert.event}
-                  </h3>
-                  <p
-                    className={`text-sm flex items-center gap-2 ${
-                      darkMode ? "text-gray-400" : "text-gray-500"
-                    }`}
-                  >
-                    📅{" "}
-                    {new Date(cert.date).toLocaleDateString("en-IN", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })}
-                  </p>
-                </div>
-
-                {/* Actions */}
-                <div
-                  className={`px-5 py-4 flex gap-3 border-t ${
-                    darkMode
-                      ? "border-slate-700 bg-slate-800/30"
-                      : "border-gray-100 bg-gray-50/50"
-                  }`}
-                >
-                  <button
-                    onClick={() => setPreviewCert(cert)}
-                    disabled={cert.locked}
-                    className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all ${
-                      darkMode
-                        ? "bg-slate-700 text-white hover:bg-slate-600 disabled:text-gray-500"
-                        : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 disabled:text-gray-400"
-                    } disabled:cursor-not-allowed`}
-                  >
-                    👁️ Preview
-                  </button>
-                  <button
-                    onClick={() => handleDownload(cert.id)}
-                    disabled={cert.locked || downloading === cert.id}
-                    className={`flex-1 py-2.5 text-sm font-semibold rounded-lg text-white shadow-md transition-all bg-linear-to-r ${styles.gradient} hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed`}
-                  >
-                    {downloading === cert.id ? "..." : "⬇️ Download"}
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div
-          className={`text-center py-16 rounded-2xl ${
-            darkMode
-              ? "bg-linear-to-br from-slate-800 to-slate-800/50 border border-slate-700"
-              : "bg-linear-to-br from-gray-50 to-white border border-gray-200"
+              ? "bg-linear-to-br from-slate-900 to-slate-800/80 ring-1 ring-white/10"
+              : "bg-linear-to-br from-white to-slate-50 ring-1 ring-slate-200 shadow-lg"
           }`}
         >
           <span className="text-6xl mb-4 block">🏆</span>
-          <h3
-            className={`font-bold text-xl ${
-              darkMode ? "text-white" : "text-gray-900"
+          <h2
+            className={`text-xl font-bold mb-2 ${
+              darkMode ? "text-white" : "text-slate-800"
             }`}
           >
             No Certificates Yet
-          </h3>
+          </h2>
           <p
-            className={`text-sm mt-2 ${
-              darkMode ? "text-gray-400" : "text-gray-500"
+            className={`text-sm ${
+              darkMode ? "text-slate-400" : "text-slate-500"
             }`}
           >
             Participate in events to earn certificates
           </p>
         </div>
-      )}
+      </div>
+    );
+  }
 
-      {/* Preview Modal */}
-      {previewCert && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  // Separate winners and participation
+  const winnerCerts = certificates.filter(
+    (c) => c.position === 1 || c.position === 2 || c.position === 3,
+  );
+  const participationCerts = certificates;
+
+  return (
+    <div className="space-y-5">
+      {/* Header */}
+      <div
+        className={`relative overflow-hidden rounded-2xl p-4 sm:p-5 lg:p-6 ${
+          darkMode
+            ? "bg-linear-to-br from-[#0c1929] via-[#0f172a] to-[#0c1525] ring-1 ring-white/8 shadow-[0_0_80px_-20px_rgba(234,179,8,0.25)]"
+            : "bg-linear-to-br from-slate-50 via-white to-amber-50/30 ring-1 ring-slate-200 shadow-lg"
+        }`}
+      >
+        {darkMode && (
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <div className="absolute -top-32 -right-32 w-80 h-80 rounded-full blur-3xl opacity-25 bg-amber-500" />
+            <div className="absolute -bottom-32 -left-32 w-72 h-72 rounded-full blur-3xl opacity-20 bg-orange-600" />
+          </div>
+        )}
+
+        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div
+              className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center text-white ${
+                darkMode
+                  ? "bg-linear-to-br from-amber-500 to-orange-600"
+                  : "bg-slate-900"
+              }`}
+            >
+              {ICONS.certificate}
+            </div>
+            <div>
+              <h1
+                className={`text-lg sm:text-xl lg:text-2xl font-black tracking-tight ${
+                  darkMode
+                    ? "bg-linear-to-r from-amber-400 via-orange-400 to-red-400 bg-clip-text text-transparent"
+                    : "text-slate-800"
+                }`}
+              >
+                Your Certificates
+              </h1>
+              <p
+                className={`text-[11px] sm:text-xs ${
+                  darkMode ? "text-slate-500" : "text-slate-500"
+                }`}
+              >
+                Download your achievement certificates
+              </p>
+            </div>
+          </div>
+
+          {/* Stats */}
           <div
-            className={`rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl ${
-              darkMode ? "bg-slate-900" : "bg-white"
+            className={`flex items-center gap-4 px-4 py-2.5 rounded-xl ${
+              darkMode
+                ? "bg-amber-500/10 ring-1 ring-amber-500/20"
+                : "bg-amber-50 ring-1 ring-amber-200"
             }`}
           >
-            <div
-              className={`p-4 border-b flex items-center justify-between ${
-                darkMode
-                  ? "border-slate-800 bg-linear-to-r from-indigo-900/50 to-purple-900/50"
-                  : "border-gray-100 bg-linear-to-r from-indigo-50 to-purple-50"
-              }`}
-            >
-              <h3
-                className={`font-bold text-lg ${
-                  darkMode ? "text-white" : "text-gray-900"
+            <div className="text-center">
+              <span
+                className={`text-xl font-black ${
+                  darkMode ? "text-amber-400" : "text-amber-600"
                 }`}
               >
-                🏆 Certificate Preview
-              </h3>
-              <button
-                onClick={() => setPreviewCert(null)}
-                className={`p-2 rounded-lg ${
-                  darkMode ? "hover:bg-slate-800" : "hover:bg-gray-100"
+                {certificates.length}
+              </span>
+              <p
+                className={`text-[9px] font-bold uppercase ${
+                  darkMode ? "text-amber-400/70" : "text-amber-600"
                 }`}
               >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
+                Total
+              </p>
             </div>
-
-            <div className="p-8 bg-linear-to-br from-amber-50 via-white to-indigo-50">
-              <div className="border-4 border-amber-400 rounded-xl p-8 text-center bg-white shadow-lg relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-20 h-20 border-t-4 border-l-4 border-amber-500"></div>
-                <div className="absolute top-0 right-0 w-20 h-20 border-t-4 border-r-4 border-amber-500"></div>
-                <div className="absolute bottom-0 left-0 w-20 h-20 border-b-4 border-l-4 border-amber-500"></div>
-                <div className="absolute bottom-0 right-0 w-20 h-20 border-b-4 border-r-4 border-amber-500"></div>
-
-                <span className="text-5xl mb-4 block">
-                  {getTypeStyles(previewCert.type).emoji}
+            {winnerCerts.length > 0 && (
+              <div className="text-center">
+                <span
+                  className={`text-xl font-black ${
+                    darkMode ? "text-yellow-400" : "text-yellow-600"
+                  }`}
+                >
+                  {winnerCerts.length}
                 </span>
-                <h2 className="text-2xl font-black text-gray-900 mb-2">
-                  Certificate of {previewCert.type}
-                </h2>
-                <p className="text-gray-500 mb-4">This is to certify that</p>
-                <p className="text-2xl font-black bg-linear-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-4">
-                  {user?.fullname || user?.username}
-                </p>
-                <p className="text-gray-600 mb-2">participated in</p>
-                <p className="text-xl font-bold text-gray-900 mb-6">
-                  {previewCert.event}
-                </p>
-                <div className="w-32 h-1 bg-linear-to-r from-amber-400 to-orange-500 mx-auto rounded-full mb-4"></div>
-                <p className="text-gray-500 text-sm">
-                  64th Annual Athletic Meet - GNDEC
+                <p
+                  className={`text-[9px] font-bold uppercase ${
+                    darkMode ? "text-yellow-400/70" : "text-yellow-600"
+                  }`}
+                >
+                  Winners
                 </p>
               </div>
-            </div>
+            )}
+          </div>
+        </div>
+      </div>
 
+      {/* Winner Certificates Section */}
+      {winnerCerts.length > 0 && (
+        <div>
+          <div className="flex items-center gap-2 mb-3">
             <div
-              className={`p-4 border-t flex justify-end gap-3 ${
-                darkMode ? "border-slate-800" : "border-gray-100"
+              className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                darkMode
+                  ? "bg-yellow-500/20 text-yellow-400"
+                  : "bg-yellow-100 text-yellow-600"
               }`}
             >
-              <button
-                onClick={() => setPreviewCert(null)}
-                className={`px-5 py-2.5 text-sm font-semibold rounded-lg ${
-                  darkMode
-                    ? "bg-slate-800 text-white"
-                    : "bg-gray-100 text-gray-700"
-                }`}
-              >
-                Close
-              </button>
-              <button
-                onClick={() => {
-                  handleDownload(previewCert.id);
-                  setPreviewCert(null);
-                }}
-                className="px-5 py-2.5 text-sm font-bold rounded-lg bg-linear-to-r from-indigo-500 to-purple-500 text-white shadow-lg hover:shadow-xl"
-              >
-                ⬇️ Download
-              </button>
+              {ICONS.trophy}
             </div>
+            <h2
+              className={`font-bold ${
+                darkMode ? "text-white" : "text-slate-800"
+              }`}
+            >
+              Winner Certificates
+            </h2>
+            <span
+              className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
+                darkMode
+                  ? "bg-yellow-500/20 text-yellow-400"
+                  : "bg-yellow-100 text-yellow-600"
+              }`}
+            >
+              {winnerCerts.length}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {winnerCerts.map((cert) => {
+              const colors = getTypeColors(cert.eventType);
+              const positions = { 1: "1st", 2: "2nd", 3: "3rd" };
+
+              return (
+                <div
+                  key={`winner-${cert.eventId}`}
+                  className={`relative overflow-hidden rounded-2xl p-5 ${
+                    darkMode
+                      ? "bg-linear-to-br from-yellow-950/60 via-amber-950/40 to-orange-950/30 ring-2 ring-yellow-500/40"
+                      : "bg-linear-to-br from-yellow-50 via-amber-50 to-orange-50 ring-2 ring-yellow-300"
+                  }`}
+                >
+                  {darkMode && (
+                    <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full blur-3xl bg-yellow-500/20 pointer-events-none" />
+                  )}
+
+                  <div className="relative">
+                    <div className="flex items-start justify-between mb-3">
+                      <span className="text-4xl">🏆</span>
+                      <span
+                        className={`px-3 py-1 rounded-lg text-xs font-bold ${
+                          darkMode
+                            ? "bg-yellow-500/20 text-yellow-400"
+                            : "bg-yellow-200 text-yellow-800"
+                        }`}
+                      >
+                        {positions[cert.position]} Place
+                      </span>
+                    </div>
+
+                    <h3
+                      className={`font-bold text-lg mb-1 ${
+                        darkMode ? "text-white" : "text-slate-800"
+                      }`}
+                    >
+                      {cert.eventName}
+                    </h3>
+
+                    <span
+                      className={`inline-block text-[10px] px-2 py-0.5 rounded font-bold uppercase ${colors.bg} ${colors.text}`}
+                    >
+                      {cert.eventType}
+                    </span>
+
+                    <button
+                      onClick={() => handleDownload(cert, "winner")}
+                      disabled={downloading === `${cert.eventId}-winner`}
+                      className={`mt-4 w-full py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all ${
+                        darkMode
+                          ? "bg-linear-to-r from-yellow-500 to-amber-600 text-black hover:brightness-110"
+                          : "bg-linear-to-r from-yellow-400 to-amber-500 text-black hover:brightness-110"
+                      } disabled:opacity-50`}
+                    >
+                      {downloading === `${cert.eventId}-winner` ? (
+                        <span className="animate-spin h-4 w-4 border-2 border-black/30 rounded-full border-t-black" />
+                      ) : (
+                        <>
+                          {ICONS.download}
+                          Download Certificate
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
+
+      {/* Participation Certificates Section */}
+      <div>
+        <div className="flex items-center gap-2 mb-3">
+          <div
+            className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+              darkMode
+                ? "bg-indigo-500/20 text-indigo-400"
+                : "bg-indigo-100 text-indigo-600"
+            }`}
+          >
+            {ICONS.medal}
+          </div>
+          <h2
+            className={`font-bold ${darkMode ? "text-white" : "text-slate-800"}`}
+          >
+            Participation Certificates
+          </h2>
+          <span
+            className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
+              darkMode
+                ? "bg-indigo-500/20 text-indigo-400"
+                : "bg-indigo-100 text-indigo-600"
+            }`}
+          >
+            {participationCerts.length}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {participationCerts.map((cert) => {
+            const colors = getTypeColors(cert.eventType);
+
+            return (
+              <div
+                key={`participation-${cert.eventId}`}
+                className={`relative overflow-hidden rounded-xl p-4 ${
+                  darkMode
+                    ? `bg-slate-900/80 ring-1 ${colors.ring}`
+                    : `bg-white ring-1 ${colors.ring} shadow-sm`
+                }`}
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div
+                    className={`w-10 h-10 rounded-lg flex items-center justify-center text-white bg-linear-to-br ${colors.gradient}`}
+                  >
+                    <span className="text-lg">🏅</span>
+                  </div>
+                  <span
+                    className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${colors.bg} ${colors.text}`}
+                  >
+                    {cert.eventType}
+                  </span>
+                </div>
+
+                <h3
+                  className={`font-bold text-sm mb-0.5 ${
+                    darkMode ? "text-white" : "text-slate-800"
+                  }`}
+                >
+                  {cert.eventName}
+                </h3>
+                <p
+                  className={`text-[11px] mb-3 ${
+                    darkMode ? "text-slate-500" : "text-slate-500"
+                  }`}
+                >
+                  {cert.eventDay}
+                </p>
+
+                <button
+                  onClick={() => handleDownload(cert, "participation")}
+                  disabled={downloading === `${cert.eventId}-participation`}
+                  className={`w-full py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all ${
+                    darkMode
+                      ? `bg-linear-to-r ${colors.gradient} text-white hover:brightness-110`
+                      : `bg-linear-to-r ${colors.gradient} text-white hover:brightness-110`
+                  } disabled:opacity-50`}
+                >
+                  {downloading === `${cert.eventId}-participation` ? (
+                    <span className="animate-spin h-3 w-3 border-2 border-white/30 rounded-full border-t-white" />
+                  ) : (
+                    <>
+                      {ICONS.download}
+                      Download
+                    </>
+                  )}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }

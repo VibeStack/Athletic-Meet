@@ -3,6 +3,7 @@ import { Html5Qrcode } from "html5-qrcode";
 import axios from "axios";
 import { useTheme } from "../../../context/ThemeContext";
 import LoadingComponent from "../LoadingComponent";
+import { toast } from "react-toastify";
 
 /* -------------------- SVG Icons -------------------- */
 const ICONS = {
@@ -91,6 +92,35 @@ const ICONS = {
       />
     </svg>
   ),
+  // Custom Boys icon (male figure)
+  boys: (
+    <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
+      <circle cx="12" cy="4" r="2.5" />
+      <path d="M15.5 22v-7.5H17V9c0-1.1-.9-2-2-2h-6c-1.1 0-2 .9-2 2v5.5h1.5V22h6z" />
+    </svg>
+  ),
+  // Custom Girls icon (female figure)
+  girls: (
+    <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
+      <circle cx="12" cy="4" r="2.5" />
+      <path d="M14.5 12.5l1.5-4C16.2 8 16 7.5 15.5 7H8.5c-.5.5-.7 1-.5 1.5l1.5 4H9v2h1.5v3H9v1.5h6V16.5h-1.5v-3H15v-2h-.5z" />
+    </svg>
+  ),
+  present: (
+    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
+      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+    </svg>
+  ),
+  absent: (
+    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
+      <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+    </svg>
+  ),
+  notMarked: (
+    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+    </svg>
+  ),
 };
 
 export default function QRScannerPage() {
@@ -108,19 +138,20 @@ export default function QRScannerPage() {
   const API_URL = import.meta.env.VITE_API_URL;
 
   // Fetch ALL events from backend
+  const fetchEvents = async () => {
+    try {
+      const { data } = await axios.get(`${API_URL}/user/events`, {
+        withCredentials: true,
+      });
+      setAllEvents(data.data || []);
+    } catch (err) {
+      console.error("Failed to fetch events:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        const { data } = await axios.get(`${API_URL}/user/events`, {
-          withCredentials: true,
-        });
-        setAllEvents(data.data || []);
-      } catch (err) {
-        console.error("Failed to fetch events:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchEvents();
   }, [API_URL]);
 
@@ -159,7 +190,7 @@ export default function QRScannerPage() {
 
   const startScanning = async () => {
     if (!selectedEvent) {
-      alert("Please select an event first");
+      toast.warning("Please select an event first");
       return;
     }
 
@@ -176,20 +207,18 @@ export default function QRScannerPage() {
             const isPortrait = viewfinderHeight > viewfinderWidth;
 
             if (isPortrait) {
-              // for mobile - use almost full width as a square
               const size = Math.floor(viewfinderWidth * 0.95);
               return { width: size, height: size };
             }
 
-            // for desktop
             const size = Math.floor(
-              Math.min(viewfinderWidth, viewfinderHeight) * 0.85
+              Math.min(viewfinderWidth, viewfinderHeight) * 0.85,
             );
             return { width: size, height: size };
           },
         },
         onScanSuccess,
-        () => {}
+        () => {},
       );
 
       setScanning(true);
@@ -228,18 +257,41 @@ export default function QRScannerPage() {
             jerseyNumber: data.jerseyNumber,
             eventId: selectedEvent,
           },
-          { withCredentials: true }
+          { withCredentials: true },
         );
 
         if (response.data.success) {
-          setScanResult({
-            success: true,
-            jerseyNumber: data.jerseyNumber,
-            name: data.name || response.data.data?.name || "Student",
-            message: "Attendance marked!",
-          });
+          const isAlreadyPresent =
+            response.data.message?.includes("already") ||
+            response.data.data?.alreadyPresent;
+
+          if (isAlreadyPresent) {
+            toast.info(`#${data.jerseyNumber} Already Present`, {
+              icon: "ℹ️",
+            });
+            setScanResult({
+              success: true,
+              jerseyNumber: data.jerseyNumber,
+              name: data.name || response.data.data?.name || "Student",
+              message: "Already marked present",
+              alreadyPresent: true,
+            });
+          } else {
+            toast.success(`#${data.jerseyNumber} Marked Present!`, {
+              icon: "✅",
+            });
+            setScanResult({
+              success: true,
+              jerseyNumber: data.jerseyNumber,
+              name: data.name || response.data.data?.name || "Student",
+              message: "Attendance marked!",
+            });
+            // Refresh events to update stats
+            fetchEvents();
+          }
           playSound("success");
         } else {
+          toast.error(response.data.message || "Failed to mark attendance");
           setScanResult({
             success: false,
             jerseyNumber: data.jerseyNumber,
@@ -248,12 +300,14 @@ export default function QRScannerPage() {
           playSound("error");
         }
       } else {
+        toast.error("Invalid QR code format");
         setScanResult({ success: false, message: "Invalid QR code format" });
         playSound("error");
       }
     } catch (err) {
       const errorMsg =
         err.response?.data?.message || "Failed to process QR code";
+      toast.error(errorMsg);
       setScanResult({ success: false, message: errorMsg });
       playSound("error");
     } finally {
@@ -263,8 +317,9 @@ export default function QRScannerPage() {
 
   const playSound = (type) => {
     try {
-      const audioContext = new (window.AudioContext ||
-        window.webkitAudioContext)();
+      const audioContext = new (
+        window.AudioContext || window.webkitAudioContext
+      )();
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
 
@@ -290,57 +345,73 @@ export default function QRScannerPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-3">
+      <div
+        className={`relative overflow-hidden rounded-2xl p-4 sm:p-5 ${
+          darkMode
+            ? "bg-linear-to-br from-[#0c1929] via-[#0f172a] to-[#0c1525] ring-1 ring-white/8 shadow-[0_0_80px_-20px_rgba(6,182,212,0.25)]"
+            : "bg-linear-to-br from-slate-50 via-white to-cyan-50/30 ring-1 ring-slate-200 shadow-lg"
+        }`}
+      >
+        {darkMode && (
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <div className="absolute -top-32 -right-32 w-80 h-80 rounded-full blur-3xl opacity-20 bg-cyan-500" />
+          </div>
+        )}
+
+        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div
+              className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center text-white ${
+                darkMode
+                  ? "bg-linear-to-br from-cyan-500 to-blue-600"
+                  : "bg-slate-800"
+              }`}
+            >
+              {ICONS.qrCode}
+            </div>
+            <div>
+              <h1
+                className={`text-lg sm:text-xl lg:text-2xl font-black tracking-tight ${
+                  darkMode
+                    ? "bg-linear-to-r from-cyan-400 via-blue-400 to-indigo-400 bg-clip-text text-transparent"
+                    : "text-slate-800"
+                }`}
+              >
+                QR Scanner
+              </h1>
+              <p
+                className={`text-[11px] sm:text-xs ${
+                  darkMode ? "text-slate-500" : "text-slate-500"
+                }`}
+              >
+                Scan student QR codes to mark attendance
+              </p>
+            </div>
+          </div>
+
+          {/* Status Badge */}
           <div
-            className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-              darkMode
-                ? "bg-linear-to-br from-cyan-500 to-blue-600 text-white"
-                : "bg-slate-800 text-white"
+            className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium ${
+              selectedEvent
+                ? darkMode
+                  ? "bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/30"
+                  : "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
+                : darkMode
+                  ? "bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/30"
+                  : "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
             }`}
           >
-            {ICONS.qrCode}
-          </div>
-          <div>
-            <h1
-              className={`text-xl sm:text-2xl font-bold ${
-                darkMode ? "text-white" : "text-slate-900"
+            <span
+              className={`w-2 h-2 rounded-full ${
+                selectedEvent ? "bg-emerald-500 animate-pulse" : "bg-amber-500"
               }`}
-            >
-              QR Scanner
-            </h1>
-            <p
-              className={`text-xs sm:text-sm ${
-                darkMode ? "text-slate-400" : "text-slate-500"
-              }`}
-            >
-              Scan student QR codes to mark attendance
-            </p>
+            ></span>
+            {selectedEvent
+              ? `Ready: ${selectedEventData?.name}`
+              : "Select category & event"}
           </div>
-        </div>
-
-        {/* Status Badge */}
-        <div
-          className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium ${
-            selectedEvent
-              ? darkMode
-                ? "bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/30"
-                : "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
-              : darkMode
-              ? "bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/30"
-              : "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
-          }`}
-        >
-          <span
-            className={`w-2 h-2 rounded-full ${
-              selectedEvent ? "bg-emerald-500 animate-pulse" : "bg-amber-500"
-            }`}
-          ></span>
-          {selectedEvent
-            ? `Ready: ${selectedEventData?.name}`
-            : "Select category & event"}
         </div>
       </div>
 
@@ -354,11 +425,11 @@ export default function QRScannerPage() {
       >
         {/* Selection Header */}
         <div
-          className={`px-5 py-4 border-b ${
+          className={`px-4 sm:px-5 py-4 border-b ${
             darkMode ? "border-white/5" : "border-slate-100"
           }`}
         >
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             {/* Category Selection */}
             <div>
               <label
@@ -375,11 +446,21 @@ export default function QRScannerPage() {
                     selectedCategory === "Boys"
                       ? "bg-linear-to-r from-sky-500 to-blue-600 text-white shadow-lg shadow-sky-500/25"
                       : darkMode
-                      ? "bg-slate-800 text-slate-300 hover:bg-slate-700 ring-1 ring-white/10"
-                      : "bg-slate-50 text-slate-700 hover:bg-slate-100 ring-1 ring-slate-200"
+                        ? "bg-slate-800 text-slate-300 hover:bg-slate-700 ring-1 ring-white/10"
+                        : "bg-slate-50 text-slate-700 hover:bg-slate-100 ring-1 ring-slate-200"
                   }`}
                 >
-                  <span className="text-lg">👦</span>
+                  <span
+                    className={
+                      selectedCategory === "Boys"
+                        ? "text-white"
+                        : darkMode
+                          ? "text-sky-400"
+                          : "text-sky-600"
+                    }
+                  >
+                    {ICONS.boys}
+                  </span>
                   Boys
                 </button>
                 <button
@@ -388,11 +469,21 @@ export default function QRScannerPage() {
                     selectedCategory === "Girls"
                       ? "bg-linear-to-r from-pink-500 to-rose-600 text-white shadow-lg shadow-pink-500/25"
                       : darkMode
-                      ? "bg-slate-800 text-slate-300 hover:bg-slate-700 ring-1 ring-white/10"
-                      : "bg-slate-50 text-slate-700 hover:bg-slate-100 ring-1 ring-slate-200"
+                        ? "bg-slate-800 text-slate-300 hover:bg-slate-700 ring-1 ring-white/10"
+                        : "bg-slate-50 text-slate-700 hover:bg-slate-100 ring-1 ring-slate-200"
                   }`}
                 >
-                  <span className="text-lg">👧</span>
+                  <span
+                    className={
+                      selectedCategory === "Girls"
+                        ? "text-white"
+                        : darkMode
+                          ? "text-pink-400"
+                          : "text-pink-600"
+                    }
+                  >
+                    {ICONS.girls}
+                  </span>
                   Girls
                 </button>
               </div>
@@ -459,69 +550,162 @@ export default function QRScannerPage() {
               </select>
             </div>
           </div>
+        </div>
 
-          {/* Selected Event Info */}
-          {selectedEventData && (
+        {/* Attendance Stats Panel - Show when event is selected */}
+        {selectedEventData && (
+          <div
+            className={`px-4 sm:px-5 py-4 border-b ${
+              darkMode ? "border-white/5" : "border-slate-100"
+            }`}
+          >
             <div
-              className={`mt-4 px-4 py-3 rounded-xl flex items-center gap-3 ${
+              className={`rounded-xl p-4 ${
                 selectedCategory === "Girls"
                   ? darkMode
-                    ? "bg-pink-500/10 ring-1 ring-pink-500/30"
+                    ? "bg-pink-500/10 ring-1 ring-pink-500/20"
                     : "bg-pink-50 ring-1 ring-pink-200"
                   : darkMode
-                  ? "bg-sky-500/10 ring-1 ring-sky-500/30"
-                  : "bg-sky-50 ring-1 ring-sky-200"
+                    ? "bg-sky-500/10 ring-1 ring-sky-500/20"
+                    : "bg-sky-50 ring-1 ring-sky-200"
               }`}
             >
-              <div
-                className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg ${
-                  selectedCategory === "Girls"
-                    ? darkMode
-                      ? "bg-pink-500/20"
-                      : "bg-pink-100"
-                    : darkMode
-                    ? "bg-sky-500/20"
-                    : "bg-sky-100"
-                }`}
-              >
-                {selectedEventData.type === "Track"
-                  ? "🏃"
-                  : selectedEventData.type === "Field"
-                  ? "🎯"
-                  : "👥"}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+                <div>
+                  <p
+                    className={`font-bold text-sm ${
+                      selectedCategory === "Girls"
+                        ? darkMode
+                          ? "text-pink-200"
+                          : "text-pink-900"
+                        : darkMode
+                          ? "text-sky-200"
+                          : "text-sky-900"
+                    }`}
+                  >
+                    {selectedEventData.name}
+                  </p>
+                  <p
+                    className={`text-xs ${
+                      selectedCategory === "Girls"
+                        ? darkMode
+                          ? "text-pink-400/70"
+                          : "text-pink-700"
+                        : darkMode
+                          ? "text-sky-400/70"
+                          : "text-sky-700"
+                    }`}
+                  >
+                    {selectedEventData.type} • {selectedEventData.category} •{" "}
+                    {selectedEventData.day}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p
-                  className={`font-semibold text-sm ${
-                    selectedCategory === "Girls"
-                      ? darkMode
-                        ? "text-pink-100"
-                        : "text-pink-900"
-                      : darkMode
-                      ? "text-sky-100"
-                      : "text-sky-900"
+
+              {/* Stats Grid */}
+              <div className="grid grid-cols-3 gap-3">
+                {/* Present */}
+                <div
+                  className={`rounded-lg p-3 text-center ${
+                    darkMode
+                      ? "bg-emerald-500/15 ring-1 ring-emerald-500/30"
+                      : "bg-emerald-50 ring-1 ring-emerald-200"
                   }`}
                 >
-                  {selectedEventData.name}
-                </p>
-                <p
-                  className={`text-xs ${
-                    selectedCategory === "Girls"
-                      ? darkMode
-                        ? "text-pink-300/70"
-                        : "text-pink-700"
-                      : darkMode
-                      ? "text-sky-300/70"
-                      : "text-sky-700"
+                  <div
+                    className={`w-8 h-8 mx-auto mb-1 rounded-lg flex items-center justify-center ${
+                      darkMode
+                        ? "bg-emerald-500/20 text-emerald-400"
+                        : "bg-emerald-100 text-emerald-600"
+                    }`}
+                  >
+                    {ICONS.present}
+                  </div>
+                  <p
+                    className={`text-xl font-black ${
+                      darkMode ? "text-emerald-400" : "text-emerald-600"
+                    }`}
+                  >
+                    {selectedEventData.studentsCount?.present || 0}
+                  </p>
+                  <p
+                    className={`text-[10px] font-bold uppercase ${
+                      darkMode ? "text-emerald-400/70" : "text-emerald-600"
+                    }`}
+                  >
+                    Present
+                  </p>
+                </div>
+
+                {/* Absent */}
+                <div
+                  className={`rounded-lg p-3 text-center ${
+                    darkMode
+                      ? "bg-red-500/15 ring-1 ring-red-500/30"
+                      : "bg-red-50 ring-1 ring-red-200"
                   }`}
                 >
-                  {selectedEventData.type} • {selectedEventData.category} •{" "}
-                  {selectedEventData.day}
-                </p>
+                  <div
+                    className={`w-8 h-8 mx-auto mb-1 rounded-lg flex items-center justify-center ${
+                      darkMode
+                        ? "bg-red-500/20 text-red-400"
+                        : "bg-red-100 text-red-600"
+                    }`}
+                  >
+                    {ICONS.absent}
+                  </div>
+                  <p
+                    className={`text-xl font-black ${
+                      darkMode ? "text-red-400" : "text-red-600"
+                    }`}
+                  >
+                    {selectedEventData.studentsCount?.absent || 0}
+                  </p>
+                  <p
+                    className={`text-[10px] font-bold uppercase ${
+                      darkMode ? "text-red-400/70" : "text-red-600"
+                    }`}
+                  >
+                    Absent
+                  </p>
+                </div>
+
+                {/* Not Marked */}
+                <div
+                  className={`rounded-lg p-3 text-center ${
+                    darkMode
+                      ? "bg-amber-500/15 ring-1 ring-amber-500/30"
+                      : "bg-amber-50 ring-1 ring-amber-200"
+                  }`}
+                >
+                  <div
+                    className={`w-8 h-8 mx-auto mb-1 rounded-lg flex items-center justify-center ${
+                      darkMode
+                        ? "bg-amber-500/20 text-amber-400"
+                        : "bg-amber-100 text-amber-600"
+                    }`}
+                  >
+                    {ICONS.notMarked}
+                  </div>
+                  <p
+                    className={`text-xl font-black ${
+                      darkMode ? "text-amber-400" : "text-amber-600"
+                    }`}
+                  >
+                    {selectedEventData.studentsCount?.notMarked || 0}
+                  </p>
+                  <p
+                    className={`text-[10px] font-bold uppercase ${
+                      darkMode ? "text-amber-400/70" : "text-amber-600"
+                    }`}
+                  >
+                    Not Marked
+                  </p>
+                </div>
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Scanner Area */}
         <div
@@ -576,7 +760,6 @@ export default function QRScannerPage() {
                     {ICONS.qrCode}
                   </div>
                 </div>
-                {/* Corner accents */}
                 <div
                   className={`absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 rounded-tl-lg ${
                     darkMode ? "border-cyan-400" : "border-slate-500"
@@ -607,8 +790,8 @@ export default function QRScannerPage() {
                 {!selectedCategory
                   ? "Select category first (Boys/Girls)"
                   : !selectedEvent
-                  ? "Select an event to start scanning"
-                  : `Ready to scan for ${selectedEventData?.name}`}
+                    ? "Select an event to start scanning"
+                    : `Ready to scan for ${selectedEventData?.name}`}
               </p>
 
               <button
@@ -620,8 +803,8 @@ export default function QRScannerPage() {
                       ? "bg-linear-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-600 hover:to-blue-700 shadow-lg shadow-cyan-500/25"
                       : "bg-linear-to-r from-slate-700 to-slate-800 text-white hover:from-slate-800 hover:to-slate-900 shadow-lg shadow-slate-500/25"
                     : darkMode
-                    ? "bg-slate-700 text-slate-500 cursor-not-allowed"
-                    : "bg-slate-300 text-slate-400 cursor-not-allowed"
+                      ? "bg-slate-700 text-slate-500 cursor-not-allowed"
+                      : "bg-slate-300 text-slate-400 cursor-not-allowed"
                 }`}
               >
                 {ICONS.camera}
@@ -644,13 +827,19 @@ export default function QRScannerPage() {
               <div
                 className={`w-20 h-20 mb-4 rounded-full flex items-center justify-center ${
                   scanResult.success
-                    ? "bg-emerald-500/20 ring-2 ring-emerald-400"
+                    ? scanResult.alreadyPresent
+                      ? "bg-blue-500/20 ring-2 ring-blue-400"
+                      : "bg-emerald-500/20 ring-2 ring-emerald-400"
                     : "bg-red-500/20 ring-2 ring-red-400"
                 }`}
               >
                 <span
                   className={
-                    scanResult.success ? "text-emerald-400" : "text-red-400"
+                    scanResult.success
+                      ? scanResult.alreadyPresent
+                        ? "text-blue-400"
+                        : "text-emerald-400"
+                      : "text-red-400"
                   }
                 >
                   {scanResult.success ? ICONS.check : ICONS.x}
@@ -667,7 +856,11 @@ export default function QRScannerPage() {
               )}
               <p
                 className={`text-center mb-6 font-medium ${
-                  scanResult.success ? "text-emerald-400" : "text-red-400"
+                  scanResult.success
+                    ? scanResult.alreadyPresent
+                      ? "text-blue-400"
+                      : "text-emerald-400"
+                    : "text-red-400"
                 }`}
               >
                 {scanResult.message}
@@ -702,67 +895,34 @@ export default function QRScannerPage() {
 
         {/* Instructions Footer */}
         <div
-          className={`px-5 py-4 border-t ${
+          className={`px-4 sm:px-5 py-4 border-t ${
             darkMode ? "border-white/5" : "border-slate-100"
           }`}
         >
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs">
-            <div className="flex items-center gap-2">
-              <span
-                className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                  darkMode
-                    ? "bg-cyan-500/20 text-cyan-400"
-                    : "bg-cyan-100 text-cyan-600"
-                }`}
-              >
-                1
-              </span>
-              <span className={darkMode ? "text-slate-400" : "text-slate-600"}>
-                Select category
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span
-                className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                  darkMode
-                    ? "bg-cyan-500/20 text-cyan-400"
-                    : "bg-cyan-100 text-cyan-600"
-                }`}
-              >
-                2
-              </span>
-              <span className={darkMode ? "text-slate-400" : "text-slate-600"}>
-                Choose event
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span
-                className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                  darkMode
-                    ? "bg-cyan-500/20 text-cyan-400"
-                    : "bg-cyan-100 text-cyan-600"
-                }`}
-              >
-                3
-              </span>
-              <span className={darkMode ? "text-slate-400" : "text-slate-600"}>
-                Start scanning
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span
-                className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                  darkMode
-                    ? "bg-cyan-500/20 text-cyan-400"
-                    : "bg-cyan-100 text-cyan-600"
-                }`}
-              >
-                4
-              </span>
-              <span className={darkMode ? "text-slate-400" : "text-slate-600"}>
-                Point at QR
-              </span>
-            </div>
+            {[
+              "Select category",
+              "Choose event",
+              "Start scanning",
+              "Point at QR",
+            ].map((step, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <span
+                  className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                    darkMode
+                      ? "bg-cyan-500/20 text-cyan-400"
+                      : "bg-cyan-100 text-cyan-600"
+                  }`}
+                >
+                  {i + 1}
+                </span>
+                <span
+                  className={darkMode ? "text-slate-400" : "text-slate-600"}
+                >
+                  {step}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       </div>

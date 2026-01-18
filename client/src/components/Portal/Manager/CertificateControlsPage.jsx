@@ -1,289 +1,300 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTheme } from "../../../context/ThemeContext";
+import axios from "axios";
+import LoadingComponent from "../LoadingComponent";
+
+/* -------------------- Icons -------------------- */
+const ICONS = {
+  certificate: (
+    <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current">
+      <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z" />
+    </svg>
+  ),
+  lock: (
+    <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current">
+      <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
+    </svg>
+  ),
+  unlock: (
+    <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current">
+      <path d="M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h1.9c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10z" />
+    </svg>
+  ),
+  info: (
+    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+    </svg>
+  ),
+};
 
 export default function CertificateControlsPage() {
   const { darkMode } = useTheme();
-  const [globalLock, setGlobalLock] = useState(true);
+  const [isLocked, setIsLocked] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
-  const [generating, setGenerating] = useState(false);
+  const API_URL = import.meta.env.VITE_API_URL;
 
-  const stats = { total: 45, participation: 35, winner: 10 };
+  useEffect(() => {
+    const fetchStatus = async () => {
+      try {
+        const { data: response } = await axios.get(
+          `${API_URL}/manager/certificates/status`,
+          { withCredentials: true },
+        );
+        if (response.success) {
+          setIsLocked(response.data.areCertificatesLocked);
+        }
+      } catch (err) {
+        console.error("Failed to fetch certificate status", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStatus();
+  }, [API_URL]);
 
-  const toggleGlobalLock = async () => {
-    setUpdating(true);
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    setGlobalLock(!globalLock);
-    setUpdating(false);
+  const toggleLock = async () => {
+    try {
+      setUpdating(true);
+      const endpoint = isLocked
+        ? `${API_URL}/manager/certificates/unlock`
+        : `${API_URL}/manager/certificates/lock`;
+
+      const { data: response } = await axios.post(
+        endpoint,
+        {},
+        { withCredentials: true },
+      );
+
+      if (response.success) {
+        setIsLocked(response.data.areCertificatesLocked);
+      }
+    } catch (err) {
+      console.error("Failed to toggle certificate lock", err);
+      alert("❌ Failed to update certificate status");
+    } finally {
+      setUpdating(false);
+    }
   };
 
-  const generateCertificates = async () => {
-    setGenerating(true);
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    setGenerating(false);
-    alert("Certificates generated successfully!");
-  };
+  if (loading) {
+    return (
+      <LoadingComponent
+        darkMode={darkMode}
+        title="Loading Certificate Controls"
+        message="Fetching certificate status..."
+      />
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1
-          className={`text-2xl font-bold ${
-            darkMode ? "text-white" : "text-gray-900"
-          }`}
-        >
-          Certificate Controls 🎓
-        </h1>
-        <p
-          className={`text-sm mt-1 ${
-            darkMode ? "text-gray-400" : "text-gray-500"
-          }`}
-        >
-          Manage certificate availability and generation
-        </p>
-      </div>
-
-      {/* Global Lock Status */}
+    <div className="space-y-4 sm:space-y-5">
+      {/* Header Section */}
       <div
-        className={`rounded-2xl overflow-hidden ${
-          globalLock
-            ? darkMode
-              ? "bg-linear-to-br from-red-900/50 to-orange-900/30 border border-red-500/40"
-              : "bg-linear-to-br from-red-50 to-orange-50 border border-red-200"
-            : darkMode
-            ? "bg-linear-to-br from-emerald-900/50 to-teal-900/30 border border-emerald-500/40"
-            : "bg-linear-to-br from-emerald-50 to-teal-50 border border-emerald-200"
+        className={`relative overflow-hidden rounded-2xl p-4 sm:p-5 lg:p-6 ${
+          darkMode
+            ? "bg-linear-to-br from-[#0c1929] via-[#0f172a] to-[#0c1525] ring-1 ring-white/8 shadow-[0_0_80px_-20px_rgba(147,51,234,0.25)]"
+            : "bg-linear-to-br from-slate-50 via-white to-slate-100 ring-1 ring-slate-200 shadow-lg"
         }`}
       >
-        <div className="p-6">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
-            <div className="flex items-start gap-4">
-              <div
-                className={`w-14 h-14 rounded-xl flex items-center justify-center text-3xl shadow-lg ${
-                  globalLock
-                    ? "bg-linear-to-br from-red-500 to-orange-500"
-                    : "bg-linear-to-br from-emerald-500 to-teal-500"
+        {/* Background glow effects */}
+        {darkMode && (
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <div className="absolute -top-32 -right-32 w-80 h-80 rounded-full blur-3xl opacity-25 bg-violet-500" />
+            <div className="absolute -bottom-32 -left-32 w-72 h-72 rounded-full blur-3xl opacity-20 bg-purple-600" />
+          </div>
+        )}
+
+        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div
+              className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center text-white ${
+                darkMode
+                  ? "bg-linear-to-br from-violet-500 to-purple-600"
+                  : "bg-slate-900"
+              }`}
+            >
+              {ICONS.certificate}
+            </div>
+            <div>
+              <h1
+                className={`text-lg sm:text-xl lg:text-2xl font-black tracking-tight ${
+                  darkMode
+                    ? "bg-linear-to-r from-violet-400 via-purple-400 to-fuchsia-400 bg-clip-text text-transparent"
+                    : "text-slate-800"
                 }`}
               >
-                {globalLock ? "🔒" : "🔓"}
-              </div>
-              <div>
-                <h2
-                  className={`font-bold text-lg ${
-                    darkMode ? "text-white" : "text-gray-900"
-                  }`}
-                >
-                  Global Certificate Lock
-                </h2>
-                <p
-                  className={`font-bold ${
-                    globalLock
-                      ? darkMode
-                        ? "text-red-400"
-                        : "text-red-600"
-                      : darkMode
+                Certificate Controls
+              </h1>
+              <p
+                className={`text-[11px] sm:text-xs ${
+                  darkMode ? "text-slate-500" : "text-slate-500"
+                }`}
+              >
+                Manage student certificate availability
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Lock Status Card */}
+      <div
+        className={`relative overflow-hidden rounded-2xl p-5 sm:p-6 lg:p-8 ${
+          isLocked
+            ? darkMode
+              ? "bg-linear-to-br from-red-950/60 via-rose-950/40 to-orange-950/30 ring-2 ring-red-500/40"
+              : "bg-linear-to-br from-red-50 via-rose-50 to-orange-50 ring-2 ring-red-300"
+            : darkMode
+              ? "bg-linear-to-br from-emerald-950/60 via-green-950/40 to-teal-950/30 ring-2 ring-emerald-500/40"
+              : "bg-linear-to-br from-emerald-50 via-green-50 to-teal-50 ring-2 ring-emerald-300"
+        }`}
+      >
+        {/* Glow effect */}
+        {darkMode && (
+          <div
+            className={`absolute -top-20 -right-20 w-60 h-60 rounded-full blur-3xl pointer-events-none ${
+              isLocked ? "bg-red-500/20" : "bg-emerald-500/20"
+            }`}
+          />
+        )}
+
+        <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+          <div className="flex items-start gap-4 sm:gap-5">
+            <div
+              className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center text-white shadow-xl ${
+                isLocked
+                  ? "bg-linear-to-br from-red-500 to-rose-600"
+                  : "bg-linear-to-br from-emerald-500 to-green-600"
+              }`}
+            >
+              <span className="text-3xl sm:text-4xl">
+                {isLocked ? "🔒" : "🔓"}
+              </span>
+            </div>
+            <div>
+              <h2
+                className={`font-black text-xl sm:text-2xl mb-1 ${
+                  darkMode ? "text-white" : "text-slate-800"
+                }`}
+              >
+                Global Certificate Lock
+              </h2>
+              <p
+                className={`font-bold text-base sm:text-lg ${
+                  isLocked
+                    ? darkMode
+                      ? "text-red-400"
+                      : "text-red-600"
+                    : darkMode
                       ? "text-emerald-400"
                       : "text-emerald-600"
-                  }`}
-                >
-                  {globalLock
-                    ? "Certificates are LOCKED"
-                    : "Certificates are AVAILABLE"}
-                </p>
-                <p
-                  className={`text-sm mt-1 ${
-                    darkMode ? "text-gray-400" : "text-gray-500"
-                  }`}
-                >
-                  {globalLock
-                    ? "Students cannot view or download certificates"
-                    : "Students can now access and download their certificates"}
-                </p>
-              </div>
-            </div>
-
-            <button
-              onClick={toggleGlobalLock}
-              disabled={updating}
-              className={`px-6 py-3 rounded-xl font-bold text-white shadow-lg transition-all hover:scale-[1.02] hover:shadow-xl ${
-                globalLock
-                  ? "bg-linear-to-r from-emerald-500 to-teal-500"
-                  : "bg-linear-to-r from-red-500 to-orange-500"
-              } disabled:opacity-50 disabled:hover:scale-100`}
-            >
-              {updating
-                ? "..."
-                : globalLock
-                ? "🔓 Unlock Certificates"
-                : "🔒 Lock Certificates"}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Statistics */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div
-          className={`rounded-xl p-5 ${
-            darkMode
-              ? "bg-linear-to-br from-indigo-900/40 to-purple-900/30 border border-indigo-500/40"
-              : "bg-linear-to-br from-indigo-50 to-purple-50 border border-indigo-200"
-          }`}
-        >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-linear-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-2xl shadow-lg">
-              📜
-            </div>
-            <div>
-              <p
-                className={`text-sm ${
-                  darkMode ? "text-indigo-300" : "text-indigo-600"
                 }`}
               >
-                Total
+                {isLocked
+                  ? "Certificates are LOCKED"
+                  : "Certificates are AVAILABLE"}
               </p>
               <p
-                className={`text-2xl font-bold ${
-                  darkMode ? "text-white" : "text-indigo-900"
+                className={`text-sm mt-1 ${
+                  darkMode ? "text-slate-400" : "text-slate-600"
                 }`}
               >
-                {stats.total}
+                {isLocked
+                  ? "Students cannot view or download their certificates"
+                  : "Students can now access and download their certificates"}
               </p>
             </div>
           </div>
-        </div>
 
-        <div
-          className={`rounded-xl p-5 ${
-            darkMode
-              ? "bg-linear-to-br from-blue-900/40 to-cyan-900/30 border border-blue-500/40"
-              : "bg-linear-to-br from-blue-50 to-cyan-50 border border-blue-200"
-          }`}
-        >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-linear-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-2xl shadow-lg">
-              🏅
-            </div>
-            <div>
-              <p
-                className={`text-sm ${
-                  darkMode ? "text-blue-300" : "text-blue-600"
-                }`}
-              >
-                Participation
-              </p>
-              <p
-                className={`text-2xl font-bold ${
-                  darkMode ? "text-white" : "text-blue-900"
-                }`}
-              >
-                {stats.participation}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div
-          className={`rounded-xl p-5 ${
-            darkMode
-              ? "bg-linear-to-br from-amber-900/40 to-orange-900/30 border border-amber-500/40"
-              : "bg-linear-to-br from-amber-50 to-orange-50 border border-amber-200"
-          }`}
-        >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-linear-to-br from-amber-500 to-orange-500 flex items-center justify-center text-2xl shadow-lg">
-              🏆
-            </div>
-            <div>
-              <p
-                className={`text-sm ${
-                  darkMode ? "text-amber-300" : "text-amber-600"
-                }`}
-              >
-                Winners
-              </p>
-              <p
-                className={`text-2xl font-bold ${
-                  darkMode ? "text-white" : "text-amber-900"
-                }`}
-              >
-                {stats.winner}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Generation Actions */}
-      <div
-        className={`rounded-2xl p-6 ${
-          darkMode
-            ? "bg-linear-to-br from-indigo-900/30 via-purple-900/20 to-pink-900/30 border border-indigo-500/30"
-            : "bg-linear-to-br from-indigo-50 via-purple-50 to-pink-50 border border-indigo-200"
-        }`}
-      >
-        <h3
-          className={`font-bold text-lg mb-2 ${
-            darkMode ? "text-white" : "text-gray-900"
-          }`}
-        >
-          ⚙️ Certificate Generation
-        </h3>
-        <p
-          className={`text-sm mb-5 ${
-            darkMode ? "text-gray-400" : "text-gray-500"
-          }`}
-        >
-          Generate certificates for all eligible participants based on event
-          results
-        </p>
-
-        <div className="flex flex-wrap gap-3">
           <button
-            onClick={generateCertificates}
-            disabled={generating}
-            className="px-6 py-3 bg-linear-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all disabled:opacity-50"
+            onClick={toggleLock}
+            disabled={updating}
+            className={`px-6 py-3.5 rounded-xl font-bold text-sm sm:text-base transition-all flex items-center justify-center gap-3 shadow-xl min-w-[200px] ${
+              isLocked
+                ? darkMode
+                  ? "bg-linear-to-r from-emerald-500 to-green-600 text-white shadow-emerald-500/25 hover:brightness-110"
+                  : "bg-linear-to-r from-emerald-500 to-green-500 text-white shadow-emerald-500/30 hover:brightness-110"
+                : darkMode
+                  ? "bg-linear-to-r from-red-500 to-rose-600 text-white shadow-red-500/25 hover:brightness-110"
+                  : "bg-linear-to-r from-red-500 to-rose-500 text-white shadow-red-500/30 hover:brightness-110"
+            } disabled:opacity-50 disabled:cursor-not-allowed`}
           >
-            {generating ? "⏳ Generating..." : "✨ Generate All Certificates"}
-          </button>
-          <button
-            className={`px-6 py-3 font-semibold rounded-xl transition-all ${
-              darkMode
-                ? "bg-slate-800 text-white hover:bg-slate-700 border border-slate-700"
-                : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-200"
-            }`}
-          >
-            🔄 Regenerate All
+            <span className="w-5 h-5 flex items-center justify-center shrink-0">
+              {updating ? (
+                <span className="animate-spin h-5 w-5 border-2 border-white/30 rounded-full border-t-white" />
+              ) : isLocked ? (
+                ICONS.unlock
+              ) : (
+                ICONS.lock
+              )}
+            </span>
+            <span className="whitespace-nowrap">
+              {isLocked ? "Unlock Certificates" : "Lock Certificates"}
+            </span>
           </button>
         </div>
       </div>
 
-      {/* Warning */}
+      {/* Info Banner */}
       <div
-        className={`rounded-xl p-5 flex items-start gap-4 ${
+        className={`rounded-xl p-4 flex items-start gap-3 ${
           darkMode
-            ? "bg-linear-to-r from-amber-900/40 to-orange-900/30 border border-amber-500/30"
-            : "bg-linear-to-r from-amber-50 to-orange-50 border border-amber-200"
+            ? "bg-linear-to-r from-violet-950/40 to-slate-900/60 ring-1 ring-violet-500/20"
+            : "bg-linear-to-r from-violet-50 to-slate-50 ring-1 ring-violet-200"
         }`}
       >
-        <span className="text-2xl">⚠️</span>
+        <div
+          className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+            darkMode
+              ? "bg-violet-500/20 text-violet-400"
+              : "bg-violet-100 text-violet-600"
+          }`}
+        >
+          {ICONS.info}
+        </div>
         <div>
           <p
-            className={`font-bold ${
-              darkMode ? "text-amber-400" : "text-amber-700"
+            className={`font-bold text-sm ${
+              darkMode ? "text-white" : "text-slate-800"
             }`}
           >
-            Important Notice
+            How Certificate Lock Works
           </p>
-          <p
-            className={`text-sm mt-1 ${
-              darkMode ? "text-amber-200" : "text-amber-600"
+          <ul
+            className={`text-xs mt-1.5 space-y-1 ${
+              darkMode ? "text-violet-300/80" : "text-violet-700"
             }`}
           >
-            Ensure all events are completed and results finalized before
-            generating certificates. Once unlocked, students will receive email
-            notifications.
-          </p>
+            <li className="flex items-start gap-2">
+              <span
+                className={`font-bold ${darkMode ? "text-red-400" : "text-red-600"}`}
+              >
+                •
+              </span>
+              <span>
+                <strong className={darkMode ? "text-red-400" : "text-red-600"}>
+                  Locked
+                </strong>{" "}
+                – Students see a message that certificates are unavailable
+              </span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span
+                className={`font-bold ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}
+              >
+                •
+              </span>
+              <span>
+                <strong
+                  className={darkMode ? "text-emerald-400" : "text-emerald-600"}
+                >
+                  Unlocked
+                </strong>{" "}
+                – Students can view and download their certificates
+              </span>
+            </li>
+          </ul>
         </div>
       </div>
     </div>

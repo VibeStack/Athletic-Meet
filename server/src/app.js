@@ -31,16 +31,21 @@ import userRouter from "./routes/user.routes.js";
 import otpRouter from "./routes/emailOtp.routes.js";
 import authLoginRouter from "./routes/authLogin.routes.js";
 import adminRouter from "./routes/admin.routes.js";
+import managerRouter from "./routes/manager.routes.js";
+import certificateRouter from "./routes/certificate.routes.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
 import {
   checkAuth,
   requireAdminAccess,
+  requireManagerAccess,
 } from "./middlewares/auth.middleware.js";
 
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/otp", otpRouter);
 app.use("/api/v1/auth", authLoginRouter);
 app.use("/api/v1/admin", checkAuth, requireAdminAccess, adminRouter);
+app.use("/api/v1/manager", checkAuth, requireManagerAccess, managerRouter);
+app.use("/api/v1/certificate", checkAuth, certificateRouter);
 
 app.use(errorHandler);
 

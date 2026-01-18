@@ -51,7 +51,7 @@ export default function UserDetailEvents({
   const [updatedEventsArray, setupdatedEventsArray] = useState(
     studentUserData.selectedEvents.map(({ eventId, eventType }) => {
       return { eventId, eventType };
-    })
+    }),
   );
   const [showAddEventModal, setShowAddEventModal] = useState(false);
 
@@ -61,7 +61,10 @@ export default function UserDetailEvents({
         withCredentials: true,
       });
       const gender = studentUserData.gender === "Male" ? "Boys" : "Girls";
-      setAllEvents(response.data.filter((e) => e.category === gender));
+      // Filter by gender AND only show ACTIVE events
+      setAllEvents(
+        response.data.filter((e) => e.category === gender && e.isActive),
+      );
       setShowAddEventModal(true);
     } catch (err) {
       console.error("Failed to fetch events", err);
@@ -76,18 +79,18 @@ export default function UserDetailEvents({
       }
 
       const updatedEventsIdsArray = updatedEventsArray.map(
-        ({ eventId }) => eventId
+        ({ eventId }) => eventId,
       );
 
       await axios.post(
         `${API_URL}/admin/users/${studentUserData.id}/updateEvents`,
         { updatedEventsIdsArray },
-        { withCredentials: true }
+        { withCredentials: true },
       );
     } catch (error) {
       console.error(
         "Failed to update user events",
-        error?.response?.data || error.message
+        error?.response?.data || error.message,
       );
     }
     setShowAddEventModal(false);
@@ -135,7 +138,8 @@ export default function UserDetailEvents({
           </div>
 
           {(studentUserData.id === user.id ||
-            roleAccessPoints(user.role) > roleAccessPoints(studentUserData.role)) &&
+            roleAccessPoints(user.role) >
+              roleAccessPoints(studentUserData.role)) &&
             studentUserData.isUserDetailsComplete === "true" && (
               <button
                 onClick={openAddEventModal}
@@ -183,12 +187,12 @@ export default function UserDetailEvents({
                               ? "bg-orange-500/25 text-orange-400"
                               : "bg-orange-100 text-orange-600"
                             : eventType === "Field"
-                            ? darkMode
-                              ? "bg-emerald-500/25 text-emerald-400"
-                              : "bg-emerald-100 text-emerald-600"
-                            : darkMode
-                            ? "bg-blue-500/25 text-blue-400"
-                            : "bg-blue-100 text-blue-600"
+                              ? darkMode
+                                ? "bg-emerald-500/25 text-emerald-400"
+                                : "bg-emerald-100 text-emerald-600"
+                              : darkMode
+                                ? "bg-blue-500/25 text-blue-400"
+                                : "bg-blue-100 text-blue-600"
                         }`}
                       >
                         {eventType}
@@ -201,8 +205,8 @@ export default function UserDetailEvents({
                             attendanceStatus === "present"
                               ? "bg-emerald-500 text-white"
                               : darkMode
-                              ? "bg-emerald-900/50 text-emerald-400 hover:bg-emerald-900/70"
-                              : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                                ? "bg-emerald-900/50 text-emerald-400 hover:bg-emerald-900/70"
+                                : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
                           }`}
                         >
                           Present
@@ -213,8 +217,8 @@ export default function UserDetailEvents({
                             attendanceStatus === "absent"
                               ? "bg-red-500 text-white"
                               : darkMode
-                              ? "bg-red-900/50 text-red-400 hover:bg-red-900/70"
-                              : "bg-red-50 text-red-700 hover:bg-red-100"
+                                ? "bg-red-900/50 text-red-400 hover:bg-red-900/70"
+                                : "bg-red-50 text-red-700 hover:bg-red-100"
                           }`}
                         >
                           Absent
@@ -225,8 +229,8 @@ export default function UserDetailEvents({
                             attendanceStatus === "notMarked"
                               ? "bg-amber-500 text-white"
                               : darkMode
-                              ? "bg-amber-900/50 text-amber-400 hover:bg-amber-900/70"
-                              : "bg-amber-50 text-amber-700 hover:bg-amber-100"
+                                ? "bg-amber-900/50 text-amber-400 hover:bg-amber-900/70"
+                                : "bg-amber-50 text-amber-700 hover:bg-amber-100"
                           }`}
                         >
                           Not Marked
@@ -234,7 +238,7 @@ export default function UserDetailEvents({
                       </div>
                     </div>
                   );
-                }
+                },
               )}
             </div>
           ) : (
@@ -339,17 +343,17 @@ export default function UserDetailEvents({
                     .filter((e) => e.type === "Track")
                     .map((event) => {
                       const trackCount = updatedEventsArray.filter(
-                        (e) => e.eventType === "Track"
+                        (e) => e.eventType === "Track",
                       ).length;
 
                       const fieldCount = updatedEventsArray.filter(
-                        (e) => e.eventType === "Field"
+                        (e) => e.eventType === "Field",
                       ).length;
 
                       const tfTotal = trackCount + fieldCount;
 
                       const isSelected = updatedEventsArray.some(
-                        (e) => e.eventId === event.id
+                        (e) => e.eventId === event.id,
                       );
 
                       const isDisabled =
@@ -367,7 +371,7 @@ export default function UserDetailEvents({
                                 : [
                                     ...prev,
                                     { eventId: event.id, eventType: "Track" },
-                                  ]
+                                  ],
                             );
                           }}
                           className={`relative rounded-lg p-2.5 transition-all cursor-pointer ${
@@ -376,8 +380,8 @@ export default function UserDetailEvents({
                                 ? "bg-emerald-900/50 ring-2 ring-emerald-500"
                                 : "bg-emerald-50 ring-2 ring-emerald-400"
                               : darkMode
-                              ? "bg-slate-800/80 ring-1 ring-white/10 hover:ring-white/20"
-                              : "bg-slate-50 ring-1 ring-slate-200 hover:ring-slate-300"
+                                ? "bg-slate-800/80 ring-1 ring-white/10 hover:ring-white/20"
+                                : "bg-slate-50 ring-1 ring-slate-200 hover:ring-slate-300"
                           } ${
                             isDisabled ? "opacity-40 pointer-events-none" : ""
                           }`}
@@ -431,17 +435,17 @@ export default function UserDetailEvents({
                     .filter((e) => e.type === "Field")
                     .map((event) => {
                       const trackCount = updatedEventsArray.filter(
-                        (e) => e.eventType === "Track"
+                        (e) => e.eventType === "Track",
                       ).length;
 
                       const fieldCount = updatedEventsArray.filter(
-                        (e) => e.eventType === "Field"
+                        (e) => e.eventType === "Field",
                       ).length;
 
                       const tfTotal = trackCount + fieldCount;
 
                       const isSelected = updatedEventsArray.some(
-                        (e) => e.eventId === event.id
+                        (e) => e.eventId === event.id,
                       );
 
                       const isDisabled =
@@ -459,7 +463,7 @@ export default function UserDetailEvents({
                                 : [
                                     ...prev,
                                     { eventId: event.id, eventType: "Field" },
-                                  ]
+                                  ],
                             );
                           }}
                           className={`relative rounded-lg p-2.5 transition-all cursor-pointer ${
@@ -468,8 +472,8 @@ export default function UserDetailEvents({
                                 ? "bg-emerald-900/50 ring-2 ring-emerald-500"
                                 : "bg-emerald-50 ring-2 ring-emerald-400"
                               : darkMode
-                              ? "bg-slate-800/80 ring-1 ring-white/10 hover:ring-white/20"
-                              : "bg-slate-50 ring-1 ring-slate-200 hover:ring-slate-300"
+                                ? "bg-slate-800/80 ring-1 ring-white/10 hover:ring-white/20"
+                                : "bg-slate-50 ring-1 ring-slate-200 hover:ring-slate-300"
                           } ${
                             isDisabled ? "opacity-40 pointer-events-none" : ""
                           }`}
@@ -523,11 +527,11 @@ export default function UserDetailEvents({
                     .filter((e) => e.type === "Team")
                     .map((event) => {
                       const teamCount = updatedEventsArray.filter(
-                        (e) => e.eventType === "Team"
+                        (e) => e.eventType === "Team",
                       ).length;
 
                       const isSelected = updatedEventsArray.some(
-                        (e) => e.eventId === event.id
+                        (e) => e.eventId === event.id,
                       );
 
                       const isDisabled = !isSelected && teamCount >= 2;
@@ -544,7 +548,7 @@ export default function UserDetailEvents({
                                 : [
                                     ...prev,
                                     { eventId: event.id, eventType: "Team" },
-                                  ]
+                                  ],
                             );
                           }}
                           className={`relative rounded-lg p-2.5 transition-all cursor-pointer ${
@@ -553,8 +557,8 @@ export default function UserDetailEvents({
                                 ? "bg-emerald-900/50 ring-2 ring-emerald-500"
                                 : "bg-emerald-50 ring-2 ring-emerald-400"
                               : darkMode
-                              ? "bg-slate-800/80 ring-1 ring-white/10 hover:ring-white/20"
-                              : "bg-slate-50 ring-1 ring-slate-200 hover:ring-slate-300"
+                                ? "bg-slate-800/80 ring-1 ring-white/10 hover:ring-white/20"
+                                : "bg-slate-50 ring-1 ring-slate-200 hover:ring-slate-300"
                           }${
                             isDisabled ? "opacity-40 pointer-events-none" : ""
                           }`}

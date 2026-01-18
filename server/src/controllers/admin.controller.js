@@ -268,9 +268,26 @@ export const unlockUserEvents = asyncHandler(async (req, res) => {
         "You are not allowed to unlock this user's events"
       );
     }
-    console.log(user.selectedEvents)
+
+    if (!user.isEventsLocked) {
+      await session.commitTransaction();
+      return res
+        .status(200)
+        .json(new ApiResponse(null, "Events already unlocked"));
+    }
+
+    // Decrement event counts for each selected event
     if (user.selectedEvents.length > 0) {
-      
+      for (const selectedEvent of user.selectedEvents) {
+        const status = selectedEvent.status || "notMarked";
+        const decrementField = `studentsCount.${status}`;
+
+        await Event.updateOne(
+          { _id: selectedEvent.eventId },
+          { $inc: { [decrementField]: -1 } },
+          { session }
+        );
+      }
     }
 
     user.isEventsLocked = false;

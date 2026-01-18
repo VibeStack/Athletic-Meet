@@ -50,13 +50,18 @@ const SECTION_ICONS = {
 export default function EventsPage() {
   const { darkMode } = useTheme();
   const { user } = useOutletContext();
-  const { userEventsList, setUserEventsList } = useUserDetail();
+  const {
+    userEventsList,
+    setUserEventsList,
+    allEventsList,
+    setAllEventsList,
+    fetchAllEvents,
+  } = useUserDetail();
 
   // Local state for pending selections (before locking)
   const [pendingSelections, setPendingSelections] = useState([]);
   const [locking, setLocking] = useState(false);
   const [enrolling, setEnrolling] = useState(null);
-  const [allEvents, setAllEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const API_URL = import.meta.env.VITE_API_URL;
 
@@ -73,44 +78,26 @@ export default function EventsPage() {
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const { data: response } = await axios.get(`${API_URL}/user/events`, {
-          withCredentials: true,
-        });
-
-        const genderBasedFilteredEvents = response.data.filter((event) => {
-          if (user.gender === "Male") return event.category === "Boys";
-          return event.category === "Girls";
-        });
+        // Fetch all events and filter by gender
+        const events = await fetchAllEvents(user.gender);
 
         // Sync userEventsList from user.selectedEvents if context is empty but user has events
         const selectedEvents = user.selectedEvents || [];
         if (userEventsList.length === 0 && selectedEvents.length > 0) {
           // User has locked events but context wasn't hydrated - sync it
           const enrichedEvents = selectedEvents.map((se) => {
-            const eventDetails = genderBasedFilteredEvents.find(
-              (e) => e.id === se.eventId,
-            );
+            const eventDetails = events.find((e) => e.id === se.eventId);
             return {
               eventId: se.eventId,
               eventName: eventDetails?.name || "Unknown",
               eventType: eventDetails?.type || "Unknown",
               eventDay: eventDetails?.day || "Unknown",
-              isEventActive: true,
+              isEventActive: eventDetails?.isActive ?? true,
               userEventAttendance: se.status || "notMarked",
             };
           });
           setUserEventsList(enrichedEvents);
         }
-
-        const mappedEvents = genderBasedFilteredEvents.map((event) => ({
-          id: event.id,
-          name: event.name,
-          day: event.day,
-          type: event.type,
-          category: event.category,
-        }));
-
-        setAllEvents(mappedEvents);
       } catch (err) {
         console.error("Failed to fetch initial data", err);
       } finally {
@@ -119,21 +106,29 @@ export default function EventsPage() {
     };
 
     fetchInitialData();
-  }, [user.gender, user.selectedEvents, API_URL, setUserEventsList]);
+  }, [user.gender, user.selectedEvents, fetchAllEvents, setUserEventsList]);
 
-  const trackEvents = allEvents.filter((e) => e.type === "Track");
-  const fieldEvents = allEvents.filter((e) => e.type === "Field");
-  const teamEvents = allEvents.filter((e) => e.type === "Team");
+  // Filter only ACTIVE events for enrollment (but all events for enrolled display)
+  const activeEvents = useMemo(
+    () => allEventsList.filter((e) => e.isActive),
+    [allEventsList],
+  );
+
+  const trackEvents = activeEvents.filter((e) => e.type === "Track");
+  const fieldEvents = activeEvents.filter((e) => e.type === "Field");
+  const teamEvents = activeEvents.filter((e) => e.type === "Team");
 
   const enrollmentStats = useMemo(() => {
-    const enrolled = allEvents.filter((e) => currentEnrolledIds.includes(e.id));
+    const enrolled = allEventsList.filter((e) =>
+      currentEnrolledIds.includes(e.id),
+    );
     return {
       trackCount: enrolled.filter((e) => e.type === "Track").length,
       fieldCount: enrolled.filter((e) => e.type === "Field").length,
       teamCount: enrolled.filter((e) => e.type === "Team").length,
       total: enrolled.length,
     };
-  }, [currentEnrolledIds, allEvents]);
+  }, [currentEnrolledIds, allEventsList]);
 
   const canEnrollInEvent = (event) => {
     if (isLocked) return false;
@@ -163,7 +158,7 @@ export default function EventsPage() {
 
   const handleEnroll = (eventId) => {
     if (isLocked) return;
-    const event = allEvents.find((e) => e.id === eventId);
+    const event = allEventsList.find((e) => e.id === eventId);
     if (!canEnrollInEvent(event) && !pendingSelections.includes(eventId))
       return;
 
@@ -711,7 +706,7 @@ export default function EventsPage() {
 
           <div className="p-3 sm:p-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-              {allEvents
+              {allEventsList
                 .filter((e) => enrolledEventIds.includes(e.id))
                 .map((event) => (
                   <EventCard key={event.id} event={event} />
