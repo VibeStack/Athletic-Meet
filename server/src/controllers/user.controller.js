@@ -166,17 +166,20 @@ export const getEvents = asyncHandler(async (req, res) => {
 
 export const lockEvents = asyncHandler(async (req, res) => {
   const { sid } = req.signedCookies;
-  const { events } = req.body;
+  const { events: userSelectedEventsIdArray } = req.body;
 
   if (!sid) {
     throw new ApiError(401, "Session not found");
   }
 
-  if (!Array.isArray(events) || events.length === 0) {
+  if (
+    !Array.isArray(userSelectedEventsIdArray) ||
+    userSelectedEventsIdArray.length === 0
+  ) {
     throw new ApiError(400, "Events must be a non-empty array");
   }
 
-  if (events.length > 5) {
+  if (userSelectedEventsIdArray.length > 5) {
     throw new ApiError(400, "Maximum 5 events can be selected");
   }
 
@@ -201,23 +204,26 @@ export const lockEvents = asyncHandler(async (req, res) => {
       );
     }
 
-    const eventObjectIds = events.map((id) => new mongoose.Types.ObjectId(id));
+    const eventObjectIds = userSelectedEventsIdArray.map(
+      (id) => new mongoose.Types.ObjectId(id)
+    );
 
     const validEvents = await Event.find({
       _id: { $in: eventObjectIds },
       isActive: true,
     }).session(mongoSession);
 
-    if (validEvents.length !== events.length) {
+    if (validEvents.length !== userSelectedEventsIdArray.length) {
       throw new ApiError(400, "One or more events are invalid or inactive");
     }
 
     const selectedEventsPayload = eventObjectIds.map((eventId) => ({
       eventId,
+      position: 0,
       status: "notMarked",
     }));
 
-    await User.updateOne(
+    const updatedData = await User.findOneAndUpdate(
       { _id: user._id },
       {
         $set: {
@@ -238,12 +244,111 @@ export const lockEvents = asyncHandler(async (req, res) => {
       { session: mongoSession }
     );
 
+    const events = await Event.find({
+      _id: { $in: eventObjectIds },
+    });
+    const returningEventsData = events.map((e) => {
+      return {
+        eventId: e._id,
+        eventName: e.name,
+        eventType: e.type,
+        eventDay: e.day,
+        isEventActive:e.isActive,
+        userEventAttendance:"notMarked"
+      };
+    });
+
     await mongoSession.commitTransaction();
     mongoSession.endSession();
 
     return res
       .status(200)
-      .json(new ApiResponse(null, "Events locked successfully"));
+      .json(new ApiResponse(returningEventsData, "Events Locked Successfully"));
+  } catch (error) {
+    await mongoSession.abortTransaction();
+    mongoSession.endSession();
+    throw error;
+  }
+});
+
+export const unlockEvents = asyncHandler(async (req, res) => {
+  const { sid } = req.signedCookies;
+
+  if (!sid) {
+    throw new ApiError(401, "Session not found");
+  }
+
+  const mongoSession = await mongoose.startSession();
+  mongoSession.startTransaction();
+
+  try {
+    const sessionDoc = await Session.findById(sid).session(mongoSession);
+    if (!sessionDoc) {
+      throw new ApiError(401, "Invalid session");
+    }
+
+    const user = await User.findById(sessionDoc.userId).session(mongoSession);
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+
+    if (user.isEventsLocked && user.role === "Student") {
+      throw new ApiError(
+        409,
+        "Events already locked. Contact admin to unlock."
+      );
+    }
+
+    const eventObjectIds = user.selectedEvents.map(({ eventId }) => eventId);
+
+    const validEvents = await Event.find({
+      _id: { $in: eventObjectIds },
+      isActive: true,
+    }).session(mongoSession);
+
+    if (validEvents.length !== user.selectedEvents.length) {
+      throw new ApiError(400, "One or more events are invalid or inactive");
+    }
+
+    // console.log(validEvents);
+
+    const updatedUser = await User.findOneAndUpdate(
+      { _id: user._id },
+      {
+        $set: {
+          selectedEvents: [],
+          isEventsLocked: false,
+        },
+      },
+      { new: true, session: mongoSession }
+    );
+
+    // console.log(updatedUser);
+
+    await Event.updateMany(
+      { _id: { $in: eventObjectIds }, "studentsCount.notMarked": { $gt: 0 } },
+      {
+        $inc: {
+          "studentsCount.notMarked": -1,
+        },
+      },
+      { session: mongoSession }
+    );
+    const updatedEvents = await Event.find({
+      _id: { $in: eventObjectIds },
+    }).session(mongoSession);
+
+    // console.log(
+    //   updatedEvents,
+    //   updatedEvents.map((e) => e.studentsCount)
+    // );
+
+    await mongoSession.commitTransaction();
+    mongoSession.endSession();
+
+    return res
+      .status(200)
+      .json(new ApiResponse(null, "Events Unlocked successfully"));
   } catch (error) {
     await mongoSession.abortTransaction();
     mongoSession.endSession();

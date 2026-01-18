@@ -69,6 +69,7 @@ export default function ProtectedRoute({ children, allowedRoles = [] }) {
         title="Authenticating"
         message="Verifying your access..."
         fullScreen
+        darkMode={false}
       />
     );
   }

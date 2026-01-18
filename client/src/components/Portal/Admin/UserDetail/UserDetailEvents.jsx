@@ -39,7 +39,7 @@ const ICONS = {
 };
 
 export default function UserDetailEvents({
-  userData,
+  studentUserData,
   darkMode,
   markAttendance,
   getStatusDisplay,
@@ -49,7 +49,7 @@ export default function UserDetailEvents({
   const API_URL = import.meta.env.VITE_API_URL;
   const [allEvents, setAllEvents] = useState([]);
   const [updatedEventsArray, setupdatedEventsArray] = useState(
-    userData.selectedEvents.map(({ eventId, eventType }) => {
+    studentUserData.selectedEvents.map(({ eventId, eventType }) => {
       return { eventId, eventType };
     })
   );
@@ -60,7 +60,7 @@ export default function UserDetailEvents({
       const { data: response } = await axios.get(`${API_URL}/user/events`, {
         withCredentials: true,
       });
-      const gender = userData.gender === "Male" ? "Boys" : "Girls";
+      const gender = studentUserData.gender === "Male" ? "Boys" : "Girls";
       setAllEvents(response.data.filter((e) => e.category === gender));
       setShowAddEventModal(true);
     } catch (err) {
@@ -80,7 +80,7 @@ export default function UserDetailEvents({
       );
 
       await axios.post(
-        `${API_URL}/admin/users/${userData.id}/updateEvents`,
+        `${API_URL}/admin/users/${studentUserData.id}/updateEvents`,
         { updatedEventsIdsArray },
         { withCredentials: true }
       );
@@ -130,13 +130,13 @@ export default function UserDetailEvents({
                   : "bg-slate-100 text-slate-600"
               }`}
             >
-              {userData.selectedEvents?.length || 0}
+              {studentUserData.selectedEvents?.length || 0}
             </span>
           </div>
 
-          {(userData.id === user.id ||
-            roleAccessPoints(user.role) > roleAccessPoints(userData.role)) &&
-            userData.isUserDetailsComplete === "true" && (
+          {(studentUserData.id === user.id ||
+            roleAccessPoints(user.role) > roleAccessPoints(studentUserData.role)) &&
+            studentUserData.isUserDetailsComplete === "true" && (
               <button
                 onClick={openAddEventModal}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition-all ${
@@ -152,9 +152,9 @@ export default function UserDetailEvents({
         </div>
 
         <div className="p-3">
-          {userData.selectedEvents?.length > 0 ? (
+          {studentUserData.selectedEvents?.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {userData.selectedEvents.map(
+              {studentUserData.selectedEvents.map(
                 ({ eventId, eventName, eventType, attendanceStatus }) => {
                   getStatusDisplay(attendanceStatus);
                   return (
@@ -293,7 +293,7 @@ export default function UserDetailEvents({
                       darkMode ? "text-white" : "text-slate-800"
                     }`}
                   >
-                    Add Event for {userData.username}
+                    Add Event for {studentUserData.username}
                   </h2>
                   <p
                     className={`text-xs ${

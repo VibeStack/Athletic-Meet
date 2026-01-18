@@ -21,16 +21,16 @@ const ICONS = {
   ),
 };
 
-export default function UserDetailInfo({ userData, darkMode }) {
+export default function UserDetailInfo({ studentUserData, darkMode }) {
   const userInfoItems = [
-    { label: "Full Name", value: userData.fullname },
-    { label: "Username", value: userData.username },
-    { label: "Course", value: userData.course },
-    { label: "Branch", value: userData.branch },
-    { label: "Year", value: userData.year },
-    { label: "Gender", value: userData.gender },
-    { label: "CRN", value: userData.crn },
-    { label: "URN", value: userData.urn },
+    { label: "Full Name", value: studentUserData.fullname },
+    { label: "Username", value: studentUserData.username },
+    { label: "Course", value: studentUserData.course },
+    { label: "Branch", value: studentUserData.branch },
+    { label: "Year", value: studentUserData.year },
+    { label: "Gender", value: studentUserData.gender },
+    { label: "CRN", value: studentUserData.crn },
+    { label: "URN", value: studentUserData.urn },
   ];
 
   return (

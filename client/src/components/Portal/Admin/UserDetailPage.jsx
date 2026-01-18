@@ -6,6 +6,7 @@ import LoadingComponent from "../LoadingComponent";
 import UserDetailHeader from "./UserDetail/UserDetailHeader";
 import UserDetailEvents from "./UserDetail/UserDetailEvents";
 import UserDetailInfo from "./UserDetail/UserDetailInfo";
+import ManagerDetailsAccessDenied from "./ManagerDetailsAccessDenied";
 
 export default function UserDetailPage() {
   const API_URL = import.meta.env.VITE_API_URL;
@@ -13,30 +14,32 @@ export default function UserDetailPage() {
   const { userId } = useParams();
   const navigate = useNavigate();
 
-  const [userData, setUserData] = useState({});
+  const [studentUserData, setStudentUserData] = useState({});
+  const [studentUserEventsList, setStudentUserEventsList] = useState([]);
   const [isUserEventsLocked, setIsUserEventsLocked] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [accessDenied, setAccessDenied] = useState(false);
 
   // Get current logged-in user
-  const { user: currentUser } = useOutletContext();
+  const { user } = useOutletContext();
 
   const fetchUser = async () => {
     try {
       const { data: response } = await axios.get(
         `${API_URL}/admin/user/${userId}`,
-        { withCredentials: true }
+        { withCredentials: true },
       );
 
       // Access control: Admin cannot view Manager details
-      if (currentUser?.role === "Admin" && response.data.role === "Manager") {
+      if (user?.role === "Admin" && response.data.role === "Manager") {
         setAccessDenied(true);
         setLoading(false);
         return;
       }
 
-      setUserData(response.data);
+      setStudentUserData(response.data);
+      setStudentUserEventsList(response.data.selectedEvents);
       setIsUserEventsLocked(response.data.isEventsLocked);
     } catch (err) {
       console.error("Failed to fetch user", err);
@@ -47,14 +50,14 @@ export default function UserDetailPage() {
 
   useEffect(() => {
     fetchUser();
-  }, [userId, API_URL, currentUser]);
+  }, [userId]);
 
   const lockUserEvents = async () => {
     try {
       await axios.post(
-        `${API_URL}/admin/users/${userData.id}/events/lock`,
+        `${API_URL}/admin/users/${studentUserData.id}/events/lock`,
         {},
-        { withCredentials: true }
+        { withCredentials: true },
       );
       setIsUserEventsLocked(true);
     } catch (err) {
@@ -65,9 +68,9 @@ export default function UserDetailPage() {
   const unlockUserEvents = async () => {
     try {
       await axios.post(
-        `${API_URL}/admin/users/${userData.id}/events/unlock`,
+        `${API_URL}/admin/users/${studentUserData.id}/events/unlock`,
         {},
-        { withCredentials: true }
+        { withCredentials: true },
       );
       setIsUserEventsLocked(false);
     } catch (err) {
@@ -77,7 +80,7 @@ export default function UserDetailPage() {
 
   const deleteUser = async () => {
     try {
-      await axios.delete(`${API_URL}/admin/user/${userData.id}`, {
+      await axios.delete(`${API_URL}/admin/user/${studentUserData.id}`, {
         withCredentials: true,
       });
       navigate(-1);
@@ -90,13 +93,13 @@ export default function UserDetailPage() {
     try {
       await axios.post(
         `${API_URL}/admin/user/event/attendance`,
-        { jerseyNumber: userData.jerseyNumber, eventId, status },
-        { withCredentials: true }
+        { jerseyNumber: studentUserData.jerseyNumber, eventId, status },
+        { withCredentials: true },
       );
-      setUserData((prev) => ({
+      setStudentUserData((prev) => ({
         ...prev,
         selectedEvents: prev.selectedEvents.map((ev) =>
-          ev.eventId === eventId ? { ...ev, attendanceStatus: status } : ev
+          ev.eventId === eventId ? { ...ev, attendanceStatus: status } : ev,
         ),
       }));
     } catch (err) {
@@ -109,12 +112,13 @@ export default function UserDetailPage() {
       <LoadingComponent
         title="Loading User Details"
         message="Fetching profile and events..."
+        darkMode={darkMode}
       />
     );
   }
 
   const getStatusDisplay = (status) => {
-    if (status === "Present") {
+    if (status === "present") {
       return {
         bg: "bg-emerald-500",
         text: "text-white",
@@ -122,7 +126,7 @@ export default function UserDetailPage() {
         icon: "✓",
       };
     }
-    if (status === "Absent") {
+    if (status === "absent") {
       return {
         bg: "bg-red-500",
         text: "text-white",
@@ -148,20 +152,19 @@ export default function UserDetailPage() {
       <div className="space-y-5">
         {/* ================= USER HEADER ================= */}
         <UserDetailHeader
-          userData={userData}
+          studentUserData={studentUserData}
           darkMode={darkMode}
           isUserEventsLocked={isUserEventsLocked}
           lockUserEvents={lockUserEvents}
           unlockUserEvents={unlockUserEvents}
           setShowDeletePopup={setShowDeletePopup}
-          refetchUser={fetchUser}
         />
 
         {/* ================= MAIN CONTENT - 60/40 SPLIT ================= */}
         <section className="grid grid-cols-1 lg:grid-cols-10 gap-5">
           {/* LEFT: REGISTERED EVENTS - Takes 3/5 width */}
           <UserDetailEvents
-            userData={userData}
+            studentUserData={studentUserData}
             darkMode={darkMode}
             markAttendance={markAttendance}
             getStatusDisplay={getStatusDisplay}
@@ -169,7 +172,10 @@ export default function UserDetailPage() {
           />
 
           {/* RIGHT: USER INFO - Takes 2/5 width */}
-          <UserDetailInfo userData={userData} darkMode={darkMode} />
+          <UserDetailInfo
+            studentUserData={studentUserData}
+            darkMode={darkMode}
+          />
         </section>
       </div>
 
@@ -191,13 +197,13 @@ export default function UserDetailPage() {
             {darkMode && (
               <div
                 className={`absolute -top-20 -right-20 w-40 h-40 rounded-full blur-3xl pointer-events-none ${
-                  userData.role === "Manager"
+                  studentUserData.role === "Manager"
                     ? "bg-red-500/20"
-                    : userData.gender === "Male"
-                    ? "bg-sky-500/20"
-                    : userData.gender === "Female"
-                    ? "bg-pink-500/20"
-                    : "bg-emerald-500/20"
+                    : studentUserData.gender === "Male"
+                      ? "bg-sky-500/20"
+                      : studentUserData.gender === "Female"
+                        ? "bg-pink-500/20"
+                        : "bg-emerald-500/20"
                 }`}
               />
             )}
@@ -206,25 +212,25 @@ export default function UserDetailPage() {
               {/* Icon - Color based on role/gender */}
               <div
                 className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center ${
-                  userData.role === "Manager"
+                  studentUserData.role === "Manager"
                     ? "bg-red-500/10"
-                    : userData.gender === "Male"
-                    ? "bg-sky-500/10"
-                    : userData.gender === "Female"
-                    ? "bg-pink-500/10"
-                    : "bg-emerald-500/10"
+                    : studentUserData.gender === "Male"
+                      ? "bg-sky-500/10"
+                      : studentUserData.gender === "Female"
+                        ? "bg-pink-500/10"
+                        : "bg-emerald-500/10"
                 }`}
               >
                 <svg
                   viewBox="0 0 24 24"
                   className={`w-8 h-8 fill-current ${
-                    userData.role === "Manager"
+                    studentUserData.role === "Manager"
                       ? "text-red-500"
-                      : userData.gender === "Male"
-                      ? "text-sky-500"
-                      : userData.gender === "Female"
-                      ? "text-pink-500"
-                      : "text-emerald-500"
+                      : studentUserData.gender === "Male"
+                        ? "text-sky-500"
+                        : studentUserData.gender === "Female"
+                          ? "text-pink-500"
+                          : "text-emerald-500"
                   }`}
                 >
                   <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
@@ -250,7 +256,7 @@ export default function UserDetailPage() {
                   darkMode ? "text-white" : "text-slate-800"
                 }`}
               >
-                {userData.fullname || userData.username}?
+                {studentUserData.fullname || studentUserData.username}?
               </p>
               <p
                 className={`text-xs mb-6 ${
@@ -277,13 +283,13 @@ export default function UserDetailPage() {
                     deleteUser();
                   }}
                   className={`flex-1 py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 ${
-                    userData.role === "Manager"
+                    studentUserData.role === "Manager"
                       ? "bg-linear-to-r from-red-500 to-red-600 shadow-red-500/25"
-                      : userData.gender === "Male"
-                      ? "bg-linear-to-r from-sky-500 to-blue-600 shadow-sky-500/25"
-                      : userData.gender === "Female"
-                      ? "bg-linear-to-r from-pink-500 to-pink-600 shadow-pink-500/25"
-                      : "bg-linear-to-r from-emerald-500 to-emerald-600 shadow-emerald-500/25"
+                      : studentUserData.gender === "Male"
+                        ? "bg-linear-to-r from-sky-500 to-blue-600 shadow-sky-500/25"
+                        : studentUserData.gender === "Female"
+                          ? "bg-linear-to-r from-pink-500 to-pink-600 shadow-pink-500/25"
+                          : "bg-linear-to-r from-emerald-500 to-emerald-600 shadow-emerald-500/25"
                   }`}
                 >
                   Delete

@@ -109,7 +109,7 @@ export default function UsersPage() {
           withCredentials: true,
         });
         const sortedUsers = response.data.users.sort(
-          (a, b) => a.jerseyNumber - b.jerseyNumber
+          (a, b) => a.jerseyNumber - b.jerseyNumber,
         );
         setAllUsers(sortedUsers);
         setTotalUsersCount(response.data.usersCount);
@@ -170,8 +170,8 @@ export default function UsersPage() {
   return isLoading ? (
     <LoadingComponent
       title="Users"
-      message="Manage all registered participants, roles, and event activity
-"
+      message="Manage all registered participants, roles, and event activity"
+      darkMode={darkMode}
     />
   ) : (
     <>
@@ -233,19 +233,19 @@ export default function UsersPage() {
           const jerseyTheme = getJerseyBadgeTheme(
             user.role,
             user.gender,
-            darkMode
+            darkMode,
           );
           const borderTheme = getCardBorderTheme(
             user.role,
             user.gender,
-            darkMode
+            darkMode,
           );
 
           return (
             <div
               key={user.id}
               onClick={() => {
-                navigate(`${location.pathname}/${user.id}`);
+                navigate(`${user.id}`);
               }}
               className={`group cursor-pointer rounded-3xl overflow-hidden transition-all duration-300 border-2
                 ${borderTheme}
@@ -423,7 +423,7 @@ export default function UsersPage() {
                     className={`text-2xl font-black ${getEventColor(
                       user.role,
                       user.gender,
-                      darkMode
+                      darkMode,
                     )}`}
                   >
                     {user.eventsCount || 0}

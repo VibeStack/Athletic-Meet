@@ -55,6 +55,7 @@ export default function PortalHome() {
     <LoadingComponent
       title="Loading Dashboard"
       message="Preparing Your Profile, Events & Access"
+      darkMode={darkMode}
     />
   ) : (
     <>

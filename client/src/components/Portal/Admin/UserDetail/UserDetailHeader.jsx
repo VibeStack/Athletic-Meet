@@ -117,7 +117,7 @@ const ICONS = {
 };
 
 export default function UserDetailHeader({
-  userData,
+  studentUserData,
   darkMode,
   isUserEventsLocked,
   lockUserEvents,
@@ -127,17 +127,17 @@ export default function UserDetailHeader({
 }) {
   const { user } = useOutletContext();
   const API_URL = import.meta.env.VITE_API_URL;
-  const jerseyTheme = getJerseyBadgeTheme(userData.role, userData.gender);
-  const roleTheme = getRoleTheme(userData.role, userData.gender, darkMode);
-  const lockButtonTheme = getLockButtonTheme(userData.role, userData.gender);
+  const jerseyTheme = getJerseyBadgeTheme(studentUserData.role, studentUserData.gender);
+  const roleTheme = getRoleTheme(studentUserData.role, studentUserData.gender, darkMode);
+  const lockButtonTheme = getLockButtonTheme(studentUserData.role, studentUserData.gender);
   const [isUserHavingAdminAccess, setIsUserHavingAdminAccess] = useState(
-    userData.role === "Manager" || userData.role === "Admin" ? true : false
+    studentUserData.role === "Manager" || studentUserData.role === "Admin" ? true : false
   );
 
   const makeAsAdmin = async () => {
     try {
       await axios.post(
-        `${API_URL}/admin/user/${userData.id}/makeAsAdmin`,
+        `${API_URL}/admin/user/${studentUserData.id}/makeAsAdmin`,
         null,
         { withCredentials: true }
       );
@@ -151,7 +151,7 @@ export default function UserDetailHeader({
   const removeAsAdmin = async () => {
     try {
       await axios.post(
-        `${API_URL}/admin/user/${userData.id}/removeAsAdmin`,
+        `${API_URL}/admin/user/${studentUserData.id}/removeAsAdmin`,
         null,
         { withCredentials: true }
       );
@@ -182,7 +182,7 @@ export default function UserDetailHeader({
           <div
             className={`shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl font-black ${jerseyTheme}`}
           >
-            {userData.jerseyNumber || "—"}
+            {studentUserData.jerseyNumber || "—"}
           </div>
 
           <div>
@@ -191,20 +191,20 @@ export default function UserDetailHeader({
                 darkMode ? "text-white" : "text-slate-900"
               }`}
             >
-              {userData.fullname || userData.username}
+              {studentUserData.fullname || studentUserData.username}
             </h1>
             <p
               className={`text-[12px] ${
                 darkMode ? "text-slate-400" : "text-slate-500"
               }`}
             >
-              {userData.email}
+              {studentUserData.email}
             </p>
             <div className="flex items-center gap-1.5 mt-2">
               <span
                 className={`inline-flex items-center text-[10px] font-semibold px-2.5 py-1 rounded-full ring-1 ${roleTheme}`}
               >
-                {userData.role}
+                {studentUserData.role}
               </span>
               <span
                 className={`inline-flex items-center gap-0.5 text-[10px] ${
@@ -213,8 +213,8 @@ export default function UserDetailHeader({
               >
                 {ICONS.calendar}
                 Joined{" "}
-                {userData.createdAt
-                  ? new Date(userData.createdAt)
+                {studentUserData.createdAt
+                  ? new Date(studentUserData.createdAt)
                       .toLocaleDateString()
                       .split("/")
                       .join("-")
@@ -228,10 +228,10 @@ export default function UserDetailHeader({
         <div className="flex flex-col gap-2 sm:gap-3 w-full sm:w-auto">
           {/* Lock/Unlock + Delete Row */}
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* {user.id === userData.id} */}
-            {(userData.id === user.id ||
-              roleAccessPoints(user.role) > roleAccessPoints(userData.role)) &&
-              userData.isUserDetailsComplete === "true" && (
+            {/* {user.id === studentUserData.id} */}
+            {(studentUserData.id === user.id ||
+              roleAccessPoints(user.role) > roleAccessPoints(studentUserData.role)) &&
+              studentUserData.isUserDetailsComplete === "true" && (
                 <button
                   onClick={
                     isUserEventsLocked ? unlockUserEvents : lockUserEvents
@@ -248,7 +248,7 @@ export default function UserDetailHeader({
                 </button>
               )}
 
-            {roleAccessPoints(user.role) > roleAccessPoints(userData.role) && (
+            {roleAccessPoints(user.role) > roleAccessPoints(studentUserData.role) && (
               <button
                 onClick={() => setShowDeletePopup(true)}
                 className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 ${lockButtonTheme}`}
@@ -260,8 +260,8 @@ export default function UserDetailHeader({
           </div>
 
           {/* Make/Remove Admin Button - Full Width Below */}
-          {roleAccessPoints(userData.role) < 3 &&
-            userData.isUserDetailsComplete === "true" && (
+          {roleAccessPoints(studentUserData.role) < 3 &&
+            studentUserData.isUserDetailsComplete === "true" && (
               <button
                 onClick={isUserHavingAdminAccess ? removeAsAdmin : makeAsAdmin}
                 className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 ${lockButtonTheme}`}

@@ -268,26 +268,9 @@ export const unlockUserEvents = asyncHandler(async (req, res) => {
         "You are not allowed to unlock this user's events"
       );
     }
-
+    console.log(user.selectedEvents)
     if (user.selectedEvents.length > 0) {
-      const buckets = { notMarked: [], present: [], absent: [] };
-
-      user.selectedEvents.forEach((ev) => {
-        buckets[ev.status]?.push(ev.eventId);
-      });
-
-      const bulkOps = Object.entries(buckets)
-        .filter(([_, ids]) => ids.length > 0)
-        .map(([status, ids]) => ({
-          updateMany: {
-            filter: { _id: { $in: ids } },
-            update: { $inc: { [`studentsCount.${status}`]: -1 } },
-          },
-        }));
-
-      if (bulkOps.length) {
-        await Event.bulkWrite(bulkOps, { session });
-      }
+      
     }
 
     user.isEventsLocked = false;

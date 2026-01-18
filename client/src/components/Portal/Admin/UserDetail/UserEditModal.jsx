@@ -33,7 +33,7 @@ const courseBranchMap = {
 export default function UserEditModal({
   isOpen,
   onClose,
-  userData,
+  studentUserData,
   darkMode,
   onSave,
 }) {
@@ -57,26 +57,26 @@ export default function UserEditModal({
 
   // Reset form when modal opens with user data
   useEffect(() => {
-    if (isOpen && userData) {
+    if (isOpen && studentUserData) {
       reset({
-        fullname: userData.fullname || "",
-        branch: userData.branch || "",
-        course: userData.course || "",
-        year: userData.year || "",
-        gender: userData.gender || "",
-        crn: userData.crn || "",
-        urn: userData.urn || "",
+        fullname: studentUserData.fullname || "",
+        branch: studentUserData.branch || "",
+        course: studentUserData.course || "",
+        year: studentUserData.year || "",
+        gender: studentUserData.gender || "",
+        crn: studentUserData.crn || "",
+        urn: studentUserData.urn || "",
       });
     }
-  }, [isOpen, userData, reset]);
+  }, [isOpen, studentUserData, reset]);
 
   if (!isOpen) return null;
 
   // Helper to get accent color based on role/gender
   const getAccentColor = () => {
-    if (userData.role === "Manager") return "red";
-    if (userData.gender === "Male") return "sky";
-    if (userData.gender === "Female") return "pink";
+    if (studentUserData.role === "Manager") return "red";
+    if (studentUserData.gender === "Male") return "sky";
+    if (studentUserData.gender === "Female") return "pink";
     return "emerald";
   };
 
@@ -145,7 +145,7 @@ export default function UserEditModal({
                   darkMode ? "text-slate-400" : "text-slate-500"
                 }`}
               >
-                {userData.fullname || userData.username}
+                {studentUserData.fullname || studentUserData.username}
               </p>
             </div>
           </div>
@@ -329,11 +329,11 @@ export default function UserEditModal({
             <button
               type="submit"
               className={`flex-1 py-2.5 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 ${
-                userData.role === "Manager"
+                studentUserData.role === "Manager"
                   ? "bg-linear-to-r from-red-500 to-red-600 shadow-red-500/25"
-                  : userData.gender === "Male"
+                  : studentUserData.gender === "Male"
                   ? "bg-linear-to-r from-sky-500 to-blue-600 shadow-sky-500/25"
-                  : userData.gender === "Female"
+                  : studentUserData.gender === "Female"
                   ? "bg-linear-to-r from-pink-500 to-pink-600 shadow-pink-500/25"
                   : "bg-linear-to-r from-emerald-500 to-emerald-600 shadow-emerald-500/25"
               }`}

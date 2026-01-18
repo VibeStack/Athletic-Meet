@@ -281,7 +281,11 @@ export default function QRScannerPage() {
 
   if (loading) {
     return (
-      <LoadingComponent title="Loading Scanner" message="Fetching events..." />
+      <LoadingComponent
+        title="Loading Scanner"
+        message="Fetching events..."
+        darkMode={darkMode}
+      />
     );
   }
 

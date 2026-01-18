@@ -3,6 +3,7 @@ import { useTheme } from "../../context/ThemeContext";
 import axios from "axios";
 import { useOutletContext } from "react-router-dom";
 import LoadingComponent from "./LoadingComponent";
+import { useUserDetail } from "../../context/UserDetailContext";
 
 const MAX_EVENTS = 3;
 
@@ -49,13 +50,25 @@ const SECTION_ICONS = {
 export default function EventsPage() {
   const { darkMode } = useTheme();
   const { user } = useOutletContext();
-  const [enrolledEvents, setEnrolledEvents] = useState([]);
-  const [isLocked, setIsLocked] = useState(false);
+  const { userEventsList, setUserEventsList } = useUserDetail();
+
+  // Local state for pending selections (before locking)
+  const [pendingSelections, setPendingSelections] = useState([]);
   const [locking, setLocking] = useState(false);
   const [enrolling, setEnrolling] = useState(null);
   const [allEvents, setAllEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const API_URL = import.meta.env.VITE_API_URL;
+
+  // Derive locked state and enrolled IDs from userEventsList
+  const isLocked = userEventsList.length > 0;
+  const enrolledEventIds = useMemo(
+    () => userEventsList.map((ev) => ev.eventId),
+    [userEventsList],
+  );
+
+  // Combined enrolled IDs: locked events + pending selections
+  const currentEnrolledIds = isLocked ? enrolledEventIds : pendingSelections;
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -69,16 +82,25 @@ export default function EventsPage() {
           return event.category === "Girls";
         });
 
-        const selectedEventIds = (user.selectedEvents || []).map(
-          (e) => e.eventId
-        );
-
-        const enrolledEventsDB = genderBasedFilteredEvents.filter((event) =>
-          selectedEventIds.includes(event.id)
-        );
-
-        setEnrolledEvents(enrolledEventsDB.map((e) => e.id));
-        setIsLocked(selectedEventIds.length > 0);
+        // Sync userEventsList from user.selectedEvents if context is empty but user has events
+        const selectedEvents = user.selectedEvents || [];
+        if (userEventsList.length === 0 && selectedEvents.length > 0) {
+          // User has locked events but context wasn't hydrated - sync it
+          const enrichedEvents = selectedEvents.map((se) => {
+            const eventDetails = genderBasedFilteredEvents.find(
+              (e) => e.id === se.eventId,
+            );
+            return {
+              eventId: se.eventId,
+              eventName: eventDetails?.name || "Unknown",
+              eventType: eventDetails?.type || "Unknown",
+              eventDay: eventDetails?.day || "Unknown",
+              isEventActive: true,
+              userEventAttendance: se.status || "notMarked",
+            };
+          });
+          setUserEventsList(enrichedEvents);
+        }
 
         const mappedEvents = genderBasedFilteredEvents.map((event) => ({
           id: event.id,
@@ -97,31 +119,29 @@ export default function EventsPage() {
     };
 
     fetchInitialData();
-  }, [user.gender, user.selectedEvents, API_URL]);
+  }, [user.gender, user.selectedEvents, API_URL, setUserEventsList]);
 
   const trackEvents = allEvents.filter((e) => e.type === "Track");
   const fieldEvents = allEvents.filter((e) => e.type === "Field");
   const teamEvents = allEvents.filter((e) => e.type === "Team");
 
   const enrollmentStats = useMemo(() => {
-    const enrolled = allEvents.filter((e) => enrolledEvents.includes(e.id));
+    const enrolled = allEvents.filter((e) => currentEnrolledIds.includes(e.id));
     return {
       trackCount: enrolled.filter((e) => e.type === "Track").length,
       fieldCount: enrolled.filter((e) => e.type === "Field").length,
       teamCount: enrolled.filter((e) => e.type === "Team").length,
       total: enrolled.length,
     };
-  }, [enrolledEvents, allEvents]);
+  }, [currentEnrolledIds, allEvents]);
 
   const canEnrollInEvent = (event) => {
     if (isLocked) return false;
 
-    const enrolled = enrolledEvents.includes(event.id);
+    const enrolled = pendingSelections.includes(event.id);
 
-    // TEAM EVENTS - No one can self-enroll (Admin/Manager enrolls from UserDetailPage)
-    if (event.type === "Team") {
-      return false; // Always false for self-enrollment, but enrolled ones still show
-    }
+    // TEAM EVENTS - No one can self-enroll
+    if (event.type === "Team") return false;
 
     // TRACK / FIELD EVENTS - Max 3 self-enrollment
     const { trackCount, fieldCount } = enrollmentStats;
@@ -141,37 +161,45 @@ export default function EventsPage() {
     return false;
   };
 
-  const handleEnroll = async (eventId) => {
+  const handleEnroll = (eventId) => {
     if (isLocked) return;
     const event = allEvents.find((e) => e.id === eventId);
-    if (!canEnrollInEvent(event) && !enrolledEvents.includes(eventId)) return;
+    if (!canEnrollInEvent(event) && !pendingSelections.includes(eventId))
+      return;
 
     setEnrolling(eventId);
-    setEnrolledEvents((prev) =>
+    setPendingSelections((prev) =>
       prev.includes(eventId)
         ? prev.filter((id) => id !== eventId)
-        : [...prev, eventId]
+        : [...prev, eventId],
     );
     setEnrolling(null);
   };
 
   const handleLockEvents = async () => {
-    if (enrolledEvents.length === 0 || enrolledEvents.length > MAX_EVENTS) {
+    if (
+      pendingSelections.length === 0 ||
+      pendingSelections.length > MAX_EVENTS
+    ) {
       alert(`Please select 1-${MAX_EVENTS} events before locking.`);
       return;
     }
 
     setLocking(true);
     try {
-      const response = await axios.post(
+      const { data: response } = await axios.post(
         `${API_URL}/user/events/lock`,
-        { events: enrolledEvents },
-        { withCredentials: true }
+        { events: pendingSelections },
+        { withCredentials: true },
       );
 
-      if (response.data.success) {
-        setIsLocked(true);
-        alert(`✅ Successfully locked ${enrolledEvents.length} event(s)!`);
+      if (
+        response.success &&
+        response.message === "Events Locked Successfully"
+      ) {
+        setUserEventsList(response.data);
+        setPendingSelections([]);
+        alert(`✅ Successfully locked ${pendingSelections.length} event(s)!`);
       }
     } catch (err) {
       console.error("Failed to lock events", err);
@@ -185,15 +213,15 @@ export default function EventsPage() {
     setLocking(true);
     try {
       await axios.post(
-        `${API_URL}/admin/users/${user.id}/events/unlock`,
+        `${API_URL}/user/events/unlock`,
         {},
-        { withCredentials: true }
+        { withCredentials: true },
       );
 
-      setIsLocked(false);
-      setEnrolledEvents([]);
+      setUserEventsList([]);
+      setPendingSelections([]);
       alert(
-        "✅ Events unlocked successfully! You can now select events again."
+        "✅ Events unlocked successfully! You can now select events again.",
       );
     } catch (err) {
       console.error("Failed to unlock events", err);
@@ -205,12 +233,10 @@ export default function EventsPage() {
 
   /* -------------------- Event Card (Compact) -------------------- */
   const EventCard = ({ event }) => {
-    const isEnrolled = enrolledEvents.includes(event.id);
+    const isEnrolled = currentEnrolledIds.includes(event.id);
     const canEnroll = canEnrollInEvent(event);
     const isTeam = event.type === "Team";
     const isDisabled = !canEnroll && !isEnrolled;
-
-    // Team events: greyed unless already enrolled (by Admin/Manager from elsewhere)
     const isTeamAndNotEnrolled = isTeam && !isEnrolled;
 
     return (
@@ -221,20 +247,18 @@ export default function EventsPage() {
               ? "bg-slate-900/50 ring-1 ring-dashed ring-slate-700 opacity-60 grayscale-30"
               : "bg-slate-100/80 ring-1 ring-dashed ring-slate-300 opacity-70 grayscale-20"
             : isEnrolled
-            ? darkMode
-              ? "bg-emerald-950/60 ring-2 ring-emerald-500/60"
-              : "bg-emerald-50 ring-2 ring-emerald-400"
-            : darkMode
-            ? "bg-slate-900/80 ring-1 ring-white/8 hover:ring-cyan-500/40"
-            : "bg-white ring-1 ring-slate-200 hover:ring-slate-400 shadow-sm hover:shadow-md"
+              ? darkMode
+                ? "bg-emerald-950/60 ring-2 ring-emerald-500/60"
+                : "bg-emerald-50 ring-2 ring-emerald-400"
+              : darkMode
+                ? "bg-slate-900/80 ring-1 ring-white/8 hover:ring-cyan-500/40"
+                : "bg-white ring-1 ring-slate-200 hover:ring-slate-400 shadow-sm hover:shadow-md"
         } ${isDisabled && !isTeamAndNotEnrolled ? "opacity-50" : ""}`}
       >
-        {/* Enrolled glow - dark mode */}
         {isEnrolled && darkMode && (
           <div className="absolute -top-6 -right-6 w-20 h-20 bg-emerald-500/25 blur-2xl rounded-full pointer-events-none" />
         )}
 
-        {/* Type badge - UPDATED COLORS: Orange, Green, Blue */}
         <span
           className={`absolute top-2.5 right-2.5 sm:top-3 sm:right-3 text-[9px] px-2 py-0.5 rounded font-bold uppercase tracking-wider ${
             event.type === "Track"
@@ -242,18 +266,17 @@ export default function EventsPage() {
                 ? "bg-orange-500/25 text-orange-400"
                 : "bg-orange-100 text-orange-600"
               : event.type === "Field"
-              ? darkMode
-                ? "bg-emerald-500/25 text-emerald-400"
-                : "bg-emerald-100 text-emerald-600"
-              : darkMode
-              ? "bg-blue-500/25 text-blue-400"
-              : "bg-blue-100 text-blue-600"
+                ? darkMode
+                  ? "bg-emerald-500/25 text-emerald-400"
+                  : "bg-emerald-100 text-emerald-600"
+                : darkMode
+                  ? "bg-blue-500/25 text-blue-400"
+                  : "bg-blue-100 text-blue-600"
           }`}
         >
           {event.type}
         </span>
 
-        {/* Content area with fixed height for title */}
         <div className="relative pr-12 sm:pr-14 flex-1">
           <div className="flex items-start gap-1.5 mb-0.5 min-h-9">
             <h3
@@ -284,7 +307,6 @@ export default function EventsPage() {
               </span>
             )}
           </div>
-
           <p
             className={`text-[11px] ${
               darkMode ? "text-slate-500" : "text-slate-500"
@@ -303,34 +325,33 @@ export default function EventsPage() {
                 ? "bg-transparent border border-dashed border-slate-600 text-slate-500 cursor-not-allowed"
                 : "bg-transparent border border-dashed border-slate-300 text-slate-400 cursor-not-allowed"
               : isEnrolled
-              ? darkMode
-                ? "bg-linear-to-r from-rose-600 to-red-600 text-white hover:from-rose-500 hover:to-red-500"
-                : "bg-linear-to-r from-rose-500 to-red-500 text-white hover:from-rose-600 hover:to-red-600"
-              : canEnroll
-              ? darkMode
-                ? "bg-linear-to-r from-violet-600 via-purple-600 to-indigo-600 text-white hover:brightness-110"
-                : "bg-linear-to-r from-slate-700 via-slate-800 to-slate-900 text-white hover:from-slate-600 hover:via-slate-700 hover:to-slate-800"
-              : darkMode
-              ? "bg-slate-800 text-slate-600 cursor-not-allowed"
-              : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                ? darkMode
+                  ? "bg-linear-to-r from-rose-600 to-red-600 text-white hover:from-rose-500 hover:to-red-500"
+                  : "bg-linear-to-r from-rose-500 to-red-500 text-white hover:from-rose-600 hover:to-red-600"
+                : canEnroll
+                  ? darkMode
+                    ? "bg-linear-to-r from-violet-600 via-purple-600 to-indigo-600 text-white hover:brightness-110"
+                    : "bg-linear-to-r from-slate-700 via-slate-800 to-slate-900 text-white hover:from-slate-600 hover:via-slate-700 hover:to-slate-800"
+                  : darkMode
+                    ? "bg-slate-800 text-slate-600 cursor-not-allowed"
+                    : "bg-slate-100 text-slate-400 cursor-not-allowed"
           } ${
             isLocked || (isTeam && isEnrolled)
               ? "cursor-not-allowed opacity-60"
               : ""
           }`}
         >
-          {/* Invisible text to maintain consistent width */}
           <span className="invisible col-start-1 row-start-1">Team Only</span>
           <span className="col-start-1 row-start-1">
             {enrolling === event.id
               ? "..."
               : (isLocked && isEnrolled) || (isTeam && isEnrolled)
-              ? "Locked"
-              : isTeamAndNotEnrolled
-              ? "Team Only"
-              : isEnrolled
-              ? "Remove"
-              : "Enroll"}
+                ? "Locked"
+                : isTeamAndNotEnrolled
+                  ? "Team Only"
+                  : isEnrolled
+                    ? "Remove"
+                    : "Enroll"}
           </span>
         </button>
       </div>
@@ -346,7 +367,6 @@ export default function EventsPage() {
           : "bg-white ring-1 ring-slate-200 shadow-lg"
       }`}
     >
-      {/* Header */}
       <div
         className={`px-4 sm:px-5 py-3 sm:py-4 flex items-center justify-between border-b ${
           darkMode ? "border-white/6" : "border-slate-100"
@@ -389,7 +409,6 @@ export default function EventsPage() {
         )}
       </div>
 
-      {/* Events Grid - 1 → 2 → 3 → 4 → 5 columns */}
       <div className="p-3 sm:p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
         {events.length > 0 ? (
           events.map((event) => <EventCard key={event.id} event={event} />)
@@ -412,6 +431,7 @@ export default function EventsPage() {
       <LoadingComponent
         title="Loading Events"
         message="Preparing available events for you"
+        darkMode={darkMode}
       />
     );
   }
@@ -419,7 +439,7 @@ export default function EventsPage() {
   /* -------------------- Main UI -------------------- */
   return (
     <div className="space-y-4 sm:space-y-5">
-      {/* Header Section - Trophy now BLUE */}
+      {/* Header Section */}
       <div
         className={`relative overflow-hidden rounded-2xl p-4 sm:p-5 lg:p-6 ${
           darkMode
@@ -427,7 +447,6 @@ export default function EventsPage() {
             : "bg-linear-to-br from-slate-50 via-white to-slate-100 ring-1 ring-slate-200 shadow-lg"
         }`}
       >
-        {/* Background glow effects - Dark mode */}
         {darkMode && (
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
             <div className="absolute -top-32 -right-32 w-80 h-80 rounded-full blur-3xl opacity-25 bg-cyan-500" />
@@ -437,7 +456,6 @@ export default function EventsPage() {
 
         <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6">
           <div className="flex items-center gap-3 sm:gap-4">
-            {/* Trophy - Now BLUE linear */}
             <div
               className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center text-white ${
                 darkMode
@@ -467,7 +485,7 @@ export default function EventsPage() {
             </div>
           </div>
 
-          {/* Stats Counter - Centered on mobile */}
+          {/* Stats Counter */}
           <div
             className={`flex items-stretch justify-center gap-1.5 sm:gap-2 p-1.5 rounded-xl w-full sm:w-auto ${
               darkMode
@@ -475,7 +493,6 @@ export default function EventsPage() {
                 : "bg-slate-50 ring-1 ring-slate-200"
             }`}
           >
-            {/* TRACK - RED */}
             <div
               className={`flex flex-col items-center justify-center px-2.5 sm:px-4 py-2 rounded-lg min-w-[55px] sm:min-w-[65px] ${
                 darkMode ? "bg-red-500/15" : "bg-red-50"
@@ -496,7 +513,6 @@ export default function EventsPage() {
                 Track
               </p>
             </div>
-            {/* FIELD - PARROT GREEN */}
             <div
               className={`flex flex-col items-center justify-center px-2.5 sm:px-4 py-2 rounded-lg min-w-[55px] sm:min-w-[65px] ${
                 darkMode ? "bg-emerald-500/15" : "bg-emerald-50"
@@ -517,7 +533,6 @@ export default function EventsPage() {
                 Field
               </p>
             </div>
-            {/* TEAM - PINK */}
             <div
               className={`flex flex-col items-center justify-center px-2.5 sm:px-4 py-2 rounded-lg min-w-[55px] sm:min-w-[65px] ${
                 darkMode ? "bg-pink-500/15" : "bg-pink-50"
@@ -538,7 +553,6 @@ export default function EventsPage() {
                 Team
               </p>
             </div>
-            {/* TOTAL - GOLDEN YELLOW */}
             <div
               className={`flex flex-col items-center justify-center px-2.5 sm:px-4 py-2 rounded-lg min-w-[55px] sm:min-w-[65px] ${
                 darkMode ? "bg-amber-500/15" : "bg-amber-50"
@@ -563,7 +577,7 @@ export default function EventsPage() {
         </div>
       </div>
 
-      {/* Enrollment Rules Banner - Golden accent */}
+      {/* Enrollment Rules Banner */}
       <div
         className={`rounded-xl p-3 sm:p-4 flex items-start gap-3 ${
           darkMode
@@ -655,7 +669,7 @@ export default function EventsPage() {
       </div>
 
       {/* Your Enrolled Events - Only when locked */}
-      {isLocked && enrolledEvents.length > 0 && (
+      {isLocked && userEventsList.length > 0 && (
         <div
           className={`rounded-2xl overflow-hidden ${
             darkMode
@@ -690,16 +704,15 @@ export default function EventsPage() {
                   darkMode ? "text-emerald-400/80" : "text-emerald-600"
                 }`}
               >
-                Registered for {enrolledEvents.length} event(s)
+                Registered for {userEventsList.length} event(s)
               </p>
             </div>
           </div>
 
-          {/* Grid with 5 equal columns on desktop, centered */}
           <div className="p-3 sm:p-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 max-w-5xl mx-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {allEvents
-                .filter((e) => enrolledEvents.includes(e.id))
+                .filter((e) => enrolledEventIds.includes(e.id))
                 .map((event) => (
                   <EventCard key={event.id} event={event} />
                 ))}
@@ -708,8 +721,8 @@ export default function EventsPage() {
         </div>
       )}
 
-      {/* Lock Banner */}
-      {!isLocked && enrolledEvents.length > 0 && (
+      {/* Lock Banner - Only when not locked and has pending selections */}
+      {!isLocked && pendingSelections.length > 0 && (
         <div
           className={`rounded-xl p-3 sm:p-4 ${
             darkMode
@@ -753,7 +766,6 @@ export default function EventsPage() {
                   : "bg-linear-to-r from-amber-500 to-orange-500 text-white hover:brightness-110"
               } disabled:opacity-60 disabled:cursor-not-allowed`}
             >
-              {/* ICON / SPINNER SLOT */}
               <span className="w-4 h-4 flex items-center justify-center">
                 {locking ? (
                   <span className="animate-spin h-4 w-4 border-2 border-white/30 rounded-full border-t-white" />
@@ -761,8 +773,6 @@ export default function EventsPage() {
                   SECTION_ICONS.lock
                 )}
               </span>
-
-              {/* TEXT — SAME WIDTH */}
               <span className="whitespace-nowrap">
                 {locking ? "Locking…" : "Lock Events"}
               </span>
@@ -814,19 +824,16 @@ export default function EventsPage() {
               <button
                 onClick={handleUnlockEvents}
                 disabled={locking}
-                className={` grid place-items-center px-5 py-2.5 rounded-lg font-bold text-xs w-full sm:w-auto h-10 transition-all ${
+                className={`grid place-items-center px-5 py-2.5 rounded-lg font-bold text-xs w-full sm:w-auto h-10 transition-all ${
                   darkMode
                     ? "bg-linear-to-r from-orange-500 to-red-600 text-white hover:brightness-110"
                     : "bg-linear-to-r from-orange-500 to-red-500 text-white hover:brightness-110"
                 } disabled:opacity-60 disabled:cursor-not-allowed`}
               >
-                {/* WIDTH DEFINER (VISIBLE TO LAYOUT, NOT USER) */}
                 <span className="invisible flex items-center gap-2 col-start-1 row-start-1">
                   <span className="w-4 h-4" />
                   <span>Unlock Events</span>
                 </span>
-
-                {/* ACTUAL CONTENT (OVERLAYS) */}
                 <span className="flex items-center gap-2 col-start-1 row-start-1">
                   <span className="w-4 h-4 flex items-center justify-center">
                     {locking ? (
@@ -835,7 +842,6 @@ export default function EventsPage() {
                       SECTION_ICONS.unlock
                     )}
                   </span>
-
                   <span className="whitespace-nowrap">
                     {locking ? "Unlocking…" : "Unlock Events"}
                   </span>
@@ -846,7 +852,7 @@ export default function EventsPage() {
         </div>
       )}
 
-      {/* Track Events Section - ORANGE icon */}
+      {/* Track Events Section */}
       <Section
         title="Track Events"
         icon={SECTION_ICONS.track}
@@ -859,7 +865,7 @@ export default function EventsPage() {
         count={enrollmentStats.trackCount}
       />
 
-      {/* Field Events Section - PARROT GREEN icon */}
+      {/* Field Events Section */}
       <Section
         title="Field Events"
         icon={SECTION_ICONS.field}
@@ -872,7 +878,7 @@ export default function EventsPage() {
         count={enrollmentStats.fieldCount}
       />
 
-      {/* Team Events Section - BLUE icon */}
+      {/* Team Events Section */}
       <Section
         title="Team Events"
         icon={SECTION_ICONS.team}
@@ -882,7 +888,7 @@ export default function EventsPage() {
             : "bg-slate-800"
         }
         events={teamEvents}
-        count={0}
+        count={enrollmentStats.teamCount}
       />
     </div>
   );
