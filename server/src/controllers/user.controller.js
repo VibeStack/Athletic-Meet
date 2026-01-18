@@ -401,12 +401,18 @@ export const getCertificates = asyncHandler(async (req, res) => {
     throw new ApiError(404, "User not found");
   }
 
-  // Format certificates from user's selected events
-  const certificates = (userWithEvents.selectedEvents || []).map((event) => ({
+  // Only include events where student is marked as present
+  const presentEvents = (userWithEvents.selectedEvents || []).filter(
+    (event) => event.status === "present"
+  );
+
+  // Format certificates from present events only
+  const certificates = presentEvents.map((event) => ({
     eventId: event.eventId?._id,
     eventName: event.eventId?.name || "Unknown Event",
     eventType: event.eventId?.type || "Unknown",
     eventDay: event.eventId?.day || "Unknown",
+    status: event.status,
     // Position from event results (if applicable)
     // For now, assuming participation. Winner logic can be added later.
     position: null, // 1, 2, 3 for winners or null for participation

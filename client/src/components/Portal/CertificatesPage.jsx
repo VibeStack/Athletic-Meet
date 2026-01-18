@@ -405,20 +405,22 @@ export default function CertificatesPage() {
                     <button
                       onClick={() => handleDownload(cert, "winner")}
                       disabled={downloading === `${cert.eventId}-winner`}
-                      className={`mt-4 w-full py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all ${
+                      className={`mt-4 w-full py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all min-h-[40px] ${
                         darkMode
                           ? "bg-linear-to-r from-yellow-500 to-amber-600 text-black hover:brightness-110"
                           : "bg-linear-to-r from-yellow-400 to-amber-500 text-black hover:brightness-110"
                       } disabled:opacity-50`}
                     >
-                      {downloading === `${cert.eventId}-winner` ? (
-                        <span className="animate-spin h-4 w-4 border-2 border-black/30 rounded-full border-t-black" />
-                      ) : (
-                        <>
-                          {ICONS.download}
-                          Download Certificate
-                        </>
-                      )}
+                      <span className="w-5 h-5 flex items-center justify-center shrink-0">
+                        {downloading === `${cert.eventId}-winner` ? (
+                          <span className="animate-spin h-4 w-4 border-2 border-black/30 rounded-full border-t-black" />
+                        ) : (
+                          ICONS.download
+                        )}
+                      </span>
+                      <span className="whitespace-nowrap">
+                        Download Certificate
+                      </span>
                     </button>
                   </div>
                 </div>
@@ -500,20 +502,20 @@ export default function CertificatesPage() {
                 <button
                   onClick={() => handleDownload(cert, "participation")}
                   disabled={downloading === `${cert.eventId}-participation`}
-                  className={`w-full py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all ${
+                  className={`w-full py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all min-h-[36px] ${
                     darkMode
                       ? `bg-linear-to-r ${colors.gradient} text-white hover:brightness-110`
                       : `bg-linear-to-r ${colors.gradient} text-white hover:brightness-110`
                   } disabled:opacity-50`}
                 >
-                  {downloading === `${cert.eventId}-participation` ? (
-                    <span className="animate-spin h-3 w-3 border-2 border-white/30 rounded-full border-t-white" />
-                  ) : (
-                    <>
-                      {ICONS.download}
-                      Download
-                    </>
-                  )}
+                  <span className="w-4 h-4 flex items-center justify-center shrink-0">
+                    {downloading === `${cert.eventId}-participation` ? (
+                      <span className="animate-spin h-3 w-3 border-2 border-white/30 rounded-full border-t-white" />
+                    ) : (
+                      ICONS.download
+                    )}
+                  </span>
+                  <span className="whitespace-nowrap">Download</span>
                 </button>
               </div>
             );
