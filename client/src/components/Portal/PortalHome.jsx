@@ -50,7 +50,6 @@ export default function PortalHome() {
     }).then(setQrCodeDataUrl);
     setIsLoading(false);
   }, [user?.username, user?.jerseyNumber, user?.selectedEvents, darkMode]);
-  console.log({ userEventsList });
 
   return isLoading ? (
     <LoadingComponent
@@ -263,7 +262,10 @@ export default function PortalHome() {
             <div className="relative">
               <div className="flex gap-4 overflow-x-auto overflow-y-hidden pb-4 scrollbar-slim">
                 {userEventsList.map(
-                  ({ eventName, eventType, eventDay, userEventAttendance }, idx) => (
+                  (
+                    { eventName, eventType, eventDay, userEventAttendance },
+                    idx,
+                  ) => (
                     <div
                       key={idx}
                       className={`snap-start min-w-[290px] h-[90px] rounded-xl p-4 shrink-0 ${
@@ -281,7 +283,8 @@ export default function PortalHome() {
                           {eventName}
                         </h3>
                         {(() => {
-                          const attendanceStatus = userEventAttendance || "notMarked";
+                          const attendanceStatus =
+                            userEventAttendance || "notMarked";
                           const badge =
                             attendanceBadgeMap[attendanceStatus] ||
                             attendanceBadgeMap.notMarked;
@@ -409,7 +412,11 @@ export default function PortalHome() {
                     darkMode ? "text-white" : "text-slate-900"
                   }`}
                 >
-                  {userEventsList.filter((e) => e.userEventAttendance === "present").length}
+                  {
+                    userEventsList.filter(
+                      (e) => e.userEventAttendance === "present",
+                    ).length
+                  }
                 </p>
               </div>
             </div>

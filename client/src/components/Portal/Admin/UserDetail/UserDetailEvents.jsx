@@ -61,29 +61,42 @@ const ICONS = {
       <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
     </svg>
   ),
+  close: (
+    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
+      <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+    </svg>
+  ),
 };
 
 export default function UserDetailEvents({
   studentUserData,
-  setStudentUserData,
+  studentUserEventsList,
+  setStudentUserEventsList,
   darkMode,
   isUserEventsLocked,
-  refetchUser,
 }) {
-  const { user } = useOutletContext();
+  const { user } = useOutletContext(); // user is me ok and studentUserData is student whose details i am viewing ok
   const API_URL = import.meta.env.VITE_API_URL;
   const { userEventsList, setUserEventsList, fetchUserDetails } =
     useUserDetail();
 
-  // Use context events if viewing own profile, otherwise use prop data
-  const isSelf = studentUserData.id === user.id;
-  const displayEvents = isSelf
-    ? userEventsList
-    : studentUserData.selectedEvents;
+  // ========== VISIBILITY LOGIC ==========
+  const viewerId = user.id;
+  const viewerRole = user.role;
+  const targetId = studentUserData.id;
+  const targetRole = studentUserData.role;
+  const isDetailsComplete = studentUserData.isUserDetailsComplete === "true";
+  const isSelf = viewerId === targetId;
+
+  // Helper to check if viewer has higher role
+  const isViewerHigherRole = () => {
+    const roleRank = { Manager: 3, Admin: 2, Student: 1 };
+    return (roleRank[viewerRole] || 0) > (roleRank[targetRole] || 0);
+  };
 
   const [allEvents, setAllEvents] = useState([]);
   const [updatedEventsArray, setupdatedEventsArray] = useState(
-    displayEvents.map(({ eventId, eventType }) => {
+    studentUserEventsList.map(({ eventId, eventType }) => {
       return { eventId, eventType };
     }),
   );
@@ -95,7 +108,6 @@ export default function UserDetailEvents({
         withCredentials: true,
       });
       const gender = studentUserData.gender === "Male" ? "Boys" : "Girls";
-      // Filter by gender AND only show ACTIVE events
       setAllEvents(
         response.data.filter((e) => e.category === gender && e.isActive),
       );
@@ -116,11 +128,16 @@ export default function UserDetailEvents({
         ({ eventId }) => eventId,
       );
 
-      await axios.post(
+      const { data: response } = await axios.post(
         `${API_URL}/admin/users/${studentUserData.id}/updateEvents`,
         { updatedEventsIdsArray },
         { withCredentials: true },
       );
+
+      if (isSelf) {
+        setUserEventsList(response.data);
+      }
+      setStudentUserEventsList(response.data);
     } catch (error) {
       console.error(
         "Failed to update user events",
@@ -128,11 +145,6 @@ export default function UserDetailEvents({
       );
     }
     setShowAddEventModal(false);
-    if (refetchUser) refetchUser();
-    // If viewing own profile, also refresh context
-    if (isSelf) {
-      await fetchUserDetails();
-    }
   };
 
   const markAttendance = async (eventId, status) => {
@@ -142,24 +154,29 @@ export default function UserDetailEvents({
         { jerseyNumber: studentUserData.jerseyNumber, eventId, status },
         { withCredentials: true },
       );
-      isSelf
-        ? setUserEventsList(userEventsList.map((ev)=>{
-          if(ev.eventId === eventId){
-            ev.userEventAttendance = status
+
+      if (isSelf) {
+        setUserEventsList(
+          userEventsList.map((ev) => {
+            if (ev.eventId === eventId) {
+              ev.attendanceStatus = status;
+            }
+            return ev;
+          }),
+        );
+      }
+      setStudentUserEventsList(
+        studentUserEventsList.map((ev) => {
+          if (ev.eventId === eventId) {
+            ev.attendanceStatus = status;
           }
-          return ev
-        }))
-        : setStudentUserData((prev) => ({
-            ...prev,
-            selectedEvents: prev.selectedEvents.map((ev) =>
-              ev.eventId === eventId ? { ...ev, attendanceStatus: status } : ev,
-            ),
-          }));
+          return ev;
+        }),
+      );
     } catch (err) {
       console.error("Failed to mark attendance", err);
     }
   };
-  console.log(displayEvents);
 
   return (
     <>
@@ -197,15 +214,13 @@ export default function UserDetailEvents({
                   : "bg-slate-100 text-slate-600"
               }`}
             >
-              {displayEvents?.length || 0}
+              {studentUserEventsList?.length || 0}
             </span>
           </div>
 
-          {!isUserEventsLocked &&
-            (studentUserData.id === user.id ||
-              roleAccessPoints(user.role) >
-                roleAccessPoints(studentUserData.role)) &&
-            studentUserData.isUserDetailsComplete === "true" && (
+          {isUserEventsLocked &&
+            (isSelf || isViewerHigherRole()) &&
+            isDetailsComplete && (
               <button
                 onClick={openAddEventModal}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition-all ${
@@ -221,11 +236,11 @@ export default function UserDetailEvents({
         </div>
 
         <div className="p-3">
-          {displayEvents?.length > 0 ? (
+          {studentUserEventsList?.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {displayEvents.map(
-                ({ eventId, eventName, eventType, userEventAttendance }) => {
-                  const statusDisplay = getStatusDisplay(userEventAttendance);
+              {studentUserEventsList.map(
+                ({ eventId, eventName, eventType, attendanceStatus }) => {
+                  const statusDisplay = getStatusDisplay(attendanceStatus);
                   return (
                     <div
                       key={eventId}
@@ -275,7 +290,7 @@ export default function UserDetailEvents({
                         <button
                           onClick={() => markAttendance(eventId, "present")}
                           className={`flex items-center justify-center gap-1.5 flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
-                            userEventAttendance === "present"
+                            attendanceStatus === "present"
                               ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/30 ring-2 ring-emerald-400/50"
                               : darkMode
                                 ? "bg-emerald-900/50 text-emerald-400 hover:bg-emerald-900/70 border border-emerald-700/30"
@@ -288,7 +303,7 @@ export default function UserDetailEvents({
                         <button
                           onClick={() => markAttendance(eventId, "absent")}
                           className={`flex items-center justify-center gap-1.5 flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
-                            userEventAttendance === "absent"
+                            attendanceStatus === "absent"
                               ? "bg-red-500 text-white shadow-md shadow-red-500/30 ring-2 ring-red-400/50"
                               : darkMode
                                 ? "bg-red-900/50 text-red-400 hover:bg-red-900/70 border border-red-700/30"
@@ -301,8 +316,8 @@ export default function UserDetailEvents({
                         <button
                           onClick={() => markAttendance(eventId, "notMarked")}
                           className={`flex items-center justify-center gap-1.5 flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
-                            userEventAttendance === "notMarked" ||
-                            !userEventAttendance
+                            attendanceStatus === "notMarked" ||
+                            !attendanceStatus
                               ? "bg-amber-500 text-white shadow-md shadow-amber-500/30 ring-2 ring-amber-400/50"
                               : darkMode
                                 ? "bg-amber-900/50 text-amber-400 hover:bg-amber-900/70 border border-amber-700/30"
@@ -481,7 +496,7 @@ export default function UserDetailEvents({
 
                           {isSelected && (
                             <span className="absolute bottom-2 right-2 text-[8px] font-bold text-emerald-500">
-                              {ICONS.check} Selected
+                              {ICONS.check} Registered
                             </span>
                           )}
                         </div>

@@ -24,7 +24,7 @@ export default function UserDetailPage() {
 
   // Get current logged-in user
   const { user } = useOutletContext();
-  const { setUserEventsList } = useUserDetail();
+  const { userDetail,setUserEventsList } = useUserDetail(); // user and userDetail are same ok 
 
   const fetchUser = async () => {
     try {
@@ -78,6 +78,7 @@ export default function UserDetailPage() {
       if (studentUserData.id === user.id) {
         setUserEventsList([]);
       }
+      setStudentUserEventsList([])
     } catch (err) {
       console.error("Failed to unlock events", err);
     }
@@ -127,9 +128,10 @@ export default function UserDetailPage() {
           {/* LEFT: REGISTERED EVENTS - Takes 3/5 width */}
           <UserDetailEvents
             studentUserData={studentUserData}
+            studentUserEventsList={studentUserEventsList}
+            setStudentUserEventsList={setStudentUserEventsList}
             darkMode={darkMode}
             isUserEventsLocked={isUserEventsLocked}
-            refetchUser={fetchUser}
           />
 
           {/* RIGHT: USER INFO - Takes 2/5 width */}

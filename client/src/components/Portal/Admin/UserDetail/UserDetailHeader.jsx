@@ -110,9 +110,8 @@ export default function UserDetailHeader({
   lockUserEvents,
   unlockUserEvents,
   setShowDeletePopup,
-  refetchUser,
 }) {
-  const { user } = useOutletContext();
+  const { user } = useOutletContext(); // user is me and studentUserData is that student whole profile i am viewing it can be me also ok
   const API_URL = import.meta.env.VITE_API_URL;
   const jerseyTheme = getJerseyBadgeTheme(
     studentUserData.role,
@@ -128,11 +127,11 @@ export default function UserDetailHeader({
     studentUserData.gender,
   );
   const [isUserHavingAdminAccess, setIsUserHavingAdminAccess] = useState(
-    studentUserData.role === "Manager" || studentUserData.role === "Admin",
+    user.role === "Manager" || user.role === "Admin",
   );
 
   // ========== VISIBILITY LOGIC ==========
-  const viewerId = user.id || user._id;
+  const viewerId = user.id;
   const viewerRole = user.role;
   const targetId = studentUserData.id;
   const targetRole = studentUserData.role;
@@ -183,7 +182,6 @@ export default function UserDetailHeader({
         { withCredentials: true },
       );
       setIsUserHavingAdminAccess(true);
-      if (refetchUser) refetchUser();
     } catch (error) {
       console.error(error.response?.data?.message || "Something went wrong");
     }
@@ -197,7 +195,6 @@ export default function UserDetailHeader({
         { withCredentials: true },
       );
       setIsUserHavingAdminAccess(false);
-      if (refetchUser) refetchUser();
     } catch (error) {
       console.error(error.response?.data?.message || "Something went wrong");
     }

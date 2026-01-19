@@ -86,13 +86,14 @@ export default function EventsPage() {
           // User has locked events but context wasn't hydrated - sync it
           const enrichedEvents = selectedEvents.map((se) => {
             const eventDetails = events.find((e) => e.id === se.eventId);
+
             return {
               eventId: se.eventId,
               eventName: eventDetails?.name || null,
               eventType: eventDetails?.type || null,
               eventDay: eventDetails?.day || null,
               isEventActive: eventDetails?.isActive ?? true,
-              userEventAttendance: se.status || null,
+              userEventAttendance: se.userEventAttendance || null,
             };
           });
           setUserEventsList(enrichedEvents);

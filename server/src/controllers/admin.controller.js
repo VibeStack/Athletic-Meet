@@ -320,91 +320,91 @@ export const updateUserEvents = asyncHandler(async (req, res) => {
 
   try {
     const user = await User.findById(userId).session(session);
-    if (!user) {
-      throw new ApiError(404, "User not found");
-    }
+    if (!user) throw new ApiError(404, "User not found");
+
     if (
       !canModifyDetails(
         { headId: head.id || head._id.toString(), headRole: head.role },
         { userId: user.id, userRole: user.role }
       )
     ) {
-      throw new ApiError(
-        403,
-        "You are not allowed to update this user's events"
-      );
+      throw new ApiError(403, "You are not allowed to update this user's events");
     }
 
     const existingEvents = user.selectedEvents;
-
-    const existingEventIds = existingEvents.map((e) => e.eventId.toString());
-
-    const updatedEventIds = updatedEventsIdsArray.map((id) => id.toString());
-
-    const removedEventIds = existingEventIds.filter(
-      (id) => !updatedEventIds.includes(id)
+    const existingIdsSet = new Set(
+      existingEvents.map((e) => e.eventId.toString())
+    );
+    const updatedIdsSet = new Set(
+      updatedEventsIdsArray.map((id) => id.toString())
     );
 
-    const addedEventIds = updatedEventIds.filter(
-      (id) => !existingEventIds.includes(id)
+    const removedEvents = existingEvents.filter(
+      (e) => !updatedIdsSet.has(e.eventId.toString())
     );
 
-    if (removedEventIds.length > 0) {
-      const removedEvents = existingEvents.filter((e) =>
-        removedEventIds.includes(e.eventId.toString())
+    const addedEventIds = [...updatedIdsSet].filter(
+      (id) => !existingIdsSet.has(id)
+    );
+
+    /* ---------- REMOVE EVENTS ---------- */
+    if (removedEvents.length > 0) {
+      await Event.bulkWrite(
+        removedEvents.map((ev) => ({
+          updateOne: {
+            filter: { _id: ev.eventId },
+            update: { $inc: { [`studentsCount.${ev.status}`]: -1 } },
+          },
+        })),
+        { session }
       );
 
-      const bulkEventUpdates = removedEvents.map((ev) => ({
-        updateOne: {
-          filter: { _id: ev.eventId },
-          update: {
-            $inc: {
-              [`studentsCount.${ev.status}`]: -1,
-            },
-          },
-        },
-      }));
-
-      await Event.bulkWrite(bulkEventUpdates, { session });
-
-      user.selectedEvents = user.selectedEvents.filter(
-        (e) => !removedEventIds.includes(e.eventId.toString())
+      user.selectedEvents = user.selectedEvents.filter((e) =>
+        updatedIdsSet.has(e.eventId.toString())
       );
     }
 
+    /* ---------- ADD EVENTS ---------- */
     if (addedEventIds.length > 0) {
-      const newUserEvents = addedEventIds.map((eventId) => ({
-        eventId,
-        status: "notMarked",
-      }));
+      user.selectedEvents.push(
+        ...addedEventIds.map((eventId) => ({
+          eventId,
+          status: "notMarked",
+        }))
+      );
 
-      user.selectedEvents.push(...newUserEvents);
-
-      const bulkEventIncrements = addedEventIds.map((eventId) => ({
-        updateOne: {
-          filter: { _id: eventId },
-          update: {
-            $inc: { "studentsCount.notMarked": 1 },
+      await Event.bulkWrite(
+        addedEventIds.map((eventId) => ({
+          updateOne: {
+            filter: { _id: eventId },
+            update: { $inc: { "studentsCount.notMarked": 1 } },
           },
-        },
-      }));
-
-      await Event.bulkWrite(bulkEventIncrements, { session });
+        })),
+        { session }
+      );
     }
 
     await user.save({ session });
 
+    /* ---------- RESPONSE DATA ---------- */
+    const events = await Event.find(
+      { _id: { $in: [...updatedIdsSet] } },
+      "name type day",
+      { session }
+    ).lean();
+
+    const formattedData = events.map((e) => ({
+      eventId: e._id.toString(),
+      eventName: e.name,
+      eventType: e.type,
+      eventDay: e.day,
+      attendanceStatus: "notMarked",
+    }));
+
     await session.commitTransaction();
 
     return res.status(200).json(
-      new ApiResponse(
-        200,
-        {
-          addedEventIds,
-          removedEventIds,
-        },
-        "User events updated successfully"
-      )
+      new ApiResponse(formattedData, "User events updated successfully")
     );
   } catch (error) {
     await session.abortTransaction();
