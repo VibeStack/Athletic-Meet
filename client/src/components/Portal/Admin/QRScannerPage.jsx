@@ -208,12 +208,12 @@ export default function QRScannerPage() {
             const isPortrait = viewfinderHeight > viewfinderWidth;
 
             if (isPortrait) {
-              const size = Math.floor(viewfinderWidth * 0.95);
+              const size = Math.floor(viewfinderWidth * 1);
               return { width: size, height: size };
             }
 
             const size = Math.floor(
-              Math.min(viewfinderWidth, viewfinderHeight) * 0.85,
+              Math.min(viewfinderWidth, viewfinderHeight) * 0.9,
             );
             return { width: size, height: size };
           },
@@ -245,7 +245,6 @@ export default function QRScannerPage() {
   }, []);
 
   const onScanSuccess = async (decodedText) => {
-    // 🔒 HARD LOCK (prevents multiple requests instantly)
     if (scanLockRef.current) return;
     scanLockRef.current = true;
 
@@ -719,11 +718,11 @@ export default function QRScannerPage() {
 
         {/* Scanner Area */}
         <div
-          className={`relative aspect-9/16 sm:aspect-video sm:max-h-[500px] w-full ${
+          className={`relative aspect-3/4 sm:aspect-video w-full h-full ${
             darkMode ? "bg-slate-950" : "bg-slate-100"
           }`}
         >
-          <div id="qr-reader" className="w-full h-full"></div>
+          <div id="qr-reader" className="w-full h-full overflow-hidden"></div>
 
           {/* Idle State */}
           {!scanning && !processing && !scanResult && (
