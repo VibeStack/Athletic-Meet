@@ -7,22 +7,43 @@ import LoadingComponent from "./LoadingComponent";
 /* -------------------- Icons -------------------- */
 const ICONS = {
   trophy: (
-    <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current">
+    <svg viewBox="0 0 24 24" className="w-full h-full fill-current">
       <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z" />
     </svg>
   ),
   medal: (
-    <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current">
-      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+    <svg viewBox="0 0 24 24" className="w-full h-full fill-current">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5l-3.5-3.5 1.41-1.41L11 13.67l4.59-4.58L17 10.5 11 16.5z" />
+    </svg>
+  ),
+  ribbon: (
+    <svg viewBox="0 0 24 24" className="w-full h-full fill-current">
+      <path d="M12 6c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm5.5 6c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5-1.5.67-1.5 1.5.67 1.5 1.5 1.5zM6.5 12c.83 0 1.5-.67 1.5-1.5S7.33 9 6.5 9 5 9.67 5 10.5 5.67 12 6.5 12zm11.21 2.21c-1.17 1.17-3.32 1.76-4.92.64L8 19.65 9.65 22 12 19.65l2.35 2.35L16 19.65l-4.79-4.79c-1.12 1.6-.53 3.75.64 4.92.78.78 1.81 1.17 2.85 1.17s2.07-.39 2.85-1.17c1.56-1.56 1.56-4.14 0-5.7-1.56-1.56-4.14-1.56-5.7 0z" />
+    </svg>
+  ),
+  award: (
+    <svg
+      viewBox="0 0 24 24"
+      className="w-full h-full"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <circle cx="12" cy="8" r="5" />
+      <path
+        d="M12 13L8 21l4-2 4 2z"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   ),
   download: (
-    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
+    <svg viewBox="0 0 24 24" className="w-full h-full fill-current">
       <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z" />
     </svg>
   ),
   lock: (
-    <svg viewBox="0 0 24 24" className="w-16 h-16 fill-current">
+    <svg viewBox="0 0 24 24" className="w-full h-full fill-current">
       <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
     </svg>
   ),
@@ -364,10 +385,10 @@ export default function CertificatesPage() {
               return (
                 <div
                   key={`winner-${cert.eventId}`}
-                  className={`relative overflow-hidden rounded-2xl p-5 ${
+                  className={`relative overflow-hidden rounded-2xl p-5 transition-all hover:scale-[1.02] ${
                     darkMode
-                      ? "bg-linear-to-br from-yellow-950/60 via-amber-950/40 to-orange-950/30 ring-2 ring-yellow-500/40"
-                      : "bg-linear-to-br from-yellow-50 via-amber-50 to-orange-50 ring-2 ring-yellow-300"
+                      ? "bg-linear-to-br from-yellow-950/60 via-amber-950/40 to-orange-950/30 ring-2 ring-yellow-500/40 shadow-xl shadow-yellow-500/10"
+                      : "bg-linear-to-br from-yellow-50 via-amber-50 to-orange-50 ring-2 ring-yellow-300 shadow-xl shadow-yellow-400/20"
                   }`}
                 >
                   {darkMode && (
@@ -376,12 +397,20 @@ export default function CertificatesPage() {
 
                   <div className="relative">
                     <div className="flex items-start justify-between mb-3">
-                      <span className="text-4xl">🏆</span>
-                      <span
-                        className={`px-3 py-1 rounded-lg text-xs font-bold ${
+                      <div
+                        className={`w-14 h-14 rounded-2xl flex items-center justify-center ${
                           darkMode
-                            ? "bg-yellow-500/20 text-yellow-400"
-                            : "bg-yellow-200 text-yellow-800"
+                            ? "bg-linear-to-br from-yellow-500/30 to-amber-600/30 text-yellow-400 ring-2 ring-yellow-500/40"
+                            : "bg-linear-to-br from-yellow-400 to-amber-500 text-white ring-2 ring-yellow-500/50 shadow-lg shadow-yellow-400/30"
+                        }`}
+                      >
+                        <div className="w-8 h-8">{ICONS.trophy}</div>
+                      </div>
+                      <span
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold ${
+                          darkMode
+                            ? "bg-yellow-500/20 text-yellow-400 ring-1 ring-yellow-500/40"
+                            : "bg-yellow-200 text-yellow-900 ring-1 ring-yellow-300"
                         }`}
                       >
                         {positions[cert.position]} Place
@@ -407,8 +436,8 @@ export default function CertificatesPage() {
                       disabled={downloading === `${cert.eventId}-winner`}
                       className={`mt-4 w-full py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all min-h-[40px] ${
                         darkMode
-                          ? "bg-linear-to-r from-yellow-500 to-amber-600 text-black hover:brightness-110"
-                          : "bg-linear-to-r from-yellow-400 to-amber-500 text-black hover:brightness-110"
+                          ? "bg-linear-to-r from-yellow-500 to-amber-600 text-black hover:brightness-110 shadow-lg shadow-yellow-500/30"
+                          : "bg-linear-to-r from-yellow-400 to-amber-500 text-black hover:brightness-110 shadow-lg shadow-yellow-500/40"
                       } disabled:opacity-50`}
                     >
                       <span className="w-5 h-5 flex items-center justify-center shrink-0">
@@ -465,20 +494,24 @@ export default function CertificatesPage() {
             return (
               <div
                 key={`participation-${cert.eventId}`}
-                className={`relative overflow-hidden rounded-xl p-4 ${
+                className={`relative overflow-hidden rounded-xl p-4 transition-all hover:scale-[1.02] ${
                   darkMode
-                    ? `bg-slate-900/80 ring-1 ${colors.ring}`
-                    : `bg-white ring-1 ${colors.ring} shadow-sm`
+                    ? `bg-slate-900/80 ring-1 ${colors.ring} shadow-lg`
+                    : `bg-white ring-1 ring-slate-200 shadow-lg`
                 }`}
               >
-                <div className="flex items-start justify-between mb-2">
+                <div className="flex items-start justify-between mb-3">
                   <div
-                    className={`w-10 h-10 rounded-lg flex items-center justify-center text-white bg-linear-to-br ${colors.gradient}`}
+                    className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-lg ${
+                      darkMode
+                        ? `bg-linear-to-br ${colors.gradient}`
+                        : "bg-linear-to-br from-slate-800 via-slate-700 to-slate-900"
+                    }`}
                   >
-                    <span className="text-lg">🏅</span>
+                    <div className="w-7 h-7 text-white">{ICONS.award}</div>
                   </div>
                   <span
-                    className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${colors.bg} ${colors.text}`}
+                    className={`text-[10px] px-2.5 py-1 rounded-lg font-bold uppercase ${colors.bg} ${colors.text} ring-1 ${colors.ring}`}
                   >
                     {cert.eventType}
                   </span>
@@ -502,10 +535,10 @@ export default function CertificatesPage() {
                 <button
                   onClick={() => handleDownload(cert, "participation")}
                   disabled={downloading === `${cert.eventId}-participation`}
-                  className={`w-full py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all min-h-[36px] ${
+                  className={`w-full py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all min-h-[36px] shadow-md ${
                     darkMode
                       ? `bg-linear-to-r ${colors.gradient} text-white hover:brightness-110`
-                      : `bg-linear-to-r ${colors.gradient} text-white hover:brightness-110`
+                      : "bg-linear-to-r from-slate-800 via-slate-700 to-slate-900 text-white hover:brightness-110 shadow-lg shadow-slate-400/30"
                   } disabled:opacity-50`}
                 >
                   <span className="w-4 h-4 flex items-center justify-center shrink-0">

@@ -133,6 +133,8 @@ export default function QRScannerPage() {
   const [scanResult, setScanResult] = useState(null);
   const [processing, setProcessing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [jerseyNumbers, setJerseyNumbers] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const scannerRef = useRef(null);
   const scanLockRef = useRef(false);
 
@@ -895,20 +897,138 @@ export default function QRScannerPage() {
                 onClick={stopScanning}
                 className="px-6 py-3 bg-red-500 text-white font-semibold rounded-xl hover:bg-red-600 transition-all flex items-center gap-2 shadow-lg shadow-red-500/25"
               >
-                {ICONS.stop}
+                <div className="w-4 h-4">{ICONS.stop}</div>
                 Stop Scanning
               </button>
             </div>
           )}
         </div>
 
+        {/* Manual Attendance Input - Show when event is selected */}
+        {selectedEvent && (
+          <div
+            className={`px-3 sm:px-5 py-4 sm:py-5 border-t ${
+              darkMode ? "border-white/5" : "border-slate-100"
+            }`}
+          >
+            <div className="max-w-5xl mx-auto">
+              {/* Header */}
+              <div className="mb-4">
+                <h3
+                  className={`text-base sm:text-lg font-black ${
+                    darkMode
+                      ? "text-slate-200"
+                      : "bg-linear-to-r from-slate-800 via-slate-700 to-slate-900 bg-clip-text text-transparent"
+                  }`}
+                >
+                  Manual Attendance
+                </h3>
+                <p
+                  className={`text-xs sm:text-sm mt-1 ${
+                    darkMode ? "text-slate-500" : "text-slate-600"
+                  }`}
+                >
+                  Mark attendance when scanner is unavailable
+                </p>
+              </div>
+
+              {/* Input and Button - Side by side on desktop, stacked on mobile */}
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                {/* Input Section - Left on desktop, Bottom on mobile */}
+                <div className="flex-1">
+                  <textarea
+                    value={jerseyNumbers}
+                    onChange={(e) => setJerseyNumbers(e.target.value)}
+                    placeholder="Enter jersey numbers: 1, 5, 12, 23"
+                    rows={4}
+                    className={`w-full px-4 py-3 rounded-xl text-sm sm:text-base font-medium transition-all resize-none ${
+                      darkMode
+                        ? "bg-slate-800/80 ring-1 ring-white/10 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-cyan-500 shadow-lg"
+                        : "bg-white ring-2 ring-slate-200 text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-cyan-500 shadow-lg shadow-slate-200/50"
+                    } focus:outline-none`}
+                  />
+                  {jerseyNumbers.trim() && (
+                    <div
+                      className={`mt-2.5 px-3 py-2 rounded-lg flex items-center gap-2 ${
+                        darkMode
+                          ? "bg-cyan-500/10 ring-1 ring-cyan-500/30"
+                          : "bg-cyan-50 ring-1 ring-cyan-200"
+                      }`}
+                    >
+                      <div
+                        className={`w-2 h-2 rounded-full animate-pulse ${
+                          darkMode ? "bg-cyan-400" : "bg-cyan-600"
+                        }`}
+                      ></div>
+                      <p
+                        className={`text-xs sm:text-sm font-semibold ${
+                          darkMode ? "text-cyan-400" : "text-cyan-700"
+                        }`}
+                      >
+                        {
+                          jerseyNumbers
+                            .split(",")
+                            .map((n) => n.trim())
+                            .filter((n) => n && !isNaN(n)).length
+                        }{" "}
+                        valid jersey number(s) detected
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Button Section - Right on desktop, Top on mobile */}
+                <div className="sm:w-48 flex flex-col justify-start">
+                  <button
+                    onClick={() => {
+                      // TODO: Implement backend integration
+                      // console.log("Submitting jersey numbers:", jerseyNumbers);
+                    }}
+                    disabled={
+                      !jerseyNumbers.trim() ||
+                      submitting ||
+                      jerseyNumbers
+                        .split(",")
+                        .map((n) => n.trim())
+                        .filter((n) => n && !isNaN(n)).length === 0
+                    }
+                    className={`w-full h-full sm:min-h-[120px] px-6 py-4 font-bold rounded-xl transition-all text-base sm:text-lg flex items-center justify-center ${
+                      !jerseyNumbers.trim() ||
+                      submitting ||
+                      jerseyNumbers
+                        .split(",")
+                        .map((n) => n.trim())
+                        .filter((n) => n && !isNaN(n)).length === 0
+                        ? darkMode
+                          ? "bg-slate-700 text-slate-500 cursor-not-allowed"
+                          : "bg-slate-200 text-slate-400 cursor-not-allowed"
+                        : darkMode
+                          ? "bg-linear-to-br from-cyan-500 via-cyan-600 to-blue-600 text-white hover:from-cyan-600 hover:to-blue-700 shadow-xl shadow-cyan-500/30"
+                          : "bg-linear-to-br from-slate-800 via-slate-700 to-slate-900 text-white hover:brightness-110 shadow-xl shadow-slate-400/40 ring-2 ring-slate-300"
+                    }`}
+                  >
+                    {submitting ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
+                        Marking...
+                      </>
+                    ) : (
+                      "Mark Attendance"
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Instructions Footer */}
         <div
-          className={`px-4 sm:px-5 py-4 border-t ${
+          className={`px-3 sm:px-5 py-4 border-t ${
             darkMode ? "border-white/5" : "border-slate-100"
           }`}
         >
-          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2.5 text-xs sm:text-sm">
             {[
               "Select category",
               "Choose event",
@@ -916,17 +1036,19 @@ export default function QRScannerPage() {
               "Point at QR",
             ].map((step, i) => (
               <div key={i} className="flex items-center gap-2">
-                <span
-                  className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                <div
+                  className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black ring-2 ${
                     darkMode
-                      ? "bg-cyan-500/20 text-cyan-400"
-                      : "bg-cyan-100 text-cyan-600"
+                      ? "bg-cyan-500/20 text-cyan-400 ring-cyan-500/30"
+                      : "bg-linear-to-br from-slate-800 via-slate-700 to-slate-900 text-white ring-slate-300 shadow-lg shadow-slate-400/30"
                   }`}
                 >
                   {i + 1}
-                </span>
+                </div>
                 <span
-                  className={darkMode ? "text-slate-400" : "text-slate-600"}
+                  className={`font-medium ${
+                    darkMode ? "text-slate-400" : "text-slate-700"
+                  }`}
                 >
                   {step}
                 </span>
