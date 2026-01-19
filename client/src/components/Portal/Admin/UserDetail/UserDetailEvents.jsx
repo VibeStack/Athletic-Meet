@@ -1,6 +1,7 @@
 import axios from "axios";
 import React, { useState } from "react";
 import { useOutletContext } from "react-router-dom";
+import { useUserDetail } from "../../../../context/UserDetailContext";
 
 const roleAccessPoints = (role) => {
   if (role === "Manager") return 3;
@@ -41,15 +42,24 @@ const ICONS = {
 export default function UserDetailEvents({
   studentUserData,
   darkMode,
+  isUserEventsLocked,
   markAttendance,
   getStatusDisplay,
   refetchUser,
 }) {
   const { user } = useOutletContext();
   const API_URL = import.meta.env.VITE_API_URL;
+  const { userEventsList, fetchUserDetails } = useUserDetail();
+
+  // Use context events if viewing own profile, otherwise use prop data
+  const isSelf = studentUserData.id === user.id;
+  const displayEvents = isSelf
+    ? userEventsList
+    : studentUserData.selectedEvents;
+
   const [allEvents, setAllEvents] = useState([]);
   const [updatedEventsArray, setupdatedEventsArray] = useState(
-    studentUserData.selectedEvents.map(({ eventId, eventType }) => {
+    displayEvents.map(({ eventId, eventType }) => {
       return { eventId, eventType };
     }),
   );
@@ -95,6 +105,10 @@ export default function UserDetailEvents({
     }
     setShowAddEventModal(false);
     if (refetchUser) refetchUser();
+    // If viewing own profile, also refresh context
+    if (isSelf) {
+      await fetchUserDetails();
+    }
   };
 
   return (
@@ -133,13 +147,14 @@ export default function UserDetailEvents({
                   : "bg-slate-100 text-slate-600"
               }`}
             >
-              {studentUserData.selectedEvents?.length || 0}
+              {displayEvents?.length || 0}
             </span>
           </div>
 
-          {(studentUserData.id === user.id ||
-            roleAccessPoints(user.role) >
-              roleAccessPoints(studentUserData.role)) &&
+          {!isUserEventsLocked &&
+            (studentUserData.id === user.id ||
+              roleAccessPoints(user.role) >
+                roleAccessPoints(studentUserData.role)) &&
             studentUserData.isUserDetailsComplete === "true" && (
               <button
                 onClick={openAddEventModal}
@@ -156,11 +171,11 @@ export default function UserDetailEvents({
         </div>
 
         <div className="p-3">
-          {studentUserData.selectedEvents?.length > 0 ? (
+          {displayEvents?.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {studentUserData.selectedEvents.map(
-                ({ eventId, eventName, eventType, attendanceStatus }) => {
-                  getStatusDisplay(attendanceStatus);
+              {displayEvents.map(
+                ({ eventId, eventName, eventType, userEventAttendance }) => {
+                  getStatusDisplay(userEventAttendance);
                   return (
                     <div
                       key={eventId}
@@ -202,7 +217,7 @@ export default function UserDetailEvents({
                         <button
                           onClick={() => markAttendance(eventId, "present")}
                           className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
-                            attendanceStatus === "present"
+                            userEventAttendance === "present"
                               ? "bg-emerald-500 text-white"
                               : darkMode
                                 ? "bg-emerald-900/50 text-emerald-400 hover:bg-emerald-900/70"
@@ -214,7 +229,7 @@ export default function UserDetailEvents({
                         <button
                           onClick={() => markAttendance(eventId, "absent")}
                           className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
-                            attendanceStatus === "absent"
+                            userEventAttendance === "absent"
                               ? "bg-red-500 text-white"
                               : darkMode
                                 ? "bg-red-900/50 text-red-400 hover:bg-red-900/70"
@@ -226,7 +241,7 @@ export default function UserDetailEvents({
                         <button
                           onClick={() => markAttendance(eventId, "notMarked")}
                           className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
-                            attendanceStatus === "notMarked"
+                            userEventAttendance === "notMarked"
                               ? "bg-amber-500 text-white"
                               : darkMode
                                 ? "bg-amber-900/50 text-amber-400 hover:bg-amber-900/70"
@@ -404,7 +419,7 @@ export default function UserDetailEvents({
 
                           {isSelected && (
                             <span className="absolute bottom-2 right-2 text-[8px] font-bold text-emerald-500">
-                              {ICONS.check} Registered
+                              {ICONS.check} Selected
                             </span>
                           )}
                         </div>

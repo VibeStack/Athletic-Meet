@@ -7,6 +7,7 @@ import UserDetailHeader from "./UserDetail/UserDetailHeader";
 import UserDetailEvents from "./UserDetail/UserDetailEvents";
 import UserDetailInfo from "./UserDetail/UserDetailInfo";
 import ManagerDetailsAccessDenied from "./ManagerDetailsAccessDenied";
+import { useUserDetail } from "../../../context/UserDetailContext";
 
 export default function UserDetailPage() {
   const API_URL = import.meta.env.VITE_API_URL;
@@ -23,6 +24,7 @@ export default function UserDetailPage() {
 
   // Get current logged-in user
   const { user } = useOutletContext();
+  const { setUserEventsList } = useUserDetail();
 
   const fetchUser = async () => {
     try {
@@ -73,6 +75,9 @@ export default function UserDetailPage() {
         { withCredentials: true },
       );
       setIsUserEventsLocked(false);
+      if (studentUserData.id === user.id) {
+        setUserEventsList([]);
+      }
     } catch (err) {
       console.error("Failed to unlock events", err);
     }
@@ -166,6 +171,7 @@ export default function UserDetailPage() {
           <UserDetailEvents
             studentUserData={studentUserData}
             darkMode={darkMode}
+            isUserEventsLocked={isUserEventsLocked}
             markAttendance={markAttendance}
             getStatusDisplay={getStatusDisplay}
             refetchUser={fetchUser}

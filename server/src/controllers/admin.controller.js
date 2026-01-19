@@ -202,7 +202,7 @@ export const lockUserEvents = asyncHandler(async (req, res) => {
 
     if (
       !canModifyDetails(
-        { headId: head.id, headRole: head.role },
+        { headId: head.id || head._id.toString(), headRole: head.role },
         { userId: user.id, userRole: user.role }
       )
     ) {
@@ -276,7 +276,6 @@ export const unlockUserEvents = asyncHandler(async (req, res) => {
         .json(new ApiResponse(null, "Events already unlocked"));
     }
 
-    // Decrement event counts for each selected event
     if (user.selectedEvents.length > 0) {
       for (const selectedEvent of user.selectedEvents) {
         const status = selectedEvent.status || "notMarked";

@@ -262,10 +262,7 @@ export default function PortalHome() {
             <div className="relative">
               <div className="flex gap-4 overflow-x-auto overflow-y-hidden pb-4 scrollbar-slim">
                 {userEventsList.map(
-                  (
-                    { eventName, eventType, eventDay, userEventAttendance },
-                    idx
-                  ) => (
+                  ({ eventName, eventType, eventDay, status }, idx) => (
                     <div
                       key={idx}
                       className={`snap-start min-w-[85%] sm:min-w-[260px] h-[90px] rounded-xl p-4 shrink-0 ${
@@ -283,9 +280,9 @@ export default function PortalHome() {
                           {eventName}
                         </h3>
                         {(() => {
-                          const status = userEventAttendance || "notMarked";
+                          const attendanceStatus = status || "notMarked";
                           const badge =
-                            attendanceBadgeMap[status] ||
+                            attendanceBadgeMap[attendanceStatus] ||
                             attendanceBadgeMap.notMarked;
 
                           return (
@@ -304,7 +301,7 @@ export default function PortalHome() {
                         {eventType} • {eventDay}
                       </p>
                     </div>
-                  )
+                  ),
                 )}
               </div>
             </div>
@@ -411,7 +408,7 @@ export default function PortalHome() {
                     darkMode ? "text-white" : "text-slate-900"
                   }`}
                 >
-                  {userEventsList.length}
+                  {userEventsList.filter((e) => e.status === "present").length}
                 </p>
               </div>
             </div>
