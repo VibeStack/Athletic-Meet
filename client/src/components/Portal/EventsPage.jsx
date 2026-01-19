@@ -54,7 +54,6 @@ export default function EventsPage() {
     userEventsList,
     setUserEventsList,
     allEventsList,
-    setAllEventsList,
     fetchAllEvents,
   } = useUserDetail();
 
@@ -83,20 +82,22 @@ export default function EventsPage() {
 
         // Sync userEventsList from user.selectedEvents if context is empty but user has events
         const selectedEvents = user.selectedEvents || [];
-        if (userEventsList.length === 0 && selectedEvents.length > 0) {
+        if (selectedEvents.length > 0) {
           // User has locked events but context wasn't hydrated - sync it
           const enrichedEvents = selectedEvents.map((se) => {
             const eventDetails = events.find((e) => e.id === se.eventId);
             return {
               eventId: se.eventId,
-              eventName: eventDetails?.name || "Unknown",
-              eventType: eventDetails?.type || "Unknown",
-              eventDay: eventDetails?.day || "Unknown",
+              eventName: eventDetails?.name || null,
+              eventType: eventDetails?.type || null,
+              eventDay: eventDetails?.day || null,
               isEventActive: eventDetails?.isActive ?? true,
-              userEventAttendance: se.status || "notMarked",
+              userEventAttendance: se.status || null,
             };
           });
           setUserEventsList(enrichedEvents);
+        } else if (userEventsList.length > 0) {
+          setUserEventsList(userEventsList);
         }
       } catch (err) {
         console.error("Failed to fetch initial data", err);
@@ -707,7 +708,9 @@ export default function EventsPage() {
           <div className="p-3 sm:p-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {allEventsList
-                .filter((e) => enrolledEventIds.includes(e.id))
+                .filter((e) =>
+                  userEventsList.map((ev) => ev.eventId).includes(e.id),
+                )
                 .map((event) => (
                   <EventCard key={event.id} event={event} />
                 ))}

@@ -94,24 +94,6 @@ export default function UserDetailPage() {
     }
   };
 
-  const markAttendance = async (eventId, status) => {
-    try {
-      await axios.post(
-        `${API_URL}/admin/user/event/attendance`,
-        { jerseyNumber: studentUserData.jerseyNumber, eventId, status },
-        { withCredentials: true },
-      );
-      setStudentUserData((prev) => ({
-        ...prev,
-        selectedEvents: prev.selectedEvents.map((ev) =>
-          ev.eventId === eventId ? { ...ev, attendanceStatus: status } : ev,
-        ),
-      }));
-    } catch (err) {
-      console.error("Failed to mark attendance", err);
-    }
-  };
-
   if (loading) {
     return (
       <LoadingComponent
@@ -121,31 +103,6 @@ export default function UserDetailPage() {
       />
     );
   }
-
-  const getStatusDisplay = (status) => {
-    if (status === "present") {
-      return {
-        bg: "bg-emerald-500",
-        text: "text-white",
-        label: "Present",
-        icon: "✓",
-      };
-    }
-    if (status === "absent") {
-      return {
-        bg: "bg-red-500",
-        text: "text-white",
-        label: "Absent",
-        icon: "✗",
-      };
-    }
-    return {
-      bg: "bg-amber-500",
-      text: "text-white",
-      label: "Not Marked",
-      icon: "○",
-    };
-  };
 
   // Access Denied Screen
   if (accessDenied) {
@@ -172,8 +129,6 @@ export default function UserDetailPage() {
             studentUserData={studentUserData}
             darkMode={darkMode}
             isUserEventsLocked={isUserEventsLocked}
-            markAttendance={markAttendance}
-            getStatusDisplay={getStatusDisplay}
             refetchUser={fetchUser}
           />
 

@@ -53,6 +53,9 @@ export function UserDetailProvider({ children }) {
     },
     [API_URL],
   );
+  // console.log(userDetail)
+  // console.log(userEventsList)
+  // console.log(allEventsList)
 
   const value = {
     userDetail,

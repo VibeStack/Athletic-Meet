@@ -9,6 +9,30 @@ const roleAccessPoints = (role) => {
   if (role === "Student") return 1;
   else 0;
 };
+const getStatusDisplay = (status) => {
+  if (status === "present") {
+    return {
+      bg: "bg-emerald-500",
+      text: "text-white",
+      label: "Present",
+      icon: "✓",
+    };
+  }
+  if (status === "absent") {
+    return {
+      bg: "bg-red-500",
+      text: "text-white",
+      label: "Absent",
+      icon: "✗",
+    };
+  }
+  return {
+    bg: "bg-amber-500",
+    text: "text-white",
+    label: "Not Marked",
+    icon: "○",
+  };
+};
 /* -------------------- SVG Icons -------------------- */
 const ICONS = {
   trophy: (
@@ -41,15 +65,15 @@ const ICONS = {
 
 export default function UserDetailEvents({
   studentUserData,
+  setStudentUserData,
   darkMode,
   isUserEventsLocked,
-  markAttendance,
-  getStatusDisplay,
   refetchUser,
 }) {
   const { user } = useOutletContext();
   const API_URL = import.meta.env.VITE_API_URL;
-  const { userEventsList, fetchUserDetails } = useUserDetail();
+  const { userEventsList, setUserEventsList, fetchUserDetails } =
+    useUserDetail();
 
   // Use context events if viewing own profile, otherwise use prop data
   const isSelf = studentUserData.id === user.id;
@@ -110,6 +134,32 @@ export default function UserDetailEvents({
       await fetchUserDetails();
     }
   };
+
+  const markAttendance = async (eventId, status) => {
+    try {
+      await axios.post(
+        `${API_URL}/admin/user/event/attendance`,
+        { jerseyNumber: studentUserData.jerseyNumber, eventId, status },
+        { withCredentials: true },
+      );
+      isSelf
+        ? setUserEventsList(userEventsList.map((ev)=>{
+          if(ev.eventId === eventId){
+            ev.userEventAttendance = status
+          }
+          return ev
+        }))
+        : setStudentUserData((prev) => ({
+            ...prev,
+            selectedEvents: prev.selectedEvents.map((ev) =>
+              ev.eventId === eventId ? { ...ev, attendanceStatus: status } : ev,
+            ),
+          }));
+    } catch (err) {
+      console.error("Failed to mark attendance", err);
+    }
+  };
+  console.log(displayEvents);
 
   return (
     <>
@@ -175,7 +225,7 @@ export default function UserDetailEvents({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {displayEvents.map(
                 ({ eventId, eventName, eventType, userEventAttendance }) => {
-                  getStatusDisplay(userEventAttendance);
+                  const statusDisplay = getStatusDisplay(userEventAttendance);
                   return (
                     <div
                       key={eventId}
@@ -193,6 +243,14 @@ export default function UserDetailEvents({
                         >
                           {eventName}
                         </h3>
+
+                        {/* Current Status Badge */}
+                        <span
+                          className={`flex items-center gap-1 text-[10px] px-2 py-1 rounded-md font-bold uppercase ${statusDisplay.bg} ${statusDisplay.text} shadow-sm`}
+                        >
+                          <span className="text-xs">{statusDisplay.icon}</span>
+                          <span>{statusDisplay.label}</span>
+                        </span>
                       </div>
 
                       <span
@@ -216,39 +274,43 @@ export default function UserDetailEvents({
                       <div className="flex gap-2 mt-3">
                         <button
                           onClick={() => markAttendance(eventId, "present")}
-                          className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
+                          className={`flex items-center justify-center gap-1.5 flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
                             userEventAttendance === "present"
-                              ? "bg-emerald-500 text-white"
+                              ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/30 ring-2 ring-emerald-400/50"
                               : darkMode
-                                ? "bg-emerald-900/50 text-emerald-400 hover:bg-emerald-900/70"
-                                : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                                ? "bg-emerald-900/50 text-emerald-400 hover:bg-emerald-900/70 border border-emerald-700/30"
+                                : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200"
                           }`}
                         >
-                          Present
+                          <span className="text-sm">✓</span>
+                          <span>Present</span>
                         </button>
                         <button
                           onClick={() => markAttendance(eventId, "absent")}
-                          className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
+                          className={`flex items-center justify-center gap-1.5 flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
                             userEventAttendance === "absent"
-                              ? "bg-red-500 text-white"
+                              ? "bg-red-500 text-white shadow-md shadow-red-500/30 ring-2 ring-red-400/50"
                               : darkMode
-                                ? "bg-red-900/50 text-red-400 hover:bg-red-900/70"
-                                : "bg-red-50 text-red-700 hover:bg-red-100"
+                                ? "bg-red-900/50 text-red-400 hover:bg-red-900/70 border border-red-700/30"
+                                : "bg-red-50 text-red-700 hover:bg-red-100 border border-red-200"
                           }`}
                         >
-                          Absent
+                          <span className="text-sm">✗</span>
+                          <span>Absent</span>
                         </button>
                         <button
                           onClick={() => markAttendance(eventId, "notMarked")}
-                          className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
-                            userEventAttendance === "notMarked"
-                              ? "bg-amber-500 text-white"
+                          className={`flex items-center justify-center gap-1.5 flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
+                            userEventAttendance === "notMarked" ||
+                            !userEventAttendance
+                              ? "bg-amber-500 text-white shadow-md shadow-amber-500/30 ring-2 ring-amber-400/50"
                               : darkMode
-                                ? "bg-amber-900/50 text-amber-400 hover:bg-amber-900/70"
-                                : "bg-amber-50 text-amber-700 hover:bg-amber-100"
+                                ? "bg-amber-900/50 text-amber-400 hover:bg-amber-900/70 border border-amber-700/30"
+                                : "bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200"
                           }`}
                         >
-                          Not Marked
+                          <span className="text-sm">○</span>
+                          <span>Reset</span>
                         </button>
                       </div>
                     </div>
