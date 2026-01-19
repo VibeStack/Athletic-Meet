@@ -496,7 +496,7 @@ export default function UserDetailEvents({
 
                           {isSelected && (
                             <span className="absolute bottom-2 right-2 text-[8px] font-bold text-emerald-500">
-                              {ICONS.check} Registered
+                              {ICONS.check} Selected
                             </span>
                           )}
                         </div>
@@ -588,7 +588,7 @@ export default function UserDetailEvents({
 
                           {isSelected && (
                             <span className="absolute bottom-2 right-2 text-[8px] font-bold text-emerald-500">
-                              {ICONS.check} Registered
+                              {ICONS.check} Selected
                             </span>
                           )}
                         </div>
@@ -673,7 +673,7 @@ export default function UserDetailEvents({
 
                           {isSelected && (
                             <span className="absolute bottom-2 right-2 text-[8px] font-bold text-emerald-500">
-                              {ICONS.check} Registered
+                              {ICONS.check} Selected
                             </span>
                           )}
                         </div>
