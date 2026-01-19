@@ -134,6 +134,7 @@ export default function QRScannerPage() {
   const [processing, setProcessing] = useState(false);
   const [loading, setLoading] = useState(true);
   const scannerRef = useRef(null);
+  const scanLockRef = useRef(false);
 
   const API_URL = import.meta.env.VITE_API_URL;
 
@@ -244,74 +245,83 @@ export default function QRScannerPage() {
   }, []);
 
   const onScanSuccess = async (decodedText) => {
-    await stopScanning();
+    // 🔒 HARD LOCK (prevents multiple requests instantly)
+    if (scanLockRef.current) return;
+    scanLockRef.current = true;
+
     setProcessing(true);
 
+    let parsedData;
+
     try {
-      const data = JSON.parse(decodedText);
+      parsedData = JSON.parse(decodedText);
 
-      if (data.jerseyNumber) {
-        const response = await axios.post(
-          `${API_URL}/admin/users/attendance`,
-          {
-            jerseyNumber: data.jerseyNumber,
-            eventId: selectedEvent,
-          },
-          { withCredentials: true },
-        );
+      if (!parsedData.jerseyNumber || !parsedData.id) {
+        throw new Error("Invalid QR code format");
+      }
 
-        if (response.data.success) {
-          const isAlreadyPresent =
-            response.data.message?.includes("already") ||
-            response.data.data?.alreadyPresent;
+      await axios.post(
+        `${API_URL}/admin/user/event/qrAttendance`,
+        {
+          recognitionId: parsedData.id,
+          jerseyNumber: parsedData.jerseyNumber,
+          eventId: selectedEvent,
+        },
+        { withCredentials: true },
+      );
 
-          if (isAlreadyPresent) {
-            toast.info(`#${data.jerseyNumber} Already Present`, {
-              icon: "ℹ️",
-            });
-            setScanResult({
-              success: true,
-              jerseyNumber: data.jerseyNumber,
-              name: data.name || response.data.data?.name || "Student",
-              message: "Already marked present",
-              alreadyPresent: true,
-            });
-          } else {
-            toast.success(`#${data.jerseyNumber} Marked Present!`, {
-              icon: "✅",
-            });
-            setScanResult({
-              success: true,
-              jerseyNumber: data.jerseyNumber,
-              name: data.name || response.data.data?.name || "Student",
-              message: "Attendance marked!",
-            });
-            // Refresh events to update stats
-            fetchEvents();
-          }
-          playSound("success");
-        } else {
-          toast.error(response.data.message || "Failed to mark attendance");
-          setScanResult({
-            success: false,
-            jerseyNumber: data.jerseyNumber,
-            message: response.data.message || "Failed to mark attendance",
-          });
-          playSound("error");
-        }
+      /* ---------- SUCCESS ---------- */
+      toast.success(`#${parsedData.jerseyNumber} Marked Present!`, {
+        position: "bottom-right",
+      });
+
+      setScanResult({
+        success: true,
+        jerseyNumber: parsedData.jerseyNumber,
+        name: parsedData.name || "Student",
+        message: "Attendance marked!",
+        alreadyPresent: false,
+      });
+
+      fetchEvents();
+      playSound("success");
+    } catch (err) {
+      const status = err.response?.status;
+      const message =
+        err.response?.data?.message || "Failed to process QR code";
+
+      if (status === 400 && message === "Attendance already marked") {
+        toast.info(`#${parsedData?.jerseyNumber} Already Present`, {
+          position: "bottom-right",
+        });
+
+        setScanResult({
+          success: true,
+          jerseyNumber: parsedData?.jerseyNumber,
+          name: parsedData?.name || "Student",
+          message: "Already marked present",
+          alreadyPresent: true,
+        });
+
+        playSound("success");
       } else {
-        toast.error("Invalid QR code format");
-        setScanResult({ success: false, message: "Invalid QR code format" });
+        toast.error(message, { position: "bottom-right" });
+
+        setScanResult({
+          success: false,
+          jerseyNumber: parsedData?.jerseyNumber,
+          message,
+        });
+
         playSound("error");
       }
-    } catch (err) {
-      const errorMsg =
-        err.response?.data?.message || "Failed to process QR code";
-      toast.error(errorMsg);
-      setScanResult({ success: false, message: errorMsg });
-      playSound("error");
     } finally {
       setProcessing(false);
+
+      setTimeout(() => {
+        scanLockRef.current = false;
+        setScanResult(null);
+      }, 1200);
     }
   };
 

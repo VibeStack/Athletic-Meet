@@ -328,7 +328,10 @@ export const updateUserEvents = asyncHandler(async (req, res) => {
         { userId: user.id, userRole: user.role }
       )
     ) {
-      throw new ApiError(403, "You are not allowed to update this user's events");
+      throw new ApiError(
+        403,
+        "You are not allowed to update this user's events"
+      );
     }
 
     const existingEvents = user.selectedEvents;
@@ -403,9 +406,9 @@ export const updateUserEvents = asyncHandler(async (req, res) => {
 
     await session.commitTransaction();
 
-    return res.status(200).json(
-      new ApiResponse(formattedData, "User events updated successfully")
-    );
+    return res
+      .status(200)
+      .json(new ApiResponse(formattedData, "User events updated successfully"));
   } catch (error) {
     await session.abortTransaction();
     throw error;
@@ -590,6 +593,89 @@ export const markAttendance = asyncHandler(async (req, res) => {
     throw error;
   }
 });
+
+export const markAttendanceByQr = asyncHandler(async (req, res) => {
+  const athleteData = req.body;
+
+  if (athleteData.recognitionId !== "GNDEC Athletix 2026") {
+    throw new ApiError(404, "Invalid QR Code");
+  }
+
+  const { sid } = req.signedCookies;
+  if (!sid) throw new ApiError(401, "Session missing");
+
+  const sessionDoc = await Session.findById(sid);
+  if (!sessionDoc) throw new ApiError(401, "Invalid session");
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const user = await User.findById(sessionDoc.userId)
+      .select("role selectedEvents isEventsLocked")
+      .session(session);
+
+    if (!user) throw new ApiError(404, "User not found");
+
+    if (user.role === "Student") {
+      throw new ApiError(403, "Unauthorized Access");
+    }
+
+    if (!user.isEventsLocked) {
+      throw new ApiError(400, "Events are not locked for this user");
+    }
+
+    const userEvent = user.selectedEvents.find(
+      (ev) => ev.eventId.toString() === athleteData.eventId
+    );
+
+    if (!userEvent) {
+      throw new ApiError(404, "User not registered for this event");
+    }
+
+    if (userEvent.status === "present") {
+      throw new ApiError(400, "Attendance already marked");
+    }
+
+    if (userEvent.status !== "notMarked") {
+      throw new ApiError(400, "Invalid attendance state");
+    }
+
+    userEvent.status = "present";
+    await user.save({ session });
+
+    const updatedEvent = await Event.findByIdAndUpdate(
+      athleteData.eventId,
+      {
+        $inc: {
+          "studentsCount.notMarked": -1,
+          "studentsCount.present": 1,
+        },
+      },
+      { new: true, session }
+    );
+
+    if (!updatedEvent) {
+      throw new ApiError(404, "Event not found");
+    }
+
+    await session.commitTransaction();
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        { eventId: athleteData.eventId, status: "present" },
+        "Attendance marked successfully"
+      )
+    );
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
+});
+
 
 export const getAttendanceStats = asyncHandler(async (req, res) => {
   const users = await User.find(
