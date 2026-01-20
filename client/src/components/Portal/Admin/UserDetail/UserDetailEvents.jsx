@@ -159,7 +159,7 @@ export default function UserDetailEvents({
         setUserEventsList(
           userEventsList.map((ev) => {
             if (ev.eventId === eventId) {
-              ev.attendanceStatus = status;
+              ev.userEventAttendance = status;
             }
             return ev;
           }),
