@@ -24,7 +24,7 @@ export default function UserDetailPage() {
 
   // Get current logged-in user
   const { user } = useOutletContext();
-  const { userDetail,setUserEventsList } = useUserDetail(); // user and userDetail are same ok 
+  const { userDetail, setUserEventsList } = useUserDetail(); // user and userDetail are same ok
 
   const fetchUser = async () => {
     try {
@@ -56,13 +56,18 @@ export default function UserDetailPage() {
 
   const lockUserEvents = async () => {
     try {
-      await axios.post(
+      const { data: response } = await axios.post(
         `${API_URL}/admin/users/${studentUserData.id}/events/lock`,
         {},
         { withCredentials: true },
       );
       setIsUserEventsLocked(true);
+      if (studentUserData.id === user.id) {
+        setUserEventsList(response.data);
+      }
+      setStudentUserEventsList(response.data);
     } catch (err) {
+      console.log(err.response);
       console.error("Failed to lock events", err);
     }
   };
@@ -78,7 +83,7 @@ export default function UserDetailPage() {
       if (studentUserData.id === user.id) {
         setUserEventsList([]);
       }
-      setStudentUserEventsList([])
+      setStudentUserEventsList([]);
     } catch (err) {
       console.error("Failed to unlock events", err);
     }

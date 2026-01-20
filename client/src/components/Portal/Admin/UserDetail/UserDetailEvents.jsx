@@ -174,6 +174,9 @@ export default function UserDetailEvents({
         }),
       );
     } catch (err) {
+      if (err?.response?.data?.message === "User events are not locked") {
+        alert("Please lock user events before marking attendance.");
+      }
       console.error("Failed to mark attendance", err);
     }
   };
@@ -218,7 +221,7 @@ export default function UserDetailEvents({
             </span>
           </div>
 
-          {isUserEventsLocked &&
+          {!isUserEventsLocked &&
             (isSelf || isViewerHigherRole()) &&
             isDetailsComplete && (
               <button
