@@ -23,7 +23,7 @@ export default function Step1AccountForm({ nextStep, setStep }) {
         data,
         {
           withCredentials: true,
-        }
+        },
       );
 
       if (
@@ -47,8 +47,7 @@ export default function Step1AccountForm({ nextStep, setStep }) {
         nextStep();
       } else if (
         response.success &&
-        response.message ===
-          "OTP sent successfully! Please verify your email."
+        response.message === "OTP sent successfully! Please verify your email."
       ) {
         alert("✅ OTP sent to your email. Please verify to continue.");
         nextStep();
@@ -66,6 +65,7 @@ export default function Step1AccountForm({ nextStep, setStep }) {
         alert("⚠️ Something Went Wrong!");
       }
     } catch (error) {
+      console.log(error.response.data.message);
       alert("⚠️ Network Error!");
     }
   };
@@ -111,6 +111,11 @@ export default function Step1AccountForm({ nextStep, setStep }) {
             minLength: {
               value: 3,
               message: "Username must be at least 3 characters long",
+            },
+            pattern: {
+              value: /^[a-zA-Z0-9_]+$/,
+              message:
+                "Username can contain only letters, numbers, and underscores",
             },
           }}
           errors={errors}

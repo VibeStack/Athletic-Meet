@@ -133,13 +133,13 @@ export default function PortalHome() {
               }`}
             >
               <div
-                className={`w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg ${
+                className={`min-w-12 h-12 px-2 rounded-xl flex items-center justify-center font-black text-lg ${
                   darkMode
                     ? "bg-linear-to-br from-cyan-500 to-blue-500 text-white"
                     : "bg-black text-white"
                 }`}
               >
-                #{user?.jerseyNumber}
+                # {user?.jerseyNumber}
               </div>
               <div>
                 <p className="text-xs uppercase tracking-wider text-slate-400">

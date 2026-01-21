@@ -16,6 +16,13 @@ export const registerOtpSender = asyncHandler(async (req, res) => {
     );
   }
 
+  if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+    throw new ApiError(
+      400,
+      "Username can contain only letters, numbers, and underscores."
+    );
+  }
+
   const user = await User.findOne({
     $or: [{ email }, { username: username.toLowerCase() }],
   });
