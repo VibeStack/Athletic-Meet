@@ -226,7 +226,70 @@ export default function CertificatesPage() {
               : "bg-linear-to-br from-white to-slate-50 ring-1 ring-slate-200 shadow-lg"
           }`}
         >
-          <span className="text-6xl mb-4 block">🏆</span>
+          <div className="w-20 h-20 mx-auto mb-4">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="url(#emptyTrophyFill)"
+              stroke="url(#emptyTrophyStroke)"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-full h-full"
+              filter="url(#emptyTrophyGlow)"
+            >
+              <defs>
+                {/* Metallic Gold Fill Gradient */}
+                <linearGradient
+                  id="emptyTrophyFill"
+                  x1="0%"
+                  y1="0%"
+                  x2="100%"
+                  y2="100%"
+                >
+                  <stop offset="0%" stopColor="#FFF2B2" />
+                  <stop offset="30%" stopColor="#FFD700" />
+                  <stop offset="60%" stopColor="#E6A400" />
+                  <stop offset="100%" stopColor="#C89100" />
+                </linearGradient>
+                {/* Gold Stroke Gradient */}
+                <linearGradient
+                  id="emptyTrophyStroke"
+                  x1="0%"
+                  y1="0%"
+                  x2="100%"
+                  y2="100%"
+                >
+                  <stop offset="0%" stopColor="#FFF8D2" />
+                  <stop offset="50%" stopColor="#FFCC33" />
+                  <stop offset="100%" stopColor="#B57A00" />
+                </linearGradient>
+                {/* Soft Golden Glow */}
+                <filter
+                  id="emptyTrophyGlow"
+                  x="-50%"
+                  y="-50%"
+                  width="200%"
+                  height="200%"
+                >
+                  <feDropShadow
+                    dx="0"
+                    dy="1"
+                    stdDeviation="2"
+                    floodColor="#FFD700"
+                    floodOpacity="0.5"
+                  />
+                </filter>
+              </defs>
+              {/* Trophy Shape */}
+              <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+              <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+              <path d="M4 22h16" />
+              <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+              <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+              <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+            </svg>
+          </div>
           <h2
             className={`text-xl font-bold mb-2 ${
               darkMode ? "text-white" : "text-slate-800"

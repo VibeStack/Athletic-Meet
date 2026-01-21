@@ -236,21 +236,25 @@ export const lockUserEvents = asyncHandler(async (req, res) => {
     user.isEventsLocked = true;
     await user.save({ session });
 
-    const eventsArrayFromEventsDB = await Event.find({ _id: { $in: userSelectedEventsIdArray } });
-    const formattedUserEventsData = eventsArrayFromEventsDB.map((ev)=>{
+    const eventsArrayFromEventsDB = await Event.find({
+      _id: { $in: userSelectedEventsIdArray },
+    });
+    const formattedUserEventsData = eventsArrayFromEventsDB.map((ev) => {
       return {
-        eventId:ev._id,
-        eventName:ev.name,
-        eventType:ev.type,
+        eventId: ev._id,
+        eventName: ev.name,
+        eventType: ev.type,
         eventDay: ev.day,
         attendanceStatus: "notMarked",
-      }
-    })
+      };
+    });
 
     await session.commitTransaction();
     return res
       .status(200)
-      .json(new ApiResponse(formattedUserEventsData, "Events locked successfully"));
+      .json(
+        new ApiResponse(formattedUserEventsData, "Events locked successfully")
+      );
   } catch (error) {
     await session.abortTransaction();
     throw error;
@@ -744,26 +748,47 @@ export const deleteUser = asyncHandler(async (req, res) => {
   const { userId } = req.params;
   const head = req.user;
 
-  const user = await User.findById(userId);
-  if (!user) {
-    throw new ApiError(404, "User not found");
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const user = await User.findById(userId).session(session);
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+
+    if (!canDeleteUser(head.role, user.role)) {
+      throw new ApiError(403, "You are not allowed to delete this user");
+    }
+
+    await User.deleteOne({ _id: user._id }).session(session);
+
+    await Session.deleteMany({ userId: user._id }).session(session);
+
+    if (user.jerseyNumber !== null && user.jerseyNumber !== undefined) {
+      await SystemConfig.findByIdAndUpdate(
+        "GLOBAL",
+        {
+          $push: {
+            freeJerseyNumbers: {
+              $each: [user.jerseyNumber],
+              $sort: 1,
+            },
+          },
+        },
+        { session }
+      );
+    }
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return res
+      .status(200)
+      .json(new ApiResponse(null, "User deleted successfully"));
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
   }
-
-  if (!canDeleteUser(head.role, user?.role)) {
-    throw new ApiError(403, "You are not allowed to delete this user");
-  }
-
-  await User.deleteOne({ _id: user._id });
-
-  await Session.deleteMany({ userId: user._id });
-
-  if (user.jerseyNumber !== null && user.jerseyNumber !== undefined) {
-    await SystemConfig.findByIdAndUpdate("GLOBAL", {
-      $push: { freeJerseyNumbers: user.jerseyNumber },
-    });
-  }
-
-  return res
-    .status(200)
-    .json(new ApiResponse(null, "User deleted successfully"));
 });
