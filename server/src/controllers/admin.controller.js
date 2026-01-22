@@ -352,64 +352,16 @@ export const updateUserEvents = asyncHandler(async (req, res) => {
       );
     }
 
-    const existingEvents = user.selectedEvents;
-    const existingIdsSet = new Set(
-      existingEvents.map((e) => e.eventId.toString())
-    );
-    const updatedIdsSet = new Set(
-      updatedEventsIdsArray.map((id) => id.toString())
-    );
-
-    const removedEvents = existingEvents.filter(
-      (e) => !updatedIdsSet.has(e.eventId.toString())
-    );
-
-    const addedEventIds = [...updatedIdsSet].filter(
-      (id) => !existingIdsSet.has(id)
-    );
-
-    /* ---------- REMOVE EVENTS ---------- */
-    if (removedEvents.length > 0) {
-      await Event.bulkWrite(
-        removedEvents.map((ev) => ({
-          updateOne: {
-            filter: { _id: ev.eventId },
-            update: { $inc: { [`studentsCount.${ev.status}`]: -1 } },
-          },
-        })),
-        { session }
-      );
-
-      user.selectedEvents = user.selectedEvents.filter((e) =>
-        updatedIdsSet.has(e.eventId.toString())
-      );
-    }
-
-    /* ---------- ADD EVENTS ---------- */
-    if (addedEventIds.length > 0) {
-      user.selectedEvents.push(
-        ...addedEventIds.map((eventId) => ({
-          eventId,
-          status: "notMarked",
-        }))
-      );
-
-      await Event.bulkWrite(
-        addedEventIds.map((eventId) => ({
-          updateOne: {
-            filter: { _id: eventId },
-            update: { $inc: { "studentsCount.notMarked": 1 } },
-          },
-        })),
-        { session }
-      );
-    }
-
+    user.selectedEvents = updatedEventsIdsArray.map((eid) => {
+      return {
+        eventId: eid,
+      };
+    });
     await user.save({ session });
 
     /* ---------- RESPONSE DATA ---------- */
     const events = await Event.find(
-      { _id: { $in: [...updatedIdsSet] } },
+      { _id: { $in: [...updatedEventsIdsArray] } },
       "name type day",
       { session }
     ).lean();

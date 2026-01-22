@@ -135,6 +135,7 @@ export default function UserDetailPage() {
             studentUserData={studentUserData}
             studentUserEventsList={studentUserEventsList}
             setStudentUserEventsList={setStudentUserEventsList}
+            lockUserEvents={lockUserEvents}
             darkMode={darkMode}
             isUserEventsLocked={isUserEventsLocked}
           />

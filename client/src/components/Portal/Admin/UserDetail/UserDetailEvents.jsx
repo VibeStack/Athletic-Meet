@@ -72,6 +72,7 @@ export default function UserDetailEvents({
   studentUserData,
   studentUserEventsList,
   setStudentUserEventsList,
+  lockUserEvents,
   darkMode,
   isUserEventsLocked,
 }) {
@@ -80,7 +81,6 @@ export default function UserDetailEvents({
   const { userEventsList, setUserEventsList, fetchUserDetails } =
     useUserDetail();
 
-  // ========== VISIBILITY LOGIC ==========
   const viewerId = user.id;
   const viewerRole = user.role;
   const targetId = studentUserData.id;
@@ -88,7 +88,9 @@ export default function UserDetailEvents({
   const isDetailsComplete = studentUserData.isUserDetailsComplete === "true";
   const isSelf = viewerId === targetId;
 
-  // Helper to check if viewer has higher role
+  const [updating, setUpdating] = useState(false);
+
+
   const isViewerHigherRole = () => {
     const roleRank = { Manager: 3, Admin: 2, Student: 1 };
     return (roleRank[viewerRole] || 0) > (roleRank[targetRole] || 0);
@@ -118,11 +120,15 @@ export default function UserDetailEvents({
   };
 
   const updateUserEvents = async () => {
+    if (updating) return;
+
     try {
       if (!updatedEventsArray || updatedEventsArray.length === 0) {
-        console.warn("No events to update");
+        alert("Please select at least one event");
         return;
       }
+
+      setUpdating(true);
 
       const updatedEventsIdsArray = updatedEventsArray.map(
         ({ eventId }) => eventId,
@@ -137,14 +143,19 @@ export default function UserDetailEvents({
       if (isSelf) {
         setUserEventsList(response.data);
       }
+
       setStudentUserEventsList(response.data);
+      await lockUserEvents();
+      setShowAddEventModal(false);
     } catch (error) {
-      console.error(
-        "Failed to update user events",
-        error?.response?.data || error.message,
-      );
+      const msg =
+        error?.response?.data?.message ||
+        "Failed to update user events. Please try again.";
+      alert(msg);
+      console.error("Failed to update user events", error);
+    } finally {
+      setUpdating(false);
     }
-    setShowAddEventModal(false);
   };
 
   const markAttendance = async (eventId, status) => {
@@ -693,14 +704,18 @@ export default function UserDetailEvents({
             >
               <button
                 onClick={updateUserEvents}
+                disabled={updating}
                 className={`px-4 py-2 rounded-lg text-sm font-bold ${
-                  darkMode
-                    ? "bg-slate-800 text-slate-300 hover:bg-slate-700"
-                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                  updating
+                    ? "opacity-50 cursor-not-allowed"
+                    : darkMode
+                      ? "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                      : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                 }`}
               >
-                Update
+                {updating ? "Updating..." : "Update"}
               </button>
+
               <button
                 onClick={() => setShowAddEventModal(false)}
                 className={`px-4 py-2 rounded-lg text-sm font-bold ${
