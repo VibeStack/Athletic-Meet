@@ -113,28 +113,23 @@ export default function UserDetailHeader({
 }) {
   const { user } = useOutletContext(); // user is me and studentUserData is that student whole profile i am viewing it can be me also ok
   const API_URL = import.meta.env.VITE_API_URL;
-  const jerseyTheme = getJerseyBadgeTheme(
-    studentUserData.role,
-    studentUserData.gender,
-  );
-  const roleTheme = getRoleTheme(
-    studentUserData.role,
-    studentUserData.gender,
-    darkMode,
-  );
-  const lockButtonTheme = getLockButtonTheme(
-    studentUserData.role,
-    studentUserData.gender,
-  );
   const [isUserHavingAdminAccess, setIsUserHavingAdminAccess] = useState(
-    user.role === "Manager" || user.role === "Admin",
+    ["Manager", "Admin"].includes(studentUserData.role),
+  );
+  const targetRole = isUserHavingAdminAccess ? "Admin" : studentUserData.role;
+
+  const roleTheme = getRoleTheme(targetRole, studentUserData.gender, darkMode);
+  const jerseyTheme = getJerseyBadgeTheme(targetRole, studentUserData.gender);
+  const lockButtonTheme = getLockButtonTheme(
+    targetRole,
+    studentUserData.gender,
   );
 
   // ========== VISIBILITY LOGIC ==========
   const viewerId = user.id;
   const viewerRole = user.role;
   const targetId = studentUserData.id;
-  const targetRole = studentUserData.role;
+
   const isDetailsComplete = studentUserData.isUserDetailsComplete === "true";
   const isSelf = viewerId === targetId;
 
@@ -182,6 +177,7 @@ export default function UserDetailHeader({
         { withCredentials: true },
       );
       setIsUserHavingAdminAccess(true);
+      window.location.reload();
     } catch (error) {
       console.error(error.response?.data?.message || "Something went wrong");
     }
@@ -195,6 +191,7 @@ export default function UserDetailHeader({
         { withCredentials: true },
       );
       setIsUserHavingAdminAccess(false);
+      window.location.reload();
     } catch (error) {
       console.error(error.response?.data?.message || "Something went wrong");
     }
@@ -242,7 +239,11 @@ export default function UserDetailHeader({
               <span
                 className={`inline-flex items-center text-[10px] font-semibold px-2.5 py-1 rounded-full ring-1 ${roleTheme}`}
               >
-                {studentUserData.role}
+                {studentUserData.role === "Manager"
+                  ? "Manager"
+                  : isUserHavingAdminAccess
+                    ? "Admin"
+                    : "Student"}
               </span>
               <span
                 className={`inline-flex items-center gap-0.5 text-[10px] ${
