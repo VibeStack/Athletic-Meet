@@ -116,6 +116,8 @@ export default function UserDetailHeader({
   const [isUserHavingAdminAccess, setIsUserHavingAdminAccess] = useState(
     ["Manager", "Admin"].includes(studentUserData.role),
   );
+  const [lockingEvents, setLockingEvents] = useState(false);
+  const [togglingAdmin, setTogglingAdmin] = useState(false);
   // When isUserHavingAdminAccess changes, we need to compute the displayed role:
   // - Manager always stays Manager
   // - Others show Admin if isUserHavingAdminAccess is true, otherwise Student
@@ -178,6 +180,8 @@ export default function UserDetailHeader({
   // Students can't see any admin buttons
 
   const makeAsAdmin = async () => {
+    if (togglingAdmin) return;
+    setTogglingAdmin(true);
     try {
       await axios.post(
         `${API_URL}/admin/user/${studentUserData.id}/makeAsAdmin`,
@@ -187,10 +191,14 @@ export default function UserDetailHeader({
       setIsUserHavingAdminAccess(true);
     } catch (error) {
       console.error(error.response?.data?.message || "Something went wrong");
+    } finally {
+      setTogglingAdmin(false);
     }
   };
 
   const removeAsAdmin = async () => {
+    if (togglingAdmin) return;
+    setTogglingAdmin(true);
     try {
       await axios.post(
         `${API_URL}/admin/user/${studentUserData.id}/removeAsAdmin`,
@@ -200,6 +208,22 @@ export default function UserDetailHeader({
       setIsUserHavingAdminAccess(false);
     } catch (error) {
       console.error(error.response?.data?.message || "Something went wrong");
+    } finally {
+      setTogglingAdmin(false);
+    }
+  };
+
+  const handleLockUnlock = async () => {
+    if (lockingEvents) return;
+    setLockingEvents(true);
+    try {
+      if (isUserEventsLocked) {
+        await unlockUserEvents();
+      } else {
+        await lockUserEvents();
+      }
+    } finally {
+      setLockingEvents(false);
     }
   };
 
@@ -275,15 +299,32 @@ export default function UserDetailHeader({
           <div className="flex items-center gap-2 sm:gap-3">
             {canShowLockUnlock && (
               <button
-                onClick={isUserEventsLocked ? unlockUserEvents : lockUserEvents}
-                className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-all sm:min-w-40 shadow-lg hover:brightness-110 whitespace-nowrap ${lockButtonTheme}`}
+                onClick={handleLockUnlock}
+                disabled={lockingEvents}
+                className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-all sm:min-w-40 shadow-lg hover:brightness-110 whitespace-nowrap ${lockButtonTheme} ${lockingEvents ? "opacity-70 cursor-not-allowed" : ""}`}
               >
-                {isUserEventsLocked ? ICONS.unlock : ICONS.lock}
+                {lockingEvents ? (
+                  <span className="animate-spin h-4 w-4 border-2 border-white/30 rounded-full border-t-white" />
+                ) : isUserEventsLocked ? (
+                  ICONS.unlock
+                ) : (
+                  ICONS.lock
+                )}
                 <span className="hidden sm:inline">
-                  {isUserEventsLocked ? "Unlock Events" : "Lock Events"}
+                  {lockingEvents
+                    ? isUserEventsLocked
+                      ? "Unlocking..."
+                      : "Locking..."
+                    : isUserEventsLocked
+                      ? "Unlock Events"
+                      : "Lock Events"}
                 </span>
                 <span className="sm:hidden">
-                  {isUserEventsLocked ? "Unlock" : "Lock"}
+                  {lockingEvents
+                    ? "..."
+                    : isUserEventsLocked
+                      ? "Unlock"
+                      : "Lock"}
                 </span>
               </button>
             )}
@@ -303,11 +344,24 @@ export default function UserDetailHeader({
           {canShowMakeRemoveAdmin && (
             <button
               onClick={isUserHavingAdminAccess ? removeAsAdmin : makeAsAdmin}
-              className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 ${lockButtonTheme}`}
+              disabled={togglingAdmin}
+              className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 ${lockButtonTheme} ${togglingAdmin ? "opacity-70 cursor-not-allowed" : ""}`}
             >
-              {isUserHavingAdminAccess ? ICONS.demoteAdmin : ICONS.promoteAdmin}
+              {togglingAdmin ? (
+                <span className="animate-spin h-5 w-5 border-2 border-white/30 rounded-full border-t-white" />
+              ) : isUserHavingAdminAccess ? (
+                ICONS.demoteAdmin
+              ) : (
+                ICONS.promoteAdmin
+              )}
               <span>
-                {isUserHavingAdminAccess ? "Remove As Admin" : "Make As Admin"}
+                {togglingAdmin
+                  ? isUserHavingAdminAccess
+                    ? "Removing..."
+                    : "Making Admin..."
+                  : isUserHavingAdminAccess
+                    ? "Remove As Admin"
+                    : "Make As Admin"}
               </span>
             </button>
           )}

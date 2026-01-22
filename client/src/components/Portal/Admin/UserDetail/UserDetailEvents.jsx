@@ -89,7 +89,7 @@ export default function UserDetailEvents({
   const isSelf = viewerId === targetId;
 
   const [updating, setUpdating] = useState(false);
-
+  const [markingAttendance, setMarkingAttendance] = useState(null); // { eventId, status }
 
   const isViewerHigherRole = () => {
     const roleRank = { Manager: 3, Admin: 2, Student: 1 };
@@ -159,6 +159,9 @@ export default function UserDetailEvents({
   };
 
   const markAttendance = async (eventId, status) => {
+    if (markingAttendance) return; // Prevent double-clicks
+    setMarkingAttendance({ eventId, status });
+
     try {
       await axios.post(
         `${API_URL}/admin/user/event/attendance`,
@@ -189,6 +192,8 @@ export default function UserDetailEvents({
         alert("Please lock user events before marking attendance.");
       }
       console.error("Failed to mark attendance", err);
+    } finally {
+      setMarkingAttendance(null);
     }
   };
 
@@ -303,32 +308,49 @@ export default function UserDetailEvents({
                       <div className="flex gap-2 mt-3">
                         <button
                           onClick={() => markAttendance(eventId, "present")}
+                          disabled={markingAttendance !== null}
                           className={`flex items-center justify-center gap-1.5 flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
                             attendanceStatus === "present"
                               ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/30 ring-2 ring-emerald-400/50"
                               : darkMode
                                 ? "bg-emerald-900/50 text-emerald-400 hover:bg-emerald-900/70 border border-emerald-700/30"
                                 : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200"
-                          }`}
+                          } ${markingAttendance !== null ? "opacity-70 cursor-not-allowed" : ""}`}
                         >
-                          <span className="text-sm">✓</span>
-                          <span>Present</span>
+                          {markingAttendance?.eventId === eventId &&
+                          markingAttendance?.status === "present" ? (
+                            <span className="animate-spin h-4 w-4 border-2 border-current/30 rounded-full border-t-current" />
+                          ) : (
+                            <>
+                              <span className="text-sm">✓</span>
+                              <span>Present</span>
+                            </>
+                          )}
                         </button>
                         <button
                           onClick={() => markAttendance(eventId, "absent")}
+                          disabled={markingAttendance !== null}
                           className={`flex items-center justify-center gap-1.5 flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
                             attendanceStatus === "absent"
                               ? "bg-red-500 text-white shadow-md shadow-red-500/30 ring-2 ring-red-400/50"
                               : darkMode
                                 ? "bg-red-900/50 text-red-400 hover:bg-red-900/70 border border-red-700/30"
                                 : "bg-red-50 text-red-700 hover:bg-red-100 border border-red-200"
-                          }`}
+                          } ${markingAttendance !== null ? "opacity-70 cursor-not-allowed" : ""}`}
                         >
-                          <span className="text-sm">✗</span>
-                          <span>Absent</span>
+                          {markingAttendance?.eventId === eventId &&
+                          markingAttendance?.status === "absent" ? (
+                            <span className="animate-spin h-4 w-4 border-2 border-current/30 rounded-full border-t-current" />
+                          ) : (
+                            <>
+                              <span className="text-sm">✗</span>
+                              <span>Absent</span>
+                            </>
+                          )}
                         </button>
                         <button
                           onClick={() => markAttendance(eventId, "notMarked")}
+                          disabled={markingAttendance !== null}
                           className={`flex items-center justify-center gap-1.5 flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
                             attendanceStatus === "notMarked" ||
                             !attendanceStatus
@@ -336,10 +358,17 @@ export default function UserDetailEvents({
                               : darkMode
                                 ? "bg-amber-900/50 text-amber-400 hover:bg-amber-900/70 border border-amber-700/30"
                                 : "bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200"
-                          }`}
+                          } ${markingAttendance !== null ? "opacity-70 cursor-not-allowed" : ""}`}
                         >
-                          <span className="text-sm">○</span>
-                          <span>Reset</span>
+                          {markingAttendance?.eventId === eventId &&
+                          markingAttendance?.status === "notMarked" ? (
+                            <span className="animate-spin h-4 w-4 border-2 border-current/30 rounded-full border-t-current" />
+                          ) : (
+                            <>
+                              <span className="text-sm">○</span>
+                              <span>Reset</span>
+                            </>
+                          )}
                         </button>
                       </div>
                     </div>

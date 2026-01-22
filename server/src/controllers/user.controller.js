@@ -317,38 +317,22 @@ export const unlockEvents = asyncHandler(async (req, res) => {
       throw new ApiError(400, "One or more events are invalid or inactive");
     }
 
-    // console.log(validEvents);
+    if (user.selectedEvents.length > 0) {
+      for (const selectedEvent of user.selectedEvents) {
+        const status = selectedEvent.status || "notMarked";
+        const decrementField = `studentsCount.${status}`;
 
-    const updatedUser = await User.findOneAndUpdate(
-      { _id: user._id },
-      {
-        $set: {
-          selectedEvents: [],
-          isEventsLocked: false,
-        },
-      },
-      { new: true, session: mongoSession }
-    );
+        await Event.updateOne(
+          { _id: selectedEvent.eventId },
+          { $inc: { [decrementField]: -1 } },
+          { mongoSession }
+        );
+      }
+    }
 
-    // console.log(updatedUser);
-
-    await Event.updateMany(
-      { _id: { $in: eventObjectIds }, "studentsCount.notMarked": { $gt: 0 } },
-      {
-        $inc: {
-          "studentsCount.notMarked": -1,
-        },
-      },
-      { session: mongoSession }
-    );
-    const updatedEvents = await Event.find({
-      _id: { $in: eventObjectIds },
-    }).session(mongoSession);
-
-    // console.log(
-    //   updatedEvents,
-    //   updatedEvents.map((e) => e.studentsCount)
-    // );
+    user.isEventsLocked = false;
+    user.selectedEvents = [];
+    await user.save({ mongoSession });
 
     await mongoSession.commitTransaction();
     mongoSession.endSession();
