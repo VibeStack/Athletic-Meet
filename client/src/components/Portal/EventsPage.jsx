@@ -220,6 +220,7 @@ export default function EventsPage() {
       alert(
         "✅ Events unlocked successfully! You can now select events again.",
       );
+      window.location.reload();
     } catch (err) {
       console.error("Failed to unlock events", err);
       alert("❌ Failed to unlock events. Please try again.");

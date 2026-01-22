@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "../../context/ThemeContext";
-import { useOutletContext } from "react-router-dom";
 import axios from "axios";
 import LoadingComponent from "./LoadingComponent";
 
@@ -56,7 +55,6 @@ const ICONS = {
 
 export default function CertificatesPage() {
   const { darkMode } = useTheme();
-  const { user } = useOutletContext();
   const [loading, setLoading] = useState(true);
   const [areCertificatesLocked, setAreCertificatesLocked] = useState(true);
   const [certificates, setCertificates] = useState([]);
@@ -70,7 +68,6 @@ export default function CertificatesPage() {
           `${API_URL}/user/certificates`,
           { withCredentials: true },
         );
-
         if (response.success) {
           setAreCertificatesLocked(response.data.areCertificatesLocked);
           setCertificates(response.data.certificates || []);
@@ -89,25 +86,19 @@ export default function CertificatesPage() {
     setDownloading(downloadId);
 
     try {
-      // Call the certificate generation API
-      const response = await fetch(
+      const response = await axios.get(
         `${API_URL}/certificate/download/${cert.eventId}/${type}`,
         {
-          method: "GET",
-          credentials: "include",
+          withCredentials: true,
+          responseType: "blob", // 👈 IMPORTANT for PDFs
         },
       );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to generate certificate");
-      }
-
-      // Get the blob from response
-      const blob = await response.blob();
+      // Create blob URL
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
 
       // Create download link
-      const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
       link.download = `Certificate_${cert.eventName.replace(/\s+/g, "_")}_${type}.pdf`;
@@ -119,7 +110,13 @@ export default function CertificatesPage() {
       window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error("Failed to download certificate:", err);
-      alert(err.message || "Failed to download certificate");
+
+      const message =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to download certificate";
+
+      alert(message);
     } finally {
       setDownloading(null);
     }
@@ -148,6 +145,93 @@ export default function CertificatesPage() {
       text: darkMode ? "text-blue-400" : "text-blue-600",
       ring: darkMode ? "ring-blue-500/30" : "ring-blue-200",
     };
+  };
+
+  // Vibrant color palette for participation certificates
+  const getCardColors = (index) => {
+    const colorPalettes = [
+      // Red
+      {
+        cardBg: darkMode
+          ? "bg-gradient-to-br from-red-950/80 via-rose-950/60 to-red-900/40"
+          : "bg-gradient-to-br from-red-50 via-rose-50 to-red-100",
+        cardRing: darkMode ? "ring-red-500/50" : "ring-red-300",
+        iconBg: darkMode
+          ? "bg-gradient-to-br from-red-500 to-rose-600"
+          : "bg-gradient-to-br from-red-500 to-rose-600",
+        buttonBg: darkMode
+          ? "bg-gradient-to-r from-red-500 to-rose-600"
+          : "bg-gradient-to-r from-red-500 to-rose-600",
+        shadow: darkMode ? "shadow-red-500/20" : "shadow-red-400/30",
+        accent: darkMode ? "text-red-400" : "text-red-600",
+        glowColor: "#f87171",
+      },
+      // Green
+      {
+        cardBg: darkMode
+          ? "bg-gradient-to-br from-green-950/80 via-emerald-950/60 to-green-900/40"
+          : "bg-gradient-to-br from-green-50 via-emerald-50 to-green-100",
+        cardRing: darkMode ? "ring-green-500/50" : "ring-green-400",
+        iconBg: darkMode
+          ? "bg-gradient-to-br from-green-500 to-emerald-600"
+          : "bg-gradient-to-br from-green-500 to-emerald-600",
+        buttonBg: darkMode
+          ? "bg-gradient-to-r from-green-500 to-emerald-600"
+          : "bg-gradient-to-r from-green-500 to-emerald-600",
+        shadow: darkMode ? "shadow-green-500/20" : "shadow-green-400/30",
+        accent: darkMode ? "text-green-400" : "text-green-600",
+        glowColor: "#4ade80",
+      },
+      // Blue
+      {
+        cardBg: darkMode
+          ? "bg-gradient-to-br from-blue-950/80 via-indigo-950/60 to-blue-900/40"
+          : "bg-gradient-to-br from-blue-50 via-indigo-50 to-blue-100",
+        cardRing: darkMode ? "ring-blue-500/50" : "ring-blue-400",
+        iconBg: darkMode
+          ? "bg-gradient-to-br from-blue-500 to-indigo-600"
+          : "bg-gradient-to-br from-blue-500 to-indigo-600",
+        buttonBg: darkMode
+          ? "bg-gradient-to-r from-blue-500 to-indigo-600"
+          : "bg-gradient-to-r from-blue-500 to-indigo-600",
+        shadow: darkMode ? "shadow-blue-500/20" : "shadow-blue-400/30",
+        accent: darkMode ? "text-blue-400" : "text-blue-600",
+        glowColor: "#60a5fa",
+      },
+      // Pink
+      {
+        cardBg: darkMode
+          ? "bg-gradient-to-br from-pink-950/80 via-rose-950/60 to-pink-900/40"
+          : "bg-gradient-to-br from-pink-50 via-rose-50 to-pink-100",
+        cardRing: darkMode ? "ring-pink-500/50" : "ring-pink-400",
+        iconBg: darkMode
+          ? "bg-gradient-to-br from-pink-500 to-rose-600"
+          : "bg-gradient-to-br from-pink-500 to-rose-600",
+        buttonBg: darkMode
+          ? "bg-gradient-to-r from-pink-500 to-rose-600"
+          : "bg-gradient-to-r from-pink-500 to-rose-600",
+        shadow: darkMode ? "shadow-pink-500/20" : "shadow-pink-400/30",
+        accent: darkMode ? "text-pink-400" : "text-pink-600",
+        glowColor: "#f472b6",
+      },
+      // Purple
+      {
+        cardBg: darkMode
+          ? "bg-gradient-to-br from-purple-950/80 via-violet-950/60 to-purple-900/40"
+          : "bg-gradient-to-br from-purple-50 via-violet-50 to-purple-100",
+        cardRing: darkMode ? "ring-purple-500/50" : "ring-purple-400",
+        iconBg: darkMode
+          ? "bg-gradient-to-br from-purple-500 to-violet-600"
+          : "bg-gradient-to-br from-purple-500 to-violet-600",
+        buttonBg: darkMode
+          ? "bg-gradient-to-r from-purple-500 to-violet-600"
+          : "bg-gradient-to-r from-purple-500 to-violet-600",
+        shadow: darkMode ? "shadow-purple-500/20" : "shadow-purple-400/30",
+        accent: darkMode ? "text-purple-400" : "text-purple-600",
+        glowColor: "#a855f7",
+      },
+    ];
+    return colorPalettes[index % colorPalettes.length];
   };
 
   if (loading) {
@@ -313,7 +397,7 @@ export default function CertificatesPage() {
   const winnerCerts = certificates.filter(
     (c) => c.position === 1 || c.position === 2 || c.position === 3,
   );
-  const participationCerts = certificates;
+  const participationCerts = certificates.filter((c) => c.position === 0);
 
   return (
     <div className="space-y-5">
@@ -365,46 +449,51 @@ export default function CertificatesPage() {
 
           {/* Stats */}
           <div
-            className={`flex items-center gap-4 px-4 py-2.5 rounded-xl ${
+            className={`flex justify-center items-center gap-6 px-5 py-3 rounded-2xl ${
               darkMode
-                ? "bg-amber-500/10 ring-1 ring-amber-500/20"
-                : "bg-amber-50 ring-1 ring-amber-200"
+                ? "bg-linear-to-r from-amber-500/15 via-yellow-500/10 to-orange-500/15 ring-1 ring-amber-500/30"
+                : "bg-linear-to-r from-amber-100 via-yellow-50 to-orange-100 ring-1 ring-amber-300 shadow-lg"
             }`}
           >
-            <div className="text-center">
+            {winnerCerts.length > 0 && (
+              <>
+                <div className="text-center px-2">
+                  <span
+                    className={`text-2xl sm:text-3xl font-black ${
+                      darkMode ? "text-yellow-400" : "text-yellow-600"
+                    }`}
+                  >
+                    {winnerCerts.length}
+                  </span>
+                  <p
+                    className={`text-[10px] font-bold uppercase tracking-wider ${
+                      darkMode ? "text-yellow-400/80" : "text-yellow-700"
+                    }`}
+                  >
+                    Winners
+                  </p>
+                </div>
+                <div
+                  className={`w-px h-10 ${darkMode ? "bg-amber-500/30" : "bg-amber-300"}`}
+                />
+              </>
+            )}
+            <div className="text-center px-2">
               <span
-                className={`text-xl font-black ${
+                className={`text-2xl sm:text-3xl font-black ${
                   darkMode ? "text-amber-400" : "text-amber-600"
                 }`}
               >
                 {certificates.length}
               </span>
               <p
-                className={`text-[9px] font-bold uppercase ${
-                  darkMode ? "text-amber-400/70" : "text-amber-600"
+                className={`text-[10px] font-bold uppercase tracking-wider ${
+                  darkMode ? "text-amber-400/80" : "text-amber-700"
                 }`}
               >
                 Total
               </p>
             </div>
-            {winnerCerts.length > 0 && (
-              <div className="text-center">
-                <span
-                  className={`text-xl font-black ${
-                    darkMode ? "text-yellow-400" : "text-yellow-600"
-                  }`}
-                >
-                  {winnerCerts.length}
-                </span>
-                <p
-                  className={`text-[9px] font-bold uppercase ${
-                    darkMode ? "text-yellow-400/70" : "text-yellow-600"
-                  }`}
-                >
-                  Winners
-                </p>
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -412,28 +501,38 @@ export default function CertificatesPage() {
       {/* Winner Certificates Section */}
       {winnerCerts.length > 0 && (
         <div>
-          <div className="flex items-center gap-2 mb-3">
-            <div
-              className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                darkMode
-                  ? "bg-yellow-500/20 text-yellow-400"
-                  : "bg-yellow-100 text-yellow-600"
-              }`}
-            >
-              {ICONS.trophy}
+          <div
+            className={`flex items-center justify-between mb-4 p-3 rounded-xl ${
+              darkMode
+                ? "bg-linear-to-r from-yellow-950/60 via-amber-950/40 to-orange-950/30 ring-1 ring-yellow-500/30"
+                : "bg-linear-to-r from-yellow-50 via-amber-50 to-orange-50 ring-1 ring-yellow-200"
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg ${
+                  darkMode
+                    ? "bg-linear-to-br from-yellow-500 to-amber-600"
+                    : "bg-linear-to-br from-yellow-500 to-amber-600"
+                }`}
+              >
+                <div className="w-6 h-6 text-white">{ICONS.trophy}</div>
+              </div>
+              <h2
+                className={`text-lg font-black tracking-tight ${
+                  darkMode
+                    ? "bg-linear-to-r from-yellow-400 via-amber-400 to-orange-400 bg-clip-text text-transparent"
+                    : "text-yellow-700"
+                }`}
+              >
+                Winner Certificates
+              </h2>
             </div>
-            <h2
-              className={`font-bold ${
-                darkMode ? "text-white" : "text-slate-800"
-              }`}
-            >
-              Winner Certificates
-            </h2>
             <span
-              className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
+              className={`text-sm px-3 py-1.5 rounded-xl font-bold ${
                 darkMode
-                  ? "bg-yellow-500/20 text-yellow-400"
-                  : "bg-yellow-100 text-yellow-600"
+                  ? "bg-yellow-500/30 text-yellow-300 ring-1 ring-yellow-500/40"
+                  : "bg-yellow-100 text-yellow-700 ring-1 ring-yellow-300"
               }`}
             >
               {winnerCerts.length}
@@ -445,43 +544,119 @@ export default function CertificatesPage() {
               const colors = getTypeColors(cert.eventType);
               const positions = { 1: "1st", 2: "2nd", 3: "3rd" };
 
+              // Premium position-based colors
+              const positionColors = {
+                1: {
+                  // Gold
+                  cardBg: darkMode
+                    ? "bg-gradient-to-br from-yellow-900/90 via-amber-950/80 to-orange-950/70"
+                    : "bg-gradient-to-br from-yellow-100 via-amber-50 to-orange-100",
+                  cardRing: darkMode ? "ring-yellow-500/60" : "ring-yellow-400",
+                  iconBg: darkMode
+                    ? "bg-gradient-to-br from-yellow-400 via-amber-500 to-yellow-600"
+                    : "bg-gradient-to-br from-yellow-400 via-amber-500 to-yellow-600",
+                  badgeBg: darkMode
+                    ? "bg-gradient-to-r from-yellow-500 to-amber-500"
+                    : "bg-gradient-to-r from-yellow-500 to-amber-500",
+                  buttonBg: darkMode
+                    ? "bg-gradient-to-r from-yellow-500 via-amber-500 to-yellow-600"
+                    : "bg-gradient-to-r from-yellow-500 via-amber-500 to-yellow-600",
+                  glowColor: "#fbbf24",
+                  shadow: "shadow-yellow-500/40",
+                  textColor: "text-yellow-400",
+                  badgeText: "text-black",
+                },
+                2: {
+                  // Silver
+                  cardBg: darkMode
+                    ? "bg-gradient-to-br from-slate-800/90 via-gray-900/80 to-zinc-900/70"
+                    : "bg-gradient-to-br from-slate-100 via-gray-50 to-zinc-100",
+                  cardRing: darkMode ? "ring-slate-400/60" : "ring-slate-400",
+                  iconBg: darkMode
+                    ? "bg-gradient-to-br from-slate-300 via-gray-400 to-slate-500"
+                    : "bg-gradient-to-br from-slate-300 via-gray-400 to-slate-500",
+                  badgeBg: darkMode
+                    ? "bg-gradient-to-r from-slate-400 to-gray-500"
+                    : "bg-gradient-to-r from-slate-400 to-gray-500",
+                  buttonBg: darkMode
+                    ? "bg-gradient-to-r from-slate-400 via-gray-500 to-slate-600"
+                    : "bg-gradient-to-r from-slate-400 via-gray-500 to-slate-600",
+                  glowColor: "#94a3b8",
+                  shadow: "shadow-slate-400/40",
+                  textColor: "text-slate-300",
+                  badgeText: "text-black",
+                },
+                3: {
+                  // Bronze
+                  cardBg: darkMode
+                    ? "bg-gradient-to-br from-orange-900/90 via-amber-950/80 to-yellow-950/70"
+                    : "bg-gradient-to-br from-orange-100 via-amber-50 to-yellow-100",
+                  cardRing: darkMode ? "ring-orange-500/60" : "ring-orange-400",
+                  iconBg: darkMode
+                    ? "bg-gradient-to-br from-orange-500 via-amber-600 to-orange-700"
+                    : "bg-gradient-to-br from-orange-500 via-amber-600 to-orange-700",
+                  badgeBg: darkMode
+                    ? "bg-gradient-to-r from-orange-500 to-amber-600"
+                    : "bg-gradient-to-r from-orange-500 to-amber-600",
+                  buttonBg: darkMode
+                    ? "bg-gradient-to-r from-orange-500 via-amber-600 to-orange-700"
+                    : "bg-gradient-to-r from-orange-500 via-amber-600 to-orange-700",
+                  glowColor: "#f97316",
+                  shadow: "shadow-orange-500/40",
+                  textColor: "text-orange-400",
+                  badgeText: "text-black",
+                },
+              };
+
+              const pColors =
+                positionColors[cert.position] || positionColors[1];
+
               return (
                 <div
                   key={`winner-${cert.eventId}`}
-                  className={`relative overflow-hidden rounded-2xl p-5 transition-all hover:scale-[1.02] ${
-                    darkMode
-                      ? "bg-linear-to-br from-yellow-950/60 via-amber-950/40 to-orange-950/30 ring-2 ring-yellow-500/40 shadow-xl shadow-yellow-500/10"
-                      : "bg-linear-to-br from-yellow-50 via-amber-50 to-orange-50 ring-2 ring-yellow-300 shadow-xl shadow-yellow-400/20"
-                  }`}
+                  className={`relative overflow-hidden rounded-2xl p-5 transition-all duration-300 hover:scale-[1.03] hover:-translate-y-1 ${pColors.cardBg} ring-2 ${pColors.cardRing} shadow-2xl ${pColors.shadow}`}
                 >
+                  {/* Premium glow effects */}
                   {darkMode && (
-                    <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full blur-3xl bg-yellow-500/20 pointer-events-none" />
+                    <>
+                      <div
+                        className="absolute -top-20 -right-20 w-48 h-48 rounded-full blur-3xl opacity-40 pointer-events-none"
+                        style={{ backgroundColor: pColors.glowColor }}
+                      />
+                      <div
+                        className="absolute -bottom-20 -left-20 w-40 h-40 rounded-full blur-3xl opacity-25 pointer-events-none"
+                        style={{ backgroundColor: pColors.glowColor }}
+                      />
+                    </>
                   )}
 
+                  {/* Shimmer overlay */}
+                  <div
+                    className={`absolute inset-0 pointer-events-none ${
+                      darkMode
+                        ? "bg-linear-to-r from-transparent via-white/5 to-transparent"
+                        : "bg-linear-to-r from-transparent via-white/40 to-transparent"
+                    }`}
+                  />
+
                   <div className="relative">
-                    <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-start justify-between mb-4">
                       <div
-                        className={`w-14 h-14 rounded-2xl flex items-center justify-center ${
-                          darkMode
-                            ? "bg-linear-to-br from-yellow-500/30 to-amber-600/30 text-yellow-400 ring-2 ring-yellow-500/40"
-                            : "bg-linear-to-br from-yellow-400 to-amber-500 text-white ring-2 ring-yellow-500/50 shadow-lg shadow-yellow-400/30"
-                        }`}
+                        className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-xl ${pColors.iconBg}`}
                       >
-                        <div className="w-8 h-8">{ICONS.trophy}</div>
+                        <div className="w-9 h-9 text-white drop-shadow-lg">
+                          {ICONS.trophy}
+                        </div>
                       </div>
                       <span
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold ${
-                          darkMode
-                            ? "bg-yellow-500/20 text-yellow-400 ring-1 ring-yellow-500/40"
-                            : "bg-yellow-200 text-yellow-900 ring-1 ring-yellow-300"
-                        }`}
+                        className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wide shadow-lg ${pColors.badgeBg} ${pColors.badgeText}`}
                       >
                         {positions[cert.position]} Place
                       </span>
                     </div>
 
                     <h3
-                      className={`font-bold text-lg mb-1 ${
+                      className={`font-black text-xl mb-2 ${
                         darkMode ? "text-white" : "text-slate-800"
                       }`}
                     >
@@ -489,7 +664,7 @@ export default function CertificatesPage() {
                     </h3>
 
                     <span
-                      className={`inline-block text-[10px] px-2 py-0.5 rounded font-bold uppercase ${colors.bg} ${colors.text}`}
+                      className={`inline-block text-[10px] px-2.5 py-1 rounded-lg font-bold uppercase ${colors.bg} ${colors.text} ring-1 ${colors.ring}`}
                     >
                       {cert.eventType}
                     </span>
@@ -497,15 +672,13 @@ export default function CertificatesPage() {
                     <button
                       onClick={() => handleDownload(cert, "winner")}
                       disabled={downloading === `${cert.eventId}-winner`}
-                      className={`mt-4 w-full py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all min-h-[40px] ${
-                        darkMode
-                          ? "bg-linear-to-r from-yellow-500 to-amber-600 text-black hover:brightness-110 shadow-lg shadow-yellow-500/30"
-                          : "bg-linear-to-r from-yellow-400 to-amber-500 text-black hover:brightness-110 shadow-lg shadow-yellow-500/40"
-                      } disabled:opacity-50`}
+                      className={`mt-5 w-full py-3 rounded-xl text-sm font-black flex items-center justify-center gap-2 transition-all min-h-[48px] shadow-xl ${pColors.buttonBg} ${darkMode ? "text-white" : "text-black"} hover:brightness-110 hover:shadow-2xl disabled:opacity-50`}
                     >
                       <span className="w-5 h-5 flex items-center justify-center shrink-0">
                         {downloading === `${cert.eventId}-winner` ? (
-                          <span className="animate-spin h-4 w-4 border-2 border-black/30 rounded-full border-t-black" />
+                          <span
+                            className={`animate-spin h-4 w-4 border-2 rounded-full ${darkMode ? "border-white/30 border-t-white" : "border-black/30 border-t-black"}`}
+                          />
                         ) : (
                           ICONS.download
                         )}
@@ -524,26 +697,38 @@ export default function CertificatesPage() {
 
       {/* Participation Certificates Section */}
       <div>
-        <div className="flex items-center gap-2 mb-3">
-          <div
-            className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-              darkMode
-                ? "bg-indigo-500/20 text-indigo-400"
-                : "bg-indigo-100 text-indigo-600"
-            }`}
-          >
-            {ICONS.medal}
+        <div
+          className={`flex items-center justify-between mb-4 p-3 rounded-xl ${
+            darkMode
+              ? "bg-linear-to-r from-indigo-950/60 via-purple-950/40 to-fuchsia-950/30 ring-1 ring-indigo-500/30"
+              : "bg-linear-to-r from-indigo-50 via-purple-50 to-fuchsia-50 ring-1 ring-indigo-200"
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg ${
+                darkMode
+                  ? "bg-linear-to-br from-indigo-500 to-purple-600"
+                  : "bg-linear-to-br from-indigo-500 to-purple-600"
+              }`}
+            >
+              <div className="w-6 h-6 text-white">{ICONS.medal}</div>
+            </div>
+            <h2
+              className={`text-lg font-black tracking-tight ${
+                darkMode
+                  ? "bg-linear-to-r from-indigo-400 via-purple-400 to-fuchsia-400 bg-clip-text text-transparent"
+                  : "text-indigo-700"
+              }`}
+            >
+              Participation Certificates
+            </h2>
           </div>
-          <h2
-            className={`font-bold ${darkMode ? "text-white" : "text-slate-800"}`}
-          >
-            Participation Certificates
-          </h2>
           <span
-            className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
+            className={`text-sm px-3 py-1.5 rounded-xl font-bold ${
               darkMode
-                ? "bg-indigo-500/20 text-indigo-400"
-                : "bg-indigo-100 text-indigo-600"
+                ? "bg-indigo-500/30 text-indigo-300 ring-1 ring-indigo-500/40"
+                : "bg-indigo-100 text-indigo-700 ring-1 ring-indigo-300"
             }`}
           >
             {participationCerts.length}
@@ -551,68 +736,69 @@ export default function CertificatesPage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {participationCerts.map((cert) => {
+          {participationCerts.map((cert, index) => {
             const colors = getTypeColors(cert.eventType);
+            const cardColors = getCardColors(index);
 
             return (
               <div
                 key={`participation-${cert.eventId}`}
-                className={`relative overflow-hidden rounded-xl p-4 transition-all hover:scale-[1.02] ${
-                  darkMode
-                    ? `bg-slate-900/80 ring-1 ${colors.ring} shadow-lg`
-                    : `bg-white ring-1 ring-slate-200 shadow-lg`
-                }`}
+                className={`relative overflow-hidden rounded-2xl p-5 transition-all duration-300 hover:scale-[1.03] hover:-translate-y-1 ${cardColors.cardBg} ring-2 ${cardColors.cardRing} shadow-xl ${cardColors.shadow}`}
               >
-                <div className="flex items-start justify-between mb-3">
+                {/* Decorative glow */}
+                {darkMode && (
                   <div
-                    className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-lg ${
-                      darkMode
-                        ? `bg-linear-to-br ${colors.gradient}`
-                        : "bg-linear-to-br from-slate-800 via-slate-700 to-slate-900"
+                    className="absolute -top-16 -right-16 w-40 h-40 rounded-full blur-3xl opacity-30 pointer-events-none"
+                    style={{ backgroundColor: cardColors.glowColor }}
+                  />
+                )}
+
+                <div className="relative">
+                  <div className="flex items-start justify-between mb-4">
+                    <div
+                      className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg ${cardColors.iconBg}`}
+                    >
+                      <div className="w-8 h-8 text-white">{ICONS.award}</div>
+                    </div>
+                    <span
+                      className={`text-[11px] px-3 py-1.5 rounded-xl font-bold uppercase ${colors.bg} ${colors.text} ring-1 ${colors.ring}`}
+                    >
+                      {cert.eventType}
+                    </span>
+                  </div>
+
+                  <h3
+                    className={`font-bold text-base mb-1 ${
+                      darkMode ? "text-white" : "text-slate-800"
                     }`}
                   >
-                    <div className="w-7 h-7 text-white">{ICONS.award}</div>
-                  </div>
-                  <span
-                    className={`text-[10px] px-2.5 py-1 rounded-lg font-bold uppercase ${colors.bg} ${colors.text} ring-1 ${colors.ring}`}
+                    {cert.eventName}
+                  </h3>
+                  <p
+                    className={`text-xs mb-4 ${
+                      darkMode ? "text-slate-400" : "text-slate-600"
+                    }`}
                   >
-                    {cert.eventType}
-                  </span>
+                    {cert.eventDay === "Both" ? "Day 1 & 2" : cert.eventDay}
+                  </p>
+
+                  <button
+                    onClick={() => handleDownload(cert, "participation")}
+                    disabled={downloading === `${cert.eventId}-participation`}
+                    className={`w-full py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all min-h-[44px] shadow-lg ${cardColors.buttonBg} ${darkMode ? "text-white" : "text-black"} hover:brightness-110 hover:shadow-xl disabled:opacity-50`}
+                  >
+                    <span className="w-5 h-5 flex items-center justify-center shrink-0">
+                      {downloading === `${cert.eventId}-participation` ? (
+                        <span
+                          className={`animate-spin h-4 w-4 border-2 rounded-full ${darkMode ? "border-white/30 border-t-white" : "border-black/30 border-t-black"}`}
+                        />
+                      ) : (
+                        ICONS.download
+                      )}
+                    </span>
+                    <span className="whitespace-nowrap">Download</span>
+                  </button>
                 </div>
-
-                <h3
-                  className={`font-bold text-sm mb-0.5 ${
-                    darkMode ? "text-white" : "text-slate-800"
-                  }`}
-                >
-                  {cert.eventName}
-                </h3>
-                <p
-                  className={`text-[11px] mb-3 ${
-                    darkMode ? "text-slate-500" : "text-slate-500"
-                  }`}
-                >
-                  {cert.eventDay}
-                </p>
-
-                <button
-                  onClick={() => handleDownload(cert, "participation")}
-                  disabled={downloading === `${cert.eventId}-participation`}
-                  className={`w-full py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all min-h-[36px] shadow-md ${
-                    darkMode
-                      ? `bg-linear-to-r ${colors.gradient} text-white hover:brightness-110`
-                      : "bg-linear-to-r from-slate-800 via-slate-700 to-slate-900 text-white hover:brightness-110 shadow-lg shadow-slate-400/30"
-                  } disabled:opacity-50`}
-                >
-                  <span className="w-4 h-4 flex items-center justify-center shrink-0">
-                    {downloading === `${cert.eventId}-participation` ? (
-                      <span className="animate-spin h-3 w-3 border-2 border-white/30 rounded-full border-t-white" />
-                    ) : (
-                      ICONS.download
-                    )}
-                  </span>
-                  <span className="whitespace-nowrap">Download</span>
-                </button>
               </div>
             );
           })}

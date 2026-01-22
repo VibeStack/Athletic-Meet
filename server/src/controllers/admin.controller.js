@@ -598,7 +598,6 @@ export const markAttendanceByQr = asyncHandler(async (req, res) => {
     if (!targetUser.isEventsLocked) {
       throw new ApiError(400, "Events are not locked for this user");
     }
-    console.log("working");
 
     const targetUserEvent = targetUser.selectedEvents.find(
       (ev) => ev.eventId.toString() === athleteData.eventId

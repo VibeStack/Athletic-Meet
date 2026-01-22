@@ -3,7 +3,6 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { User } from "../models/User.model.js";
-import { Event } from "../models/Events.model.js";
 import { SystemConfig } from "../models/SystemConfig.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -12,55 +11,57 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export const generateCertificate = asyncHandler(async (req, res) => {
-  const user = req.user;
-  const { eventId, type } = req.params; // type can be 'participation' or 'winner'
+  const currentUser = req.user;
+  const { eventId, type } = req.params; // type = "winner" | "participation"
 
-  if (!user) {
+  if (!currentUser) {
     throw new ApiError(401, "Not authenticated");
   }
 
-  // Check if certificates are locked
-  const config = await SystemConfig.findById("GLOBAL");
-  if (config?.areCertificatesLocked) {
+  /* ---------- SYSTEM CHECK ---------- */
+  const systemConfig = await SystemConfig.findById("GLOBAL").lean();
+  if (systemConfig?.areCertificatesLocked) {
     throw new ApiError(403, "Certificates are currently locked");
   }
 
-  // Get user with full details
-  const userDoc = await User.findById(user._id).lean();
-  if (!userDoc) {
-    throw new ApiError(404, "User not found");
-  }
+  /* ---------- LOAD USER ---------- */
+  const user = await User.findById(currentUser._id).lean();
+  if (!user) throw new ApiError(404, "User not found");
 
-  // Verify user is enrolled in this event AND is marked present
-  const enrolledEvent = userDoc.selectedEvents?.find(
+  /* ---------- VALIDATE EVENT ENROLLMENT (from user.selectedEvents) ---------- */
+  const userEvent = user.selectedEvents?.find(
     (e) => e.eventId?.toString() === eventId
   );
-  if (!enrolledEvent) {
+  
+  if (!userEvent) {
     throw new ApiError(400, "You are not enrolled in this event");
   }
-
-  // Check if student is marked present
-  if (enrolledEvent.status !== "present") {
-    throw new ApiError(
-      400,
-      "You can only download certificate for events where you were present"
-    );
+  
+  if (userEvent.status !== "present") {
+    throw new ApiError(400, "Certificate allowed only for attended events");
   }
 
-  // Get event details
-  const event = await Event.findById(eventId).lean();
-  if (!event) {
-    throw new ApiError(404, "Event not found");
+  /* ---------- WINNER VALIDATION ---------- */
+  if (type === "winner" && (!userEvent.position || userEvent.position === 0)) {
+    throw new ApiError(400, "Winner certificate requires a valid position");
   }
 
-  // Load the certificate template image
+  /* ---------- GET EVENT INFO FROM selectedEvents ---------- */
+  const eventName = String(userEvent.eventName || "Event");
+
+  /* ---------- CHOOSE TEMPLATE ---------- */
+  const templateFileName =
+    type === "winner"
+      ? "winnersCertificate.png"
+      : "participationCertificate.png";
+
   const templatePath = path.join(
     __dirname,
     "..",
     "..",
     "public",
     "Certificates",
-    "Certificates.png"
+    templateFileName
   );
 
   if (!fs.existsSync(templatePath)) {
@@ -69,98 +70,116 @@ export const generateCertificate = asyncHandler(async (req, res) => {
 
   const templateBytes = fs.readFileSync(templatePath);
 
-  // Create a new PDF document
+  /* ---------- CREATE PDF ---------- */
   const pdfDoc = await PDFDocument.create();
-
-  // Embed the PNG image
   const templateImage = await pdfDoc.embedPng(templateBytes);
-  const { width: imgWidth, height: imgHeight } = templateImage.scale(1);
 
-  // Add a page with the same size as the image
-  const page = pdfDoc.addPage([imgWidth, imgHeight]);
+  const { width, height } = templateImage.scale(1);
+  const page = pdfDoc.addPage([width, height]);
 
-  // Draw the template as background
   page.drawImage(templateImage, {
     x: 0,
     y: 0,
-    width: imgWidth,
-    height: imgHeight,
+    width,
+    height,
   });
 
-  // Embed fonts
-  const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-  const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  /* ---------- FONTS ---------- */
+  const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
-  // Define text color (dark blue to match the certificate style)
   const textColor = rgb(0.1, 0.15, 0.3);
+  const centerX = width / 2;
 
-  // Calculate positions based on the certificate template
-  const centerX = imgWidth / 2;
+  /* ---------- TEXT DATA ---------- */
+  const studentName = String(user.fullname || user.username);
+  const courseBranch = user.branch
+    ? `${user.course} - ${user.branch}`
+    : user.course;
 
-  // User's Full Name - positioned after "THIS IS TO CERTIFY THAT"
-  // IMPORTANT: Convert all values to strings to avoid pdf-lib errors
-  const userName = String(userDoc.fullname || userDoc.username || "Student");
-  const nameWidth = helveticaBold.widthOfTextAtSize(userName, 28);
-  page.drawText(userName, {
+  const urn = String(user.urn || "N/A");
+
+  // Position text for winner certificate
+  const positionText =
+    type === "winner"
+      ? userEvent.position === 1
+        ? "1st Position"
+        : userEvent.position === 2
+          ? "2nd Position"
+          : "3rd Position"
+      : null;
+
+  /* ---------- DRAW NAME ---------- */
+  const nameFontSize = 48;
+  const nameWidth = fontBold.widthOfTextAtSize(studentName, nameFontSize);
+
+  page.drawText(studentName, {
     x: centerX - nameWidth / 2,
-    y: imgHeight - 285,
-    size: 28,
-    font: helveticaBold,
+    y: height - 770,
+    size: nameFontSize,
+    font: fontBold,
     color: textColor,
   });
 
-  // "of" line - Degree and Branch
-  const course = String(userDoc.course || "B.Tech");
-  const branch = String(userDoc.branch || "");
-  const degreeText = branch ? `${course} - ${branch}` : course;
-  page.drawText(degreeText, {
-    x: 170,
-    y: imgHeight - 336,
-    size: 16,
-    font: helvetica,
+  /* ---------- DRAW COURSE/BRANCH (after "of") ---------- */
+  page.drawText(courseBranch, {
+    x: 105,
+    y: height - 350,
+    size: 14,
+    font: fontRegular,
     color: textColor,
   });
 
-  // Roll Number (URN) - Convert to string
-  const urnText = String(userDoc.urn || "N/A");
-  page.drawText(urnText, {
-    x: imgWidth / 2 + 80,
-    y: imgHeight - 336,
-    size: 16,
-    font: helvetica,
+  /* ---------- DRAW URN (after "Roll Number") ---------- */
+  page.drawText(urn, {
+    x: width / 2 + 50,
+    y: height - 350,
+    size: 14,
+    font: fontRegular,
     color: textColor,
   });
 
-  // "participated in" - Event Name
-  const eventName = String(event.name || "Event");
-  page.drawText(eventName, {
-    x: 230,
-    y: imgHeight - 380,
-    size: 16,
-    font: helvetica,
-    color: textColor,
-  });
+  /* ---------- DRAW TYPE-SPECIFIC TEXT ---------- */
+  if (type === "winner") {
+    // Winner certificate: "won ___ in ___"
+    // Position after "won"
+    page.drawText(positionText, {
+      x: 105,
+      y: height - 395,
+      size: 14,
+      font: fontBold,
+      color: textColor,
+    });
 
-  // Session
-  const sessionText = "2025-2026";
-  page.drawText(sessionText, {
-    x: imgWidth / 2 + 90,
-    y: imgHeight - 380,
-    size: 16,
-    font: helvetica,
-    color: textColor,
-  });
+    // Event name after "in"
+    page.drawText(eventName, {
+      x: 230,
+      y: height - 395,
+      size: 14,
+      font: fontRegular,
+      color: textColor,
+    });
+  } else {
+    // Participation certificate: "participated in ___"
+    // Event name after "participated in"
+    page.drawText(eventName, {
+      x: 195,
+      y: height - 395,
+      size: 14,
+      font: fontRegular,
+      color: textColor,
+    });
+  }
 
-  // Serialize the PDF
+  /* ---------- EXPORT PDF ---------- */
   const pdfBytes = await pdfDoc.save();
 
-  // Set response headers for PDF download
-  const filename = `Certificate_${eventName.replace(/\s+/g, "_")}_${userName.replace(/\s+/g, "_")}.pdf`;
+  const safeFileName = `Certificate_${eventName.replace(/\s+/g, "_")}_${studentName.replace(/\s+/g, "_")}_${type}.pdf`;
 
   res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
-  res.setHeader("Content-Length", pdfBytes.length);
-
-  // Send the PDF
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename="${safeFileName}"`
+  );
   res.send(Buffer.from(pdfBytes));
 });

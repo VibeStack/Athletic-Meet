@@ -41,16 +41,19 @@ export const checkAuth = async (req, res, next) => {
       });
       throw new ApiError(401, "User not found");
     }
-    user.selectedEvents = user.selectedEvents.map(({ eventId, status }) => {
-      return {
-        eventId: eventId._id.toString(),
-        eventName: eventId.name,
-        eventDay: eventId.day,
-        eventType: eventId.type,
-        isEventActive: eventId.isActive,
-        userEventAttendance: status,
-      };
-    });
+    user.selectedEvents = user.selectedEvents.map(
+      ({ eventId, status, position }) => {
+        return {
+          eventId: eventId._id.toString(),
+          eventName: eventId.name,
+          eventDay: eventId.day,
+          eventType: eventId.type,
+          isEventActive: eventId.isActive,
+          userEventAttendance: status,
+          position: position,
+        };
+      }
+    );
     req.user = user;
     return next();
   } catch (error) {

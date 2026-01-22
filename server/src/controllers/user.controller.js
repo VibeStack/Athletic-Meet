@@ -102,7 +102,6 @@ export const registerUser = asyncHandler(async (req, res) => {
       .status(200)
       .json(new ApiResponse(null, "Registration completed successfully"));
   } catch (error) {
-    console.log(JSON.stringify(error.errInfo, null, 2));
     if (session.inTransaction()) {
       await session.abortTransaction();
     }
@@ -409,14 +408,14 @@ export const getCertificates = asyncHandler(async (req, res) => {
   // Format certificates from present events only
   const certificates = presentEvents.map((event) => ({
     eventId: event.eventId?._id,
-    eventName: event.eventId?.name || "Unknown Event",
-    eventType: event.eventId?.type || "Unknown",
-    eventDay: event.eventId?.day || "Unknown",
+    eventName: event.eventId?.name || null,
+    eventType: event.eventId?.type || null,
+    eventDay: event.eventId?.day || null,
     status: event.status,
     // Position from event results (if applicable)
     // For now, assuming participation. Winner logic can be added later.
-    position: null, // 1, 2, 3 for winners or null for participation
-    certificateType: "Participation", // "Winner" if position is 1,2,3
+    position: event.position || 0, // 1, 2, 3 for winners or null for participation
+    certificateType: event.position === 0 ? "Participation" : "Winner", // "Winner" if position is 1,2,3
   }));
 
   return res.status(200).json(
