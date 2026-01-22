@@ -50,12 +50,8 @@ const SECTION_ICONS = {
 export default function EventsPage() {
   const { darkMode } = useTheme();
   const { user } = useOutletContext();
-  const {
-    userEventsList,
-    setUserEventsList,
-    allEventsList,
-    fetchAllEvents,
-  } = useUserDetail();
+  const { userEventsList, setUserEventsList, allEventsList, fetchAllEvents } =
+    useUserDetail();
 
   // Local state for pending selections (before locking)
   const [pendingSelections, setPendingSelections] = useState([]);
@@ -81,7 +77,7 @@ export default function EventsPage() {
         const events = await fetchAllEvents(user.gender);
 
         // Sync userEventsList from user.selectedEvents if context is empty but user has events
-        const selectedEvents = user.selectedEvents || [];
+        const selectedEvents = userEventsList || [];
         if (selectedEvents.length > 0) {
           // User has locked events but context wasn't hydrated - sync it
           const enrichedEvents = selectedEvents.map((se) => {
@@ -220,7 +216,6 @@ export default function EventsPage() {
       alert(
         "✅ Events unlocked successfully! You can now select events again.",
       );
-      window.location.reload();
     } catch (err) {
       console.error("Failed to unlock events", err);
       alert("❌ Failed to unlock events. Please try again.");

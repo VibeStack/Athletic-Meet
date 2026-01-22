@@ -116,7 +116,15 @@ export default function UserDetailHeader({
   const [isUserHavingAdminAccess, setIsUserHavingAdminAccess] = useState(
     ["Manager", "Admin"].includes(studentUserData.role),
   );
-  const targetRole = isUserHavingAdminAccess ? "Admin" : studentUserData.role;
+  // When isUserHavingAdminAccess changes, we need to compute the displayed role:
+  // - Manager always stays Manager
+  // - Others show Admin if isUserHavingAdminAccess is true, otherwise Student
+  const targetRole =
+    studentUserData.role === "Manager"
+      ? "Manager"
+      : isUserHavingAdminAccess
+        ? "Admin"
+        : "Student";
 
   const roleTheme = getRoleTheme(targetRole, studentUserData.gender, darkMode);
   const jerseyTheme = getJerseyBadgeTheme(targetRole, studentUserData.gender);
@@ -177,7 +185,6 @@ export default function UserDetailHeader({
         { withCredentials: true },
       );
       setIsUserHavingAdminAccess(true);
-      window.location.reload();
     } catch (error) {
       console.error(error.response?.data?.message || "Something went wrong");
     }
@@ -191,7 +198,6 @@ export default function UserDetailHeader({
         { withCredentials: true },
       );
       setIsUserHavingAdminAccess(false);
-      window.location.reload();
     } catch (error) {
       console.error(error.response?.data?.message || "Something went wrong");
     }
