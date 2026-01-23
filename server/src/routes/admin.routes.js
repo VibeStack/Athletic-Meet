@@ -8,8 +8,6 @@ import {
   unlockUserEvents,
   getUserDetails,
   updateUserEvents,
-  makeAsAdmin,
-  removeAsAdmin,
   markAttendanceByQr,
 } from "../controllers/admin.controller.js";
 
@@ -20,9 +18,6 @@ router.route("/user/:userId").get(getUserDetails);
 
 router.route("/user/event/attendance").post(markAttendance);
 router.route("/user/event/qrAttendance").post(markAttendanceByQr);
-
-router.route("/user/:userId/makeAsAdmin").post(makeAsAdmin);
-router.route("/user/:userId/removeAsAdmin").post(removeAsAdmin);
 
 router.route("/users/:userId/events/lock").post(lockUserEvents);
 router.route("/users/:userId/events/unlock").post(unlockUserEvents);

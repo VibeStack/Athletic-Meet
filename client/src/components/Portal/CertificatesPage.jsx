@@ -304,90 +304,129 @@ export default function CertificatesPage() {
     return (
       <div className="min-h-[60vh] flex items-center justify-center p-4">
         <div
-          className={`max-w-md w-full text-center p-8 sm:p-12 rounded-3xl ${
+          className={`max-w-lg w-full text-center p-8 sm:p-12 rounded-3xl relative overflow-hidden ${
             darkMode
-              ? "bg-linear-to-br from-slate-900 to-slate-800/80 ring-1 ring-white/10"
-              : "bg-linear-to-br from-white to-slate-50 ring-1 ring-slate-200 shadow-lg"
+              ? "bg-linear-to-br from-slate-900 via-slate-800/80 to-slate-900 ring-1 ring-white/10 shadow-2xl"
+              : "bg-linear-to-br from-white via-slate-50 to-white ring-1 ring-slate-200 shadow-xl"
           }`}
         >
-          <div className="w-20 h-20 mx-auto mb-4">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="url(#emptyTrophyFill)"
-              stroke="url(#emptyTrophyStroke)"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="w-full h-full"
-              filter="url(#emptyTrophyGlow)"
+          {/* Decorative background glow */}
+          {darkMode && (
+            <>
+              <div className="absolute -top-32 -right-32 w-64 h-64 rounded-full blur-3xl opacity-20 bg-amber-500 pointer-events-none" />
+              <div className="absolute -bottom-32 -left-32 w-56 h-56 rounded-full blur-3xl opacity-15 bg-yellow-600 pointer-events-none" />
+            </>
+          )}
+
+          {/* Trophy Icon */}
+          <div className="relative mb-6">
+            <div
+              className={`w-24 h-24 sm:w-28 sm:h-28 mx-auto rounded-2xl flex items-center justify-center transform transition-all duration-500 hover:scale-110 hover:rotate-6 ${
+                darkMode
+                  ? "bg-linear-to-br from-amber-500/20 to-yellow-500/10 ring-2 ring-amber-500/30"
+                  : "bg-linear-to-br from-amber-100 to-yellow-100 ring-2 ring-amber-300 shadow-lg"
+              }`}
             >
-              <defs>
-                {/* Metallic Gold Fill Gradient */}
-                <linearGradient
-                  id="emptyTrophyFill"
-                  x1="0%"
-                  y1="0%"
-                  x2="100%"
-                  y2="100%"
+              <svg
+                viewBox="0 0 24 24"
+                className={`w-14 h-14 sm:w-16 sm:h-16 transition-colors duration-300 ${
+                  darkMode ? "text-amber-400" : "text-amber-500"
+                }`}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                {/* Trophy Cup */}
+                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+                <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+                <path d="M4 22h16" />
+                <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+                <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+                <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+              </svg>
+
+              {/* Sparkle effects */}
+              <div className="absolute -top-1 -right-1">
+                <svg
+                  className={`w-5 h-5 ${darkMode ? "text-yellow-400" : "text-amber-400"} animate-pulse`}
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
                 >
-                  <stop offset="0%" stopColor="#FFF2B2" />
-                  <stop offset="30%" stopColor="#FFD700" />
-                  <stop offset="60%" stopColor="#E6A400" />
-                  <stop offset="100%" stopColor="#C89100" />
-                </linearGradient>
-                {/* Gold Stroke Gradient */}
-                <linearGradient
-                  id="emptyTrophyStroke"
-                  x1="0%"
-                  y1="0%"
-                  x2="100%"
-                  y2="100%"
+                  <path d="M12 0L14.59 8.41L23 11L14.59 13.59L12 22L9.41 13.59L1 11L9.41 8.41L12 0Z" />
+                </svg>
+              </div>
+              <div className="absolute -bottom-1 -left-1">
+                <svg
+                  className={`w-4 h-4 ${darkMode ? "text-amber-500" : "text-yellow-500"} animate-pulse delay-75`}
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  style={{ animationDelay: "0.3s" }}
                 >
-                  <stop offset="0%" stopColor="#FFF8D2" />
-                  <stop offset="50%" stopColor="#FFCC33" />
-                  <stop offset="100%" stopColor="#B57A00" />
-                </linearGradient>
-                {/* Soft Golden Glow */}
-                <filter
-                  id="emptyTrophyGlow"
-                  x="-50%"
-                  y="-50%"
-                  width="200%"
-                  height="200%"
-                >
-                  <feDropShadow
-                    dx="0"
-                    dy="1"
-                    stdDeviation="2"
-                    floodColor="#FFD700"
-                    floodOpacity="0.5"
-                  />
-                </filter>
-              </defs>
-              {/* Trophy Shape */}
-              <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
-              <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
-              <path d="M4 22h16" />
-              <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
-              <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
-              <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
-            </svg>
+                  <path d="M12 0L14.59 8.41L23 11L14.59 13.59L12 22L9.41 13.59L1 11L9.41 8.41L12 0Z" />
+                </svg>
+              </div>
+            </div>
           </div>
-          <h2
-            className={`text-xl font-bold mb-2 ${
-              darkMode ? "text-white" : "text-slate-800"
-            }`}
-          >
-            No Certificates Yet
-          </h2>
-          <p
-            className={`text-sm ${
-              darkMode ? "text-slate-400" : "text-slate-500"
-            }`}
-          >
-            Participate in events to earn certificates
-          </p>
+
+          {/* Content */}
+          <div className="relative">
+            <h2
+              className={`text-2xl sm:text-3xl font-black mb-3 ${
+                darkMode
+                  ? "bg-linear-to-r from-amber-400 via-yellow-400 to-amber-400 bg-clip-text text-transparent"
+                  : "text-slate-800"
+              }`}
+            >
+              No Certificates Yet
+            </h2>
+            <p
+              className={`text-sm sm:text-base mb-6 ${
+                darkMode ? "text-slate-400" : "text-slate-600"
+              }`}
+            >
+              Your certificates will appear here once you participate in events
+              and achieve excellent results
+            </p>
+
+            {/* Info Box */}
+            <div
+              className={`inline-flex items-center gap-3 px-5 py-3 rounded-2xl ${
+                darkMode
+                  ? "bg-amber-500/10 ring-1 ring-amber-500/30"
+                  : "bg-amber-50 ring-1 ring-amber-200"
+              }`}
+            >
+              <div
+                className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                  darkMode
+                    ? "bg-amber-500/20 text-amber-400"
+                    : "bg-amber-100 text-amber-600"
+                }`}
+              >
+                <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+                </svg>
+              </div>
+              <div className="text-left">
+                <p
+                  className={`text-xs font-bold ${
+                    darkMode ? "text-amber-400" : "text-amber-700"
+                  }`}
+                >
+                  Ready to earn certificates?
+                </p>
+                <p
+                  className={`text-[10px] ${
+                    darkMode ? "text-amber-500/70" : "text-amber-600/80"
+                  }`}
+                >
+                  Participate in events to get started
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );

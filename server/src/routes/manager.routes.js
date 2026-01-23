@@ -1,6 +1,8 @@
 import { Router } from "express";
 import {
   getAllEvents,
+  makeAsAdmin,
+  removeAsAdmin,
   toggleEvent,
   activateEvents,
   deactivateEvents,
@@ -13,6 +15,9 @@ const router = Router();
 
 // GET all events
 router.route("/allEvents").get(getAllEvents);
+
+router.route("/user/:userId/makeAsAdmin").post(makeAsAdmin);
+router.route("/user/:userId/removeAsAdmin").post(removeAsAdmin);
 
 // Toggle single event
 router.route("/event/toggle").post(toggleEvent);

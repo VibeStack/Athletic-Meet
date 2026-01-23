@@ -184,7 +184,7 @@ export default function UserDetailHeader({
     setTogglingAdmin(true);
     try {
       await axios.post(
-        `${API_URL}/admin/user/${studentUserData.id}/makeAsAdmin`,
+        `${API_URL}/manager/user/${studentUserData.id}/makeAsAdmin`,
         null,
         { withCredentials: true },
       );
@@ -201,7 +201,7 @@ export default function UserDetailHeader({
     setTogglingAdmin(true);
     try {
       await axios.post(
-        `${API_URL}/admin/user/${studentUserData.id}/removeAsAdmin`,
+        `${API_URL}/manager/user/${studentUserData.id}/removeAsAdmin`,
         null,
         { withCredentials: true },
       );

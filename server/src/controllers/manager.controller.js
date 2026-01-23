@@ -3,8 +3,8 @@ import { SystemConfig } from "../models/SystemConfig.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { User } from "../models/User.model.js";
 
-// Get all events for manager
 export const getAllEvents = asyncHandler(async (req, res) => {
   const user = req.user;
 
@@ -48,7 +48,94 @@ export const getAllEvents = asyncHandler(async (req, res) => {
   );
 });
 
-// Toggle single event (activate/deactivate)
+export const makeAsAdmin = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+
+  if (!userId) {
+    throw {
+      code: 400,
+      message: "User ID is required",
+    };
+  }
+
+  const updatedUser = await User.findOneAndUpdate(
+    { _id: userId, role: "Student", isUserDetailsComplete: "true" },
+    { $set: { role: "Admin" } },
+    { new: true, runValidators: true }
+  );
+
+  if (!updatedUser) {
+    const existingUser = await User.findById(userId).select("role");
+
+    if (!existingUser) {
+      throw {
+        code: 404,
+        message: "User not found",
+      };
+    }
+
+    if (existingUser.role === "Admin") {
+      throw {
+        code: 409,
+        message: "User is already an Admin",
+      };
+    }
+
+    throw {
+      code: 403,
+      message: "Only students can be promoted to Admin",
+    };
+  }
+
+  res
+    .status(200)
+    .json(new ApiResponse(null, "Student promoted to Admin successfully"));
+});
+
+export const removeAsAdmin = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+
+  if (!userId) {
+    throw {
+      code: 400,
+      message: "User ID is required",
+    };
+  }
+
+  const updatedUser = await User.findOneAndUpdate(
+    { _id: userId, role: "Admin", isUserDetailsComplete: "true" },
+    { $set: { role: "Student" } },
+    { new: true, runValidators: true }
+  );
+
+  if (!updatedUser) {
+    const existingUser = await User.findById(userId).select("role");
+
+    if (!existingUser) {
+      throw {
+        code: 404,
+        message: "User not found",
+      };
+    }
+
+    if (existingUser.role === "Student") {
+      throw {
+        code: 409,
+        message: "User is already a Student",
+      };
+    }
+
+    throw {
+      code: 403,
+      message: "Only Admin can be demoted to Student",
+    };
+  }
+
+  res
+    .status(200)
+    .json(new ApiResponse(null, "Admin demoted to Student successfully"));
+});
+
 export const toggleEvent = asyncHandler(async (req, res) => {
   const user = req.user;
   const { eventId } = req.body;
@@ -87,7 +174,6 @@ export const toggleEvent = asyncHandler(async (req, res) => {
   );
 });
 
-// Activate multiple events
 export const activateEvents = asyncHandler(async (req, res) => {
   const user = req.user;
   const { eventIds } = req.body;
@@ -120,7 +206,6 @@ export const activateEvents = asyncHandler(async (req, res) => {
   );
 });
 
-// Deactivate multiple events
 export const deactivateEvents = asyncHandler(async (req, res) => {
   const user = req.user;
   const { eventIds } = req.body;
@@ -153,7 +238,6 @@ export const deactivateEvents = asyncHandler(async (req, res) => {
   );
 });
 
-// Get certificate lock status
 export const getCertificateStatus = asyncHandler(async (req, res) => {
   const user = req.user;
 
@@ -187,7 +271,6 @@ export const getCertificateStatus = asyncHandler(async (req, res) => {
   );
 });
 
-// Lock certificates
 export const lockCertificates = asyncHandler(async (req, res) => {
   const user = req.user;
 
@@ -215,7 +298,6 @@ export const lockCertificates = asyncHandler(async (req, res) => {
     );
 });
 
-// Unlock certificates
 export const unlockCertificates = asyncHandler(async (req, res) => {
   const user = req.user;
 
