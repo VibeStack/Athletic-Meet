@@ -273,7 +273,7 @@ export default function QRScannerPage() {
       );
 
       /* ---------- SUCCESS ---------- */
-      toast.success(`Jersey Number Attendance ${parsedData.jerseyNumber} Marked Present!`, {
+      toast.success(`Jersey Number ${parsedData.jerseyNumber} Attendance Marked Present!`, {
         position: "bottom-right",
       });
 
