@@ -204,10 +204,10 @@ export default function CertificateControlsPage() {
         </div>
 
         {/* Content */}
-        <div className="p-6 sm:p-8">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+        <div className="p-6 sm:p-8 w-full">
+          <div className="flex flex-col sm:flex-row gap-8 justify-between items-center">
             {/* Left Side - Icon and Info */}
-            <div className="flex items-start gap-5">
+            <div className="flex items-center gap-5">
               {/* Lock/Unlock Icon */}
               <div
                 className={`w-20 h-20 sm:w-24 sm:h-24 rounded-2xl flex items-center justify-center transition-all duration-500 ${
@@ -228,14 +228,14 @@ export default function CertificateControlsPage() {
               {/* Text Info */}
               <div className="flex-1">
                 <h2
-                  className={`font-black text-xl sm:text-2xl mb-2 ${
+                  className={`font-black sm:text-2xl mb-2 ${
                     darkMode ? "text-white" : "text-slate-800"
                   }`}
                 >
                   Global Certificate Lock
                 </h2>
                 <p
-                  className={`text-sm sm:text-base ${
+                  className={`text-[12px] sm:text-[14px] ${
                     darkMode ? "text-slate-400" : "text-slate-600"
                   }`}
                 >
@@ -247,7 +247,7 @@ export default function CertificateControlsPage() {
             </div>
 
             {/* Right Side - Action Button */}
-            <div className="flex justify-center w-[200px]">
+            <div className="flex justify-center">
               <button
                 onClick={toggleLock}
                 disabled={updating}
