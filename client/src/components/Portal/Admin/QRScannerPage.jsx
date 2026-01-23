@@ -273,7 +273,7 @@ export default function QRScannerPage() {
       );
 
       /* ---------- SUCCESS ---------- */
-      toast.success(`#${parsedData.jerseyNumber} Marked Present!`, {
+      toast.success(`Jersey Number Attendance ${parsedData.jerseyNumber} Marked Present!`, {
         position: "bottom-right",
       });
 
@@ -293,7 +293,7 @@ export default function QRScannerPage() {
         err.response?.data?.message || "Failed to process QR code";
 
       if (status === 400 && message === "Attendance already marked") {
-        toast.info(`#${parsedData?.jerseyNumber} Already Present`, {
+        toast.info(`Jersey Number ${parsedData?.jerseyNumber} Already Present`, {
           position: "bottom-right",
         });
 
@@ -1073,7 +1073,7 @@ export default function QRScannerPage() {
                             { withCredentials: true },
                           );
 
-                          toast.success("Attendance marked successfully");
+                          toast.success(`${arrayOfStudentsJerseyNumberForMarkingAttendance.length} Student's Attendance Marked Successfully`);
 
                           // Refresh event stats
                           await fetchEvents();
