@@ -9,6 +9,7 @@ import {
   getUserDetails,
   updateUserEvents,
   markAttendanceByQr,
+  markAttendanceByGivingJerseyArray,
 } from "../controllers/admin.controller.js";
 
 const router = Router();
@@ -18,6 +19,7 @@ router.route("/user/:userId").get(getUserDetails);
 
 router.route("/user/event/attendance").post(markAttendance);
 router.route("/user/event/qrAttendance").post(markAttendanceByQr);
+router.route("/user/event/jerseysArray").post(markAttendanceByGivingJerseyArray);
 
 router.route("/users/:userId/events/lock").post(lockUserEvents);
 router.route("/users/:userId/events/unlock").post(unlockUserEvents);

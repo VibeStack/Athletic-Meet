@@ -941,48 +941,156 @@ export default function QRScannerPage() {
                     onChange={(e) => setJerseyNumbers(e.target.value)}
                     placeholder="Enter jersey numbers: 1, 5, 12, 23"
                     rows={4}
-                    className={`w-full px-4 py-3 rounded-xl text-sm sm:text-base font-medium transition-all resize-none ${
-                      darkMode
-                        ? "bg-slate-800/80 ring-1 ring-white/10 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-cyan-500 shadow-lg"
-                        : "bg-white ring-2 ring-slate-200 text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-cyan-500 shadow-lg shadow-slate-200/50"
-                    } focus:outline-none`}
+                    className={`w-full px-4 py-3 rounded-xl text-sm sm:text-base font-medium transition-all resize-none focus:outline-none ${(() => {
+                      const hasInput = jerseyNumbers.trim();
+                      const isValid =
+                        hasInput &&
+                        jerseyNumbers
+                          .split(",")
+                          .map((n) => n.trim())
+                          .filter((n) => n)
+                          .every((n) => !isNaN(n) && n !== "");
+                      const isGirls = selectedCategory === "Girls";
+
+                      if (hasInput && !isValid) {
+                        return darkMode
+                          ? "bg-slate-800/80 ring-2 ring-red-500/50 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-red-500 shadow-lg"
+                          : "bg-white ring-2 ring-red-300 text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-red-500 shadow-lg shadow-red-100/50";
+                      }
+                      return darkMode
+                        ? `bg-slate-800/80 ring-1 ring-white/10 text-white placeholder:text-slate-500 focus:ring-2 shadow-lg ${
+                            isGirls
+                              ? "focus:ring-pink-500"
+                              : "focus:ring-sky-500"
+                          }`
+                        : `bg-white ring-2 ring-slate-200 text-slate-900 placeholder:text-slate-400 focus:ring-2 shadow-lg shadow-slate-200/50 ${
+                            isGirls
+                              ? "focus:ring-pink-500"
+                              : "focus:ring-sky-500"
+                          }`;
+                    })()}`}
                   />
-                  {jerseyNumbers.trim() && (
-                    <div
-                      className={`mt-2.5 px-3 py-2 rounded-lg flex items-center gap-2 ${
-                        darkMode
-                          ? "bg-cyan-500/10 ring-1 ring-cyan-500/30"
-                          : "bg-cyan-50 ring-1 ring-cyan-200"
-                      }`}
-                    >
-                      <div
-                        className={`w-2 h-2 rounded-full animate-pulse ${
-                          darkMode ? "bg-cyan-400" : "bg-cyan-600"
-                        }`}
-                      ></div>
-                      <p
-                        className={`text-xs sm:text-sm font-semibold ${
-                          darkMode ? "text-cyan-400" : "text-cyan-700"
-                        }`}
-                      >
-                        {
-                          jerseyNumbers
-                            .split(",")
-                            .map((n) => n.trim())
-                            .filter((n) => n && !isNaN(n)).length
-                        }{" "}
-                        valid jersey number(s) detected
-                      </p>
-                    </div>
-                  )}
+                  {jerseyNumbers.trim() &&
+                    (() => {
+                      const isValid = jerseyNumbers
+                        .split(",")
+                        .map((n) => n.trim())
+                        .filter((n) => n)
+                        .every((n) => !isNaN(n) && n !== "");
+                      const validCount = jerseyNumbers
+                        .split(",")
+                        .map((n) => n.trim())
+                        .filter((n) => n && !isNaN(n)).length;
+                      const isGirls = selectedCategory === "Girls";
+
+                      return (
+                        <div
+                          className={`mt-2.5 px-3 py-2 rounded-lg flex items-center gap-2 ${
+                            !isValid
+                              ? darkMode
+                                ? "bg-red-500/10 ring-1 ring-red-500/30"
+                                : "bg-red-50 ring-1 ring-red-200"
+                              : isGirls
+                                ? darkMode
+                                  ? "bg-pink-500/10 ring-1 ring-pink-500/30"
+                                  : "bg-pink-50 ring-1 ring-pink-200"
+                                : darkMode
+                                  ? "bg-sky-500/10 ring-1 ring-sky-500/30"
+                                  : "bg-sky-50 ring-1 ring-sky-200"
+                          }`}
+                        >
+                          <div
+                            className={`w-2 h-2 rounded-full animate-pulse ${
+                              !isValid
+                                ? "bg-red-500"
+                                : isGirls
+                                  ? darkMode
+                                    ? "bg-pink-400"
+                                    : "bg-pink-600"
+                                  : darkMode
+                                    ? "bg-sky-400"
+                                    : "bg-sky-600"
+                            }`}
+                          />
+                          <p
+                            className={`text-xs sm:text-sm font-semibold ${
+                              !isValid
+                                ? darkMode
+                                  ? "text-red-400"
+                                  : "text-red-600"
+                                : isGirls
+                                  ? darkMode
+                                    ? "text-pink-400"
+                                    : "text-pink-700"
+                                  : darkMode
+                                    ? "text-sky-400"
+                                    : "text-sky-700"
+                            }`}
+                          >
+                            {isValid
+                              ? `${validCount} valid jersey number(s) detected`
+                              : "Invalid jersey number(s) detected"}
+                          </p>
+                        </div>
+                      );
+                    })()}
                 </div>
 
                 {/* Button Section - Right on desktop, Top on mobile */}
                 <div className="sm:w-48 flex flex-col justify-start">
                   <button
-                    onClick={() => {
-                      // TODO: Implement backend integration
-                      // console.log("Submitting jersey numbers:", jerseyNumbers);
+                    onClick={async () => {
+                      try {
+                        setSubmitting(true);
+
+                        const arrayOfStudentsJerseyNumberForMarkingAttendance =
+                          jerseyNumbers
+                            .split(",")
+                            .map((n) => Number(n.trim()))
+                            .filter((n) => !isNaN(n));
+
+                        if (
+                          arrayOfStudentsJerseyNumberForMarkingAttendance.length ===
+                          0
+                        ) {
+                          toast.error("Please enter valid jersey numbers");
+                          return;
+                        }
+
+                        await axios.post(
+                          `${API_URL}/admin/user/event/jerseysArray`,
+                          {
+                            jerseysArray:
+                              arrayOfStudentsJerseyNumberForMarkingAttendance,
+                            selectedEventId: selectedEvent,
+                          },
+                          { withCredentials: true },
+                        );
+
+                        toast.success("✅ Attendance marked successfully");
+
+                        // ✅ Refresh event stats
+                        await fetchEvents();
+
+                        // ✅ Clear input after success
+                        setJerseyNumbers("");
+                      } catch (error) {
+                        const message =
+                          error?.response?.data?.message ||
+                          "Something went wrong";
+
+                        if (message.includes("not found")) {
+                          toast.error(
+                            "❌ Some jersey numbers were not found. Please verify.",
+                          );
+                        } else if (message.includes("do not meet conditions")) {
+                          toast.warning(`⚠️ ${message}`);
+                        } else {
+                          toast.error(`❌ ${message}`);
+                        }
+                      } finally {
+                        setSubmitting(false);
+                      }
                     }}
                     disabled={
                       !jerseyNumbers.trim() ||

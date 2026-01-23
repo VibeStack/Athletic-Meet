@@ -505,7 +505,11 @@ export const markAttendanceByQr = asyncHandler(async (req, res) => {
 
     const targetUser = await User.findOne({
       jerseyNumber: athleteData.jerseyNumber,
-    });
+    }).session(session);
+
+    if (!targetUser) {
+      throw new ApiError(404, "Athlete not found");
+    }
 
     if (!targetUser.isEventsLocked) {
       throw new ApiError(400, "Events are not locked for this user");
@@ -530,8 +534,11 @@ export const markAttendanceByQr = asyncHandler(async (req, res) => {
     targetUserEvent.status = "present";
     await targetUser.save({ session });
 
-    const updatedTargetedUserEvent = await Event.findByIdAndUpdate(
-      athleteData.eventId,
+    const updatedTargetedUserEvent = await Event.findOneAndUpdate(
+      {
+        _id: athleteData.eventId,
+        "studentsCount.notMarked": { $gt: 0 },
+      },
       {
         $inc: {
           "studentsCount.notMarked": -1,
@@ -542,7 +549,7 @@ export const markAttendanceByQr = asyncHandler(async (req, res) => {
     );
 
     if (!updatedTargetedUserEvent) {
-      throw new ApiError(404, "Event not found");
+      throw new ApiError(404, "Event not found or invalid counter state");
     }
 
     await session.commitTransaction();
@@ -563,6 +570,88 @@ export const markAttendanceByQr = asyncHandler(async (req, res) => {
     session.endSession();
   }
 });
+
+export const markAttendanceByGivingJerseyArray = asyncHandler(
+  async (req, res) => {
+    const { jerseysArray, selectedEventId } = req.body;
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      const users = await User.find(
+        { jerseyNumber: { $in: jerseysArray } },
+        { selectedEvents: 1, jerseyNumber: 1 }
+      ).session(session);
+
+      if (users.length !== jerseysArray.length) {
+        throw new ApiError(400, "Some jersey numbers were not found");
+      }
+
+      const failedUsers = users.filter((user) => {
+        return !user.selectedEvents.some(
+          (event) =>
+            event.eventId.toString() === selectedEventId.toString() &&
+            event.status === "notMarked" &&
+            event.position === 0
+        );
+      });
+
+      if (failedUsers.length > 0) {
+        const failedJerseys = failedUsers.map((u) => u.jerseyNumber);
+
+        throw new ApiError(
+          409,
+          `Update blocked. These jerseys do not meet conditions: ${failedJerseys.join(", ")}`
+        );
+      }
+
+      await User.updateMany(
+        {
+          jerseyNumber: { $in: jerseysArray },
+        },
+        {
+          $set: { "selectedEvents.$[event].status": "present" },
+        },
+        {
+          session,
+          runValidators: true,
+          arrayFilters: [
+            {
+              "event.eventId": selectedEventId,
+              "event.status": "notMarked",
+              "event.position": 0,
+            },
+          ],
+        }
+      );
+      await Event.findOneAndUpdate(
+        {
+          _id: selectedEventId,
+          "studentsCount.notMarked": { $gte: jerseysArray.length },
+        },
+        {
+          $inc: {
+            "studentsCount.present": jerseysArray.length,
+            "studentsCount.notMarked": -jerseysArray.length,
+          },
+        },
+        { session }
+      );
+
+      await session.commitTransaction();
+
+      return res
+        .status(200)
+        .json(new ApiResponse(null, "Attendance marked successfully"));
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
+    }
+  }
+);
 
 export const getAttendanceStats = asyncHandler(async (req, res) => {
   const users = await User.find(
