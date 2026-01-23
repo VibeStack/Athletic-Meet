@@ -3,7 +3,8 @@ import { Html5Qrcode } from "html5-qrcode";
 import axios from "axios";
 import { useTheme } from "../../../context/ThemeContext";
 import LoadingComponent from "../LoadingComponent";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 /* -------------------- SVG Icons -------------------- */
 const ICONS = {
@@ -356,845 +357,853 @@ export default function QRScannerPage() {
   }
 
   return (
-    <div className="space-y-5">
-      {/* Header */}
-      <div
-        className={`relative overflow-hidden rounded-2xl p-4 sm:p-5 ${
-          darkMode
-            ? "bg-linear-to-br from-[#0c1929] via-[#0f172a] to-[#0c1525] ring-1 ring-white/8 shadow-[0_0_80px_-20px_rgba(6,182,212,0.25)]"
-            : "bg-linear-to-br from-slate-50 via-white to-cyan-50/30 ring-1 ring-slate-200 shadow-lg"
-        }`}
-      >
-        {darkMode && (
-          <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            <div className="absolute -top-32 -right-32 w-80 h-80 rounded-full blur-3xl opacity-20 bg-cyan-500" />
-          </div>
-        )}
+    <>
+      <ToastContainer position="bottom-right" autoClose={2500} />
 
-        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div
-              className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center text-white ${
-                darkMode
-                  ? "bg-linear-to-br from-cyan-500 to-blue-600"
-                  : "bg-slate-800"
-              }`}
-            >
-              {ICONS.qrCode}
-            </div>
-            <div>
-              <h1
-                className={`text-lg sm:text-xl lg:text-2xl font-black tracking-tight ${
-                  darkMode
-                    ? "bg-linear-to-r from-cyan-400 via-blue-400 to-indigo-400 bg-clip-text text-transparent"
-                    : "text-slate-800"
-                }`}
-              >
-                QR Scanner
-              </h1>
-              <p
-                className={`text-[11px] sm:text-xs ${
-                  darkMode ? "text-slate-500" : "text-slate-500"
-                }`}
-              >
-                Scan student QR codes to mark attendance
-              </p>
-            </div>
-          </div>
-
-          {/* Status Badge */}
-          <div
-            className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium ${
-              selectedEvent
-                ? darkMode
-                  ? "bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/30"
-                  : "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
-                : darkMode
-                  ? "bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/30"
-                  : "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
-            }`}
-          >
-            <span
-              className={`w-2 h-2 rounded-full ${
-                selectedEvent ? "bg-emerald-500 animate-pulse" : "bg-amber-500"
-              }`}
-            ></span>
-            {selectedEvent
-              ? `Ready: ${selectedEventData?.name}`
-              : "Select category & event"}
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div
-        className={`rounded-2xl overflow-hidden ${
-          darkMode
-            ? "bg-slate-900/80 border border-white/10"
-            : "bg-white border border-slate-200 shadow-lg"
-        }`}
-      >
-        {/* Selection Header */}
+      <div className="space-y-5">
+        {/* Header */}
         <div
-          className={`px-4 sm:px-5 py-4 border-b ${
-            darkMode ? "border-white/5" : "border-slate-100"
+          className={`relative overflow-hidden rounded-2xl p-4 sm:p-5 ${
+            darkMode
+              ? "bg-linear-to-br from-[#0c1929] via-[#0f172a] to-[#0c1525] ring-1 ring-white/8 shadow-[0_0_80px_-20px_rgba(6,182,212,0.25)]"
+              : "bg-linear-to-br from-slate-50 via-white to-cyan-50/30 ring-1 ring-slate-200 shadow-lg"
           }`}
         >
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            {/* Category Selection */}
-            <div>
-              <label
-                className={`block text-xs font-bold mb-3 uppercase tracking-wide ${
-                  darkMode ? "text-slate-400" : "text-slate-500"
+          {darkMode && (
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+              <div className="absolute -top-32 -right-32 w-80 h-80 rounded-full blur-3xl opacity-20 bg-cyan-500" />
+            </div>
+          )}
+
+          <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div
+                className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center text-white ${
+                  darkMode
+                    ? "bg-linear-to-br from-cyan-500 to-blue-600"
+                    : "bg-slate-800"
                 }`}
               >
-                1. Select Category
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => handleCategoryChange("Boys")}
-                  className={`p-3 sm:p-4 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 ${
-                    selectedCategory === "Boys"
-                      ? "bg-linear-to-r from-sky-500 to-blue-600 text-white shadow-lg shadow-sky-500/25"
-                      : darkMode
-                        ? "bg-slate-800 text-slate-300 hover:bg-slate-700 ring-1 ring-white/10"
-                        : "bg-slate-50 text-slate-700 hover:bg-slate-100 ring-1 ring-slate-200"
+                {ICONS.qrCode}
+              </div>
+              <div>
+                <h1
+                  className={`text-lg sm:text-xl lg:text-2xl font-black tracking-tight ${
+                    darkMode
+                      ? "bg-linear-to-r from-cyan-400 via-blue-400 to-indigo-400 bg-clip-text text-transparent"
+                      : "text-slate-800"
                   }`}
                 >
-                  <span
-                    className={
-                      selectedCategory === "Boys"
-                        ? "text-white"
-                        : darkMode
-                          ? "text-sky-400"
-                          : "text-sky-600"
-                    }
-                  >
-                    {ICONS.boys}
-                  </span>
-                  Boys
-                </button>
-                <button
-                  onClick={() => handleCategoryChange("Girls")}
-                  className={`p-3 sm:p-4 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 ${
-                    selectedCategory === "Girls"
-                      ? "bg-linear-to-r from-pink-500 to-rose-600 text-white shadow-lg shadow-pink-500/25"
-                      : darkMode
-                        ? "bg-slate-800 text-slate-300 hover:bg-slate-700 ring-1 ring-white/10"
-                        : "bg-slate-50 text-slate-700 hover:bg-slate-100 ring-1 ring-slate-200"
+                  QR Scanner
+                </h1>
+                <p
+                  className={`text-[11px] sm:text-xs ${
+                    darkMode ? "text-slate-500" : "text-slate-500"
                   }`}
                 >
-                  <span
-                    className={
-                      selectedCategory === "Girls"
-                        ? "text-white"
-                        : darkMode
-                          ? "text-pink-400"
-                          : "text-pink-600"
-                    }
-                  >
-                    {ICONS.girls}
-                  </span>
-                  Girls
-                </button>
+                  Scan student QR codes to mark attendance
+                </p>
               </div>
             </div>
 
-            {/* Event Selection */}
-            <div>
-              <label
-                className={`block text-xs font-bold mb-3 uppercase tracking-wide ${
-                  darkMode ? "text-slate-400" : "text-slate-500"
+            {/* Status Badge */}
+            <div
+              className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium ${
+                selectedEvent
+                  ? darkMode
+                    ? "bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/30"
+                    : "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
+                  : darkMode
+                    ? "bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/30"
+                    : "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
+              }`}
+            >
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  selectedEvent
+                    ? "bg-emerald-500 animate-pulse"
+                    : "bg-amber-500"
                 }`}
-              >
-                2. Select Event
-              </label>
-              <select
-                value={selectedEvent}
-                onChange={(e) => {
-                  setSelectedEvent(e.target.value);
-                  setScanResult(null);
-                  stopScanning();
-                }}
-                disabled={!selectedCategory}
-                className={`w-full px-4 py-3 sm:py-4 rounded-xl font-medium transition-all appearance-none cursor-pointer ${
-                  darkMode
-                    ? "bg-slate-800 ring-1 ring-white/10 text-white focus:ring-cyan-500"
-                    : "bg-slate-50 ring-1 ring-slate-200 text-slate-900 focus:ring-cyan-500"
-                } focus:outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed`}
-              >
-                <option value="">
-                  {selectedCategory
-                    ? "-- Select Event --"
-                    : "-- Select Category First --"}
-                </option>
-
-                {trackEvents.length > 0 && (
-                  <optgroup label="🏃 Track Events">
-                    {trackEvents.map((e) => (
-                      <option key={e.id} value={e.id}>
-                        {e.name}
-                      </option>
-                    ))}
-                  </optgroup>
-                )}
-
-                {fieldEvents.length > 0 && (
-                  <optgroup label="🎯 Field Events">
-                    {fieldEvents.map((e) => (
-                      <option key={e.id} value={e.id}>
-                        {e.name}
-                      </option>
-                    ))}
-                  </optgroup>
-                )}
-
-                {teamEvents.length > 0 && (
-                  <optgroup label="👥 Team Events">
-                    {teamEvents.map((e) => (
-                      <option key={e.id} value={e.id}>
-                        {e.name}
-                      </option>
-                    ))}
-                  </optgroup>
-                )}
-              </select>
+              ></span>
+              {selectedEvent
+                ? `Ready: ${selectedEventData?.name}`
+                : "Select category & event"}
             </div>
           </div>
         </div>
 
-        {/* Attendance Stats Panel - Show when event is selected */}
-        {selectedEventData && (
+        {/* Main Content */}
+        <div
+          className={`rounded-2xl overflow-hidden ${
+            darkMode
+              ? "bg-slate-900/80 border border-white/10"
+              : "bg-white border border-slate-200 shadow-lg"
+          }`}
+        >
+          {/* Selection Header */}
           <div
             className={`px-4 sm:px-5 py-4 border-b ${
               darkMode ? "border-white/5" : "border-slate-100"
             }`}
           >
-            <div
-              className={`rounded-xl p-4 ${
-                selectedCategory === "Girls"
-                  ? darkMode
-                    ? "bg-pink-500/10 ring-1 ring-pink-500/20"
-                    : "bg-pink-50 ring-1 ring-pink-200"
-                  : darkMode
-                    ? "bg-sky-500/10 ring-1 ring-sky-500/20"
-                    : "bg-sky-50 ring-1 ring-sky-200"
-              }`}
-            >
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
-                <div>
-                  <p
-                    className={`font-bold text-sm ${
-                      selectedCategory === "Girls"
-                        ? darkMode
-                          ? "text-pink-200"
-                          : "text-pink-900"
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+              {/* Category Selection */}
+              <div>
+                <label
+                  className={`block text-xs font-bold mb-3 uppercase tracking-wide ${
+                    darkMode ? "text-slate-400" : "text-slate-500"
+                  }`}
+                >
+                  1. Select Category
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => handleCategoryChange("Boys")}
+                    className={`p-3 sm:p-4 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 ${
+                      selectedCategory === "Boys"
+                        ? "bg-linear-to-r from-sky-500 to-blue-600 text-white shadow-lg shadow-sky-500/25"
                         : darkMode
-                          ? "text-sky-200"
-                          : "text-sky-900"
+                          ? "bg-slate-800 text-slate-300 hover:bg-slate-700 ring-1 ring-white/10"
+                          : "bg-slate-50 text-slate-700 hover:bg-slate-100 ring-1 ring-slate-200"
                     }`}
                   >
-                    {selectedEventData.name}
-                  </p>
-                  <p
-                    className={`text-xs ${
+                    <span
+                      className={
+                        selectedCategory === "Boys"
+                          ? "text-white"
+                          : darkMode
+                            ? "text-sky-400"
+                            : "text-sky-600"
+                      }
+                    >
+                      {ICONS.boys}
+                    </span>
+                    Boys
+                  </button>
+                  <button
+                    onClick={() => handleCategoryChange("Girls")}
+                    className={`p-3 sm:p-4 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 ${
                       selectedCategory === "Girls"
-                        ? darkMode
-                          ? "text-pink-400/70"
-                          : "text-pink-700"
+                        ? "bg-linear-to-r from-pink-500 to-rose-600 text-white shadow-lg shadow-pink-500/25"
                         : darkMode
-                          ? "text-sky-400/70"
-                          : "text-sky-700"
+                          ? "bg-slate-800 text-slate-300 hover:bg-slate-700 ring-1 ring-white/10"
+                          : "bg-slate-50 text-slate-700 hover:bg-slate-100 ring-1 ring-slate-200"
                     }`}
                   >
-                    {selectedEventData.type} • {selectedEventData.category} •{" "}
-                    {selectedEventData.day}
-                  </p>
+                    <span
+                      className={
+                        selectedCategory === "Girls"
+                          ? "text-white"
+                          : darkMode
+                            ? "text-pink-400"
+                            : "text-pink-600"
+                      }
+                    >
+                      {ICONS.girls}
+                    </span>
+                    Girls
+                  </button>
                 </div>
               </div>
 
-              {/* Stats Grid */}
-              <div className="grid grid-cols-3 gap-3">
-                {/* Present */}
-                <div
-                  className={`rounded-lg p-3 text-center ${
-                    darkMode
-                      ? "bg-emerald-500/15 ring-1 ring-emerald-500/30"
-                      : "bg-emerald-50 ring-1 ring-emerald-200"
+              {/* Event Selection */}
+              <div>
+                <label
+                  className={`block text-xs font-bold mb-3 uppercase tracking-wide ${
+                    darkMode ? "text-slate-400" : "text-slate-500"
                   }`}
                 >
-                  <div
-                    className={`w-8 h-8 mx-auto mb-1 rounded-lg flex items-center justify-center ${
-                      darkMode
-                        ? "bg-emerald-500/20 text-emerald-400"
-                        : "bg-emerald-100 text-emerald-600"
-                    }`}
-                  >
-                    {ICONS.present}
-                  </div>
-                  <p
-                    className={`text-xl font-black ${
-                      darkMode ? "text-emerald-400" : "text-emerald-600"
-                    }`}
-                  >
-                    {selectedEventData.studentsCount?.present || 0}
-                  </p>
-                  <p
-                    className={`text-[10px] font-bold uppercase ${
-                      darkMode ? "text-emerald-400/70" : "text-emerald-600"
-                    }`}
-                  >
-                    Present
-                  </p>
-                </div>
+                  2. Select Event
+                </label>
+                <select
+                  value={selectedEvent}
+                  onChange={(e) => {
+                    setSelectedEvent(e.target.value);
+                    setScanResult(null);
+                    stopScanning();
+                  }}
+                  disabled={!selectedCategory}
+                  className={`w-full px-4 py-3 sm:py-4 rounded-xl font-medium transition-all appearance-none cursor-pointer ${
+                    darkMode
+                      ? "bg-slate-800 ring-1 ring-white/10 text-white focus:ring-cyan-500"
+                      : "bg-slate-50 ring-1 ring-slate-200 text-slate-900 focus:ring-cyan-500"
+                  } focus:outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  <option value="">
+                    {selectedCategory
+                      ? "-- Select Event --"
+                      : "-- Select Category First --"}
+                  </option>
 
-                {/* Absent */}
-                <div
-                  className={`rounded-lg p-3 text-center ${
-                    darkMode
-                      ? "bg-red-500/15 ring-1 ring-red-500/30"
-                      : "bg-red-50 ring-1 ring-red-200"
-                  }`}
-                >
-                  <div
-                    className={`w-8 h-8 mx-auto mb-1 rounded-lg flex items-center justify-center ${
-                      darkMode
-                        ? "bg-red-500/20 text-red-400"
-                        : "bg-red-100 text-red-600"
-                    }`}
-                  >
-                    {ICONS.absent}
-                  </div>
-                  <p
-                    className={`text-xl font-black ${
-                      darkMode ? "text-red-400" : "text-red-600"
-                    }`}
-                  >
-                    {selectedEventData.studentsCount?.absent || 0}
-                  </p>
-                  <p
-                    className={`text-[10px] font-bold uppercase ${
-                      darkMode ? "text-red-400/70" : "text-red-600"
-                    }`}
-                  >
-                    Absent
-                  </p>
-                </div>
+                  {trackEvents.length > 0 && (
+                    <optgroup label="🏃 Track Events">
+                      {trackEvents.map((e) => (
+                        <option key={e.id} value={e.id}>
+                          {e.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
 
-                {/* Not Marked */}
-                <div
-                  className={`rounded-lg p-3 text-center ${
-                    darkMode
-                      ? "bg-amber-500/15 ring-1 ring-amber-500/30"
-                      : "bg-amber-50 ring-1 ring-amber-200"
-                  }`}
-                >
-                  <div
-                    className={`w-8 h-8 mx-auto mb-1 rounded-lg flex items-center justify-center ${
-                      darkMode
-                        ? "bg-amber-500/20 text-amber-400"
-                        : "bg-amber-100 text-amber-600"
-                    }`}
-                  >
-                    {ICONS.notMarked}
-                  </div>
-                  <p
-                    className={`text-xl font-black ${
-                      darkMode ? "text-amber-400" : "text-amber-600"
-                    }`}
-                  >
-                    {selectedEventData.studentsCount?.notMarked || 0}
-                  </p>
-                  <p
-                    className={`text-[10px] font-bold uppercase ${
-                      darkMode ? "text-amber-400/70" : "text-amber-600"
-                    }`}
-                  >
-                    Not Marked
-                  </p>
-                </div>
+                  {fieldEvents.length > 0 && (
+                    <optgroup label="🎯 Field Events">
+                      {fieldEvents.map((e) => (
+                        <option key={e.id} value={e.id}>
+                          {e.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+
+                  {teamEvents.length > 0 && (
+                    <optgroup label="👥 Team Events">
+                      {teamEvents.map((e) => (
+                        <option key={e.id} value={e.id}>
+                          {e.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+                </select>
               </div>
             </div>
           </div>
-        )}
 
-        {/* Scanner Area */}
-        <div
-          className={`relative aspect-3/4 sm:aspect-video w-full h-full ${
-            darkMode ? "bg-slate-950" : "bg-slate-100"
-          }`}
-        >
-          <div id="qr-reader" className="w-full h-full overflow-hidden"></div>
-
-          {/* Idle State */}
-          {!scanning && !processing && !scanResult && (
+          {/* Attendance Stats Panel - Show when event is selected */}
+          {selectedEventData && (
             <div
-              className={`absolute inset-0 flex flex-col items-center justify-center ${
-                darkMode
-                  ? "bg-linear-to-br from-slate-900 via-slate-800 to-slate-900"
-                  : "bg-linear-to-br from-slate-100 via-white to-slate-100"
+              className={`px-4 sm:px-5 py-4 border-b ${
+                darkMode ? "border-white/5" : "border-slate-100"
               }`}
             >
-              {/* Decorative Elements */}
-              <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div
-                  className={`absolute top-1/4 left-1/4 w-32 h-32 rounded-full blur-3xl ${
-                    darkMode
-                      ? "opacity-20 bg-cyan-500"
-                      : "opacity-10 bg-slate-400"
-                  }`}
-                ></div>
-                <div
-                  className={`absolute bottom-1/4 right-1/4 w-40 h-40 rounded-full blur-3xl ${
-                    darkMode
-                      ? "opacity-15 bg-blue-500"
-                      : "opacity-10 bg-slate-300"
-                  }`}
-                ></div>
-              </div>
-
-              {/* QR Frame */}
-              <div className="relative w-28 h-28 sm:w-32 sm:h-32 mb-6">
-                <div
-                  className={`absolute inset-0 rounded-2xl border-2 border-dashed animate-pulse ${
-                    darkMode ? "border-cyan-400/40" : "border-slate-400/50"
-                  }`}
-                ></div>
-                <div
-                  className={`absolute inset-2 rounded-xl flex items-center justify-center ${
-                    darkMode ? "bg-cyan-500/10" : "bg-slate-200/80"
-                  }`}
-                >
-                  <div
-                    className={darkMode ? "text-cyan-400" : "text-slate-600"}
-                  >
-                    {ICONS.qrCode}
+              <div
+                className={`rounded-xl p-4 ${
+                  selectedCategory === "Girls"
+                    ? darkMode
+                      ? "bg-pink-500/10 ring-1 ring-pink-500/20"
+                      : "bg-pink-50 ring-1 ring-pink-200"
+                    : darkMode
+                      ? "bg-sky-500/10 ring-1 ring-sky-500/20"
+                      : "bg-sky-50 ring-1 ring-sky-200"
+                }`}
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+                  <div>
+                    <p
+                      className={`font-bold text-sm ${
+                        selectedCategory === "Girls"
+                          ? darkMode
+                            ? "text-pink-200"
+                            : "text-pink-900"
+                          : darkMode
+                            ? "text-sky-200"
+                            : "text-sky-900"
+                      }`}
+                    >
+                      {selectedEventData.name}
+                    </p>
+                    <p
+                      className={`text-xs ${
+                        selectedCategory === "Girls"
+                          ? darkMode
+                            ? "text-pink-400/70"
+                            : "text-pink-700"
+                          : darkMode
+                            ? "text-sky-400/70"
+                            : "text-sky-700"
+                      }`}
+                    >
+                      {selectedEventData.type} • {selectedEventData.category} •{" "}
+                      {selectedEventData.day}
+                    </p>
                   </div>
                 </div>
-                <div
-                  className={`absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 rounded-tl-lg ${
-                    darkMode ? "border-cyan-400" : "border-slate-500"
-                  }`}
-                ></div>
-                <div
-                  className={`absolute -top-1 -right-1 w-4 h-4 border-t-2 border-r-2 rounded-tr-lg ${
-                    darkMode ? "border-cyan-400" : "border-slate-500"
-                  }`}
-                ></div>
-                <div
-                  className={`absolute -bottom-1 -left-1 w-4 h-4 border-b-2 border-l-2 rounded-bl-lg ${
-                    darkMode ? "border-cyan-400" : "border-slate-500"
-                  }`}
-                ></div>
-                <div
-                  className={`absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 rounded-br-lg ${
-                    darkMode ? "border-cyan-400" : "border-slate-500"
-                  }`}
-                ></div>
+
+                {/* Stats Grid */}
+                <div className="grid grid-cols-3 gap-3">
+                  {/* Present */}
+                  <div
+                    className={`rounded-lg p-3 text-center ${
+                      darkMode
+                        ? "bg-emerald-500/15 ring-1 ring-emerald-500/30"
+                        : "bg-emerald-50 ring-1 ring-emerald-200"
+                    }`}
+                  >
+                    <div
+                      className={`w-8 h-8 mx-auto mb-1 rounded-lg flex items-center justify-center ${
+                        darkMode
+                          ? "bg-emerald-500/20 text-emerald-400"
+                          : "bg-emerald-100 text-emerald-600"
+                      }`}
+                    >
+                      {ICONS.present}
+                    </div>
+                    <p
+                      className={`text-xl font-black ${
+                        darkMode ? "text-emerald-400" : "text-emerald-600"
+                      }`}
+                    >
+                      {selectedEventData.studentsCount?.present || 0}
+                    </p>
+                    <p
+                      className={`text-[10px] font-bold uppercase ${
+                        darkMode ? "text-emerald-400/70" : "text-emerald-600"
+                      }`}
+                    >
+                      Present
+                    </p>
+                  </div>
+
+                  {/* Absent */}
+                  <div
+                    className={`rounded-lg p-3 text-center ${
+                      darkMode
+                        ? "bg-red-500/15 ring-1 ring-red-500/30"
+                        : "bg-red-50 ring-1 ring-red-200"
+                    }`}
+                  >
+                    <div
+                      className={`w-8 h-8 mx-auto mb-1 rounded-lg flex items-center justify-center ${
+                        darkMode
+                          ? "bg-red-500/20 text-red-400"
+                          : "bg-red-100 text-red-600"
+                      }`}
+                    >
+                      {ICONS.absent}
+                    </div>
+                    <p
+                      className={`text-xl font-black ${
+                        darkMode ? "text-red-400" : "text-red-600"
+                      }`}
+                    >
+                      {selectedEventData.studentsCount?.absent || 0}
+                    </p>
+                    <p
+                      className={`text-[10px] font-bold uppercase ${
+                        darkMode ? "text-red-400/70" : "text-red-600"
+                      }`}
+                    >
+                      Absent
+                    </p>
+                  </div>
+
+                  {/* Not Marked */}
+                  <div
+                    className={`rounded-lg p-3 text-center ${
+                      darkMode
+                        ? "bg-amber-500/15 ring-1 ring-amber-500/30"
+                        : "bg-amber-50 ring-1 ring-amber-200"
+                    }`}
+                  >
+                    <div
+                      className={`w-8 h-8 mx-auto mb-1 rounded-lg flex items-center justify-center ${
+                        darkMode
+                          ? "bg-amber-500/20 text-amber-400"
+                          : "bg-amber-100 text-amber-600"
+                      }`}
+                    >
+                      {ICONS.notMarked}
+                    </div>
+                    <p
+                      className={`text-xl font-black ${
+                        darkMode ? "text-amber-400" : "text-amber-600"
+                      }`}
+                    >
+                      {selectedEventData.studentsCount?.notMarked || 0}
+                    </p>
+                    <p
+                      className={`text-[10px] font-bold uppercase ${
+                        darkMode ? "text-amber-400/70" : "text-amber-600"
+                      }`}
+                    >
+                      Not Marked
+                    </p>
+                  </div>
+                </div>
               </div>
-
-              <p
-                className={`mb-6 text-center px-4 text-sm ${
-                  darkMode ? "text-slate-400" : "text-slate-600"
-                }`}
-              >
-                {!selectedCategory
-                  ? "Select category first (Boys/Girls)"
-                  : !selectedEvent
-                    ? "Select an event to start scanning"
-                    : `Ready to scan for ${selectedEventData?.name}`}
-              </p>
-
-              <button
-                onClick={startScanning}
-                disabled={!selectedEvent}
-                className={`px-6 py-3 font-semibold rounded-xl transition-all flex items-center gap-2 ${
-                  selectedEvent
-                    ? darkMode
-                      ? "bg-linear-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-600 hover:to-blue-700 shadow-lg shadow-cyan-500/25"
-                      : "bg-linear-to-r from-slate-700 to-slate-800 text-white hover:from-slate-800 hover:to-slate-900 shadow-lg shadow-slate-500/25"
-                    : darkMode
-                      ? "bg-slate-700 text-slate-500 cursor-not-allowed"
-                      : "bg-slate-300 text-slate-400 cursor-not-allowed"
-                }`}
-              >
-                {ICONS.camera}
-                Start Scanning
-              </button>
             </div>
           )}
 
-          {/* Processing */}
-          {processing && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/95 backdrop-blur-sm">
-              <div className="w-14 h-14 border-4 border-cyan-400/30 rounded-full animate-spin border-t-cyan-400 mb-4"></div>
-              <p className="text-white font-medium">Processing...</p>
-            </div>
-          )}
+          {/* Scanner Area */}
+          <div
+            className={`relative aspect-3/4 sm:aspect-video w-full h-full ${
+              darkMode ? "bg-slate-950" : "bg-slate-100"
+            }`}
+          >
+            <div id="qr-reader" className="w-full h-full overflow-hidden"></div>
 
-          {/* Result */}
-          {scanResult && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/95 backdrop-blur-sm p-4">
+            {/* Idle State */}
+            {!scanning && !processing && !scanResult && (
               <div
-                className={`w-20 h-20 mb-4 rounded-full flex items-center justify-center ${
-                  scanResult.success
-                    ? scanResult.alreadyPresent
-                      ? "bg-blue-500/20 ring-2 ring-blue-400"
-                      : "bg-emerald-500/20 ring-2 ring-emerald-400"
-                    : "bg-red-500/20 ring-2 ring-red-400"
+                className={`absolute inset-0 flex flex-col items-center justify-center ${
+                  darkMode
+                    ? "bg-linear-to-br from-slate-900 via-slate-800 to-slate-900"
+                    : "bg-linear-to-br from-slate-100 via-white to-slate-100"
                 }`}
               >
-                <span
-                  className={
+                {/* Decorative Elements */}
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                  <div
+                    className={`absolute top-1/4 left-1/4 w-32 h-32 rounded-full blur-3xl ${
+                      darkMode
+                        ? "opacity-20 bg-cyan-500"
+                        : "opacity-10 bg-slate-400"
+                    }`}
+                  ></div>
+                  <div
+                    className={`absolute bottom-1/4 right-1/4 w-40 h-40 rounded-full blur-3xl ${
+                      darkMode
+                        ? "opacity-15 bg-blue-500"
+                        : "opacity-10 bg-slate-300"
+                    }`}
+                  ></div>
+                </div>
+
+                {/* QR Frame */}
+                <div className="relative w-28 h-28 sm:w-32 sm:h-32 mb-6">
+                  <div
+                    className={`absolute inset-0 rounded-2xl border-2 border-dashed animate-pulse ${
+                      darkMode ? "border-cyan-400/40" : "border-slate-400/50"
+                    }`}
+                  ></div>
+                  <div
+                    className={`absolute inset-2 rounded-xl flex items-center justify-center ${
+                      darkMode ? "bg-cyan-500/10" : "bg-slate-200/80"
+                    }`}
+                  >
+                    <div
+                      className={darkMode ? "text-cyan-400" : "text-slate-600"}
+                    >
+                      {ICONS.qrCode}
+                    </div>
+                  </div>
+                  <div
+                    className={`absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 rounded-tl-lg ${
+                      darkMode ? "border-cyan-400" : "border-slate-500"
+                    }`}
+                  ></div>
+                  <div
+                    className={`absolute -top-1 -right-1 w-4 h-4 border-t-2 border-r-2 rounded-tr-lg ${
+                      darkMode ? "border-cyan-400" : "border-slate-500"
+                    }`}
+                  ></div>
+                  <div
+                    className={`absolute -bottom-1 -left-1 w-4 h-4 border-b-2 border-l-2 rounded-bl-lg ${
+                      darkMode ? "border-cyan-400" : "border-slate-500"
+                    }`}
+                  ></div>
+                  <div
+                    className={`absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 rounded-br-lg ${
+                      darkMode ? "border-cyan-400" : "border-slate-500"
+                    }`}
+                  ></div>
+                </div>
+
+                <p
+                  className={`mb-6 text-center px-4 text-sm ${
+                    darkMode ? "text-slate-400" : "text-slate-600"
+                  }`}
+                >
+                  {!selectedCategory
+                    ? "Select category first (Boys/Girls)"
+                    : !selectedEvent
+                      ? "Select an event to start scanning"
+                      : `Ready to scan for ${selectedEventData?.name}`}
+                </p>
+
+                <button
+                  onClick={startScanning}
+                  disabled={!selectedEvent}
+                  className={`px-6 py-3 font-semibold rounded-xl transition-all flex items-center gap-2 ${
+                    selectedEvent
+                      ? darkMode
+                        ? "bg-linear-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-600 hover:to-blue-700 shadow-lg shadow-cyan-500/25"
+                        : "bg-linear-to-r from-slate-700 to-slate-800 text-white hover:from-slate-800 hover:to-slate-900 shadow-lg shadow-slate-500/25"
+                      : darkMode
+                        ? "bg-slate-700 text-slate-500 cursor-not-allowed"
+                        : "bg-slate-300 text-slate-400 cursor-not-allowed"
+                  }`}
+                >
+                  {ICONS.camera}
+                  Start Scanning
+                </button>
+              </div>
+            )}
+
+            {/* Processing */}
+            {processing && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/95 backdrop-blur-sm">
+                <div className="w-14 h-14 border-4 border-cyan-400/30 rounded-full animate-spin border-t-cyan-400 mb-4"></div>
+                <p className="text-white font-medium">Processing...</p>
+              </div>
+            )}
+
+            {/* Result */}
+            {scanResult && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/95 backdrop-blur-sm p-4">
+                <div
+                  className={`w-20 h-20 mb-4 rounded-full flex items-center justify-center ${
+                    scanResult.success
+                      ? scanResult.alreadyPresent
+                        ? "bg-blue-500/20 ring-2 ring-blue-400"
+                        : "bg-emerald-500/20 ring-2 ring-emerald-400"
+                      : "bg-red-500/20 ring-2 ring-red-400"
+                  }`}
+                >
+                  <span
+                    className={
+                      scanResult.success
+                        ? scanResult.alreadyPresent
+                          ? "text-blue-400"
+                          : "text-emerald-400"
+                        : "text-red-400"
+                    }
+                  >
+                    {scanResult.success ? ICONS.check : ICONS.x}
+                  </span>
+                </div>
+
+                {scanResult.jerseyNumber && (
+                  <p className="text-3xl font-black text-white mb-1">
+                    #{scanResult.jerseyNumber}
+                  </p>
+                )}
+                {scanResult.name && (
+                  <p className="text-slate-400 mb-2">{scanResult.name}</p>
+                )}
+                <p
+                  className={`text-center mb-6 font-medium ${
                     scanResult.success
                       ? scanResult.alreadyPresent
                         ? "text-blue-400"
                         : "text-emerald-400"
                       : "text-red-400"
-                  }
-                >
-                  {scanResult.success ? ICONS.check : ICONS.x}
-                </span>
-              </div>
-
-              {scanResult.jerseyNumber && (
-                <p className="text-3xl font-black text-white mb-1">
-                  #{scanResult.jerseyNumber}
-                </p>
-              )}
-              {scanResult.name && (
-                <p className="text-slate-400 mb-2">{scanResult.name}</p>
-              )}
-              <p
-                className={`text-center mb-6 font-medium ${
-                  scanResult.success
-                    ? scanResult.alreadyPresent
-                      ? "text-blue-400"
-                      : "text-emerald-400"
-                    : "text-red-400"
-                }`}
-              >
-                {scanResult.message}
-              </p>
-
-              <button
-                onClick={() => {
-                  setScanResult(null);
-                  startScanning();
-                }}
-                className="px-6 py-3 bg-linear-to-r from-cyan-500 to-blue-600 text-white font-semibold rounded-xl transition-all flex items-center gap-2 hover:from-cyan-600 hover:to-blue-700 shadow-lg"
-              >
-                {ICONS.refresh}
-                Scan Next
-              </button>
-            </div>
-          )}
-
-          {/* Scanning - Stop Button */}
-          {scanning && !scanResult && !processing && (
-            <div className="absolute bottom-6 left-0 right-0 flex justify-center">
-              <button
-                onClick={stopScanning}
-                className="px-6 py-3 bg-red-500 text-white font-semibold rounded-xl hover:bg-red-600 transition-all flex items-center gap-2 shadow-lg shadow-red-500/25"
-              >
-                <div className="w-4 h-4">{ICONS.stop}</div>
-                Stop Scanning
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Manual Attendance Input - Show when event is selected */}
-        {selectedEvent && (
-          <div
-            className={`px-3 sm:px-5 py-4 sm:py-5 border-t ${
-              darkMode ? "border-white/5" : "border-slate-100"
-            }`}
-          >
-            <div className="max-w-5xl mx-auto">
-              {/* Header */}
-              <div className="mb-4">
-                <h3
-                  className={`text-base sm:text-lg font-black ${
-                    darkMode
-                      ? "text-slate-200"
-                      : "bg-linear-to-r from-slate-800 via-slate-700 to-slate-900 bg-clip-text text-transparent"
                   }`}
                 >
-                  Manual Attendance
-                </h3>
-                <p
-                  className={`text-xs sm:text-sm mt-1 ${
-                    darkMode ? "text-slate-500" : "text-slate-600"
-                  }`}
-                >
-                  Mark attendance when scanner is unavailable
+                  {scanResult.message}
                 </p>
-              </div>
 
-              {/* Input and Button - Side by side on desktop, stacked on mobile */}
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                {/* Input Section - Left on desktop, Bottom on mobile */}
-                <div className="flex-1">
-                  <textarea
-                    value={jerseyNumbers}
-                    onChange={(e) => setJerseyNumbers(e.target.value)}
-                    placeholder="Enter jersey numbers: 1, 5, 12, 23"
-                    rows={4}
-                    className={`w-full px-4 py-3 rounded-xl text-sm sm:text-base font-medium transition-all resize-none focus:outline-none ${(() => {
-                      const hasInput = jerseyNumbers.trim();
-                      const isValid =
-                        hasInput &&
-                        jerseyNumbers
+                <button
+                  onClick={() => {
+                    setScanResult(null);
+                    startScanning();
+                  }}
+                  className="px-6 py-3 bg-linear-to-r from-cyan-500 to-blue-600 text-white font-semibold rounded-xl transition-all flex items-center gap-2 hover:from-cyan-600 hover:to-blue-700 shadow-lg"
+                >
+                  {ICONS.refresh}
+                  Scan Next
+                </button>
+              </div>
+            )}
+
+            {/* Scanning - Stop Button */}
+            {scanning && !scanResult && !processing && (
+              <div className="absolute bottom-6 left-0 right-0 flex justify-center">
+                <button
+                  onClick={stopScanning}
+                  className="px-6 py-3 bg-red-500 text-white font-semibold rounded-xl hover:bg-red-600 transition-all flex items-center gap-2 shadow-lg shadow-red-500/25"
+                >
+                  <div className="w-4 h-4">{ICONS.stop}</div>
+                  Stop Scanning
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Manual Attendance Input - Show when event is selected */}
+          {selectedEvent && (
+            <div
+              className={`px-3 sm:px-5 py-4 sm:py-5 border-t ${
+                darkMode ? "border-white/5" : "border-slate-100"
+              }`}
+            >
+              <div className="max-w-5xl mx-auto">
+                {/* Header */}
+                <div className="mb-4">
+                  <h3
+                    className={`text-base sm:text-lg font-black ${
+                      darkMode
+                        ? "text-slate-200"
+                        : "bg-linear-to-r from-slate-800 via-slate-700 to-slate-900 bg-clip-text text-transparent"
+                    }`}
+                  >
+                    Manual Attendance
+                  </h3>
+                  <p
+                    className={`text-xs sm:text-sm mt-1 ${
+                      darkMode ? "text-slate-500" : "text-slate-600"
+                    }`}
+                  >
+                    Mark attendance when scanner is unavailable
+                  </p>
+                </div>
+
+                {/* Input and Button - Side by side on desktop, stacked on mobile */}
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                  {/* Input Section - Left on desktop, Bottom on mobile */}
+                  <div className="flex-1">
+                    <textarea
+                      value={jerseyNumbers}
+                      onChange={(e) => setJerseyNumbers(e.target.value)}
+                      placeholder="Enter jersey numbers: 1, 5, 12, 23"
+                      rows={4}
+                      className={`w-full px-4 py-3 rounded-xl text-sm sm:text-base font-medium transition-all resize-none focus:outline-none ${(() => {
+                        const hasInput = jerseyNumbers.trim();
+                        const isValid =
+                          hasInput &&
+                          jerseyNumbers
+                            .split(",")
+                            .map((n) => n.trim())
+                            .filter((n) => n)
+                            .every((n) => !isNaN(n) && n !== "");
+                        const isGirls = selectedCategory === "Girls";
+
+                        if (hasInput && !isValid) {
+                          return darkMode
+                            ? "bg-slate-800/80 ring-2 ring-red-500/50 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-red-500 shadow-lg"
+                            : "bg-white ring-2 ring-red-300 text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-red-500 shadow-lg shadow-red-100/50";
+                        }
+                        return darkMode
+                          ? `bg-slate-800/80 ring-1 ring-white/10 text-white placeholder:text-slate-500 focus:ring-2 shadow-lg ${
+                              isGirls
+                                ? "focus:ring-pink-500"
+                                : "focus:ring-sky-500"
+                            }`
+                          : `bg-white ring-2 ring-slate-200 text-slate-900 placeholder:text-slate-400 focus:ring-2 shadow-lg shadow-slate-200/50 ${
+                              isGirls
+                                ? "focus:ring-pink-500"
+                                : "focus:ring-sky-500"
+                            }`;
+                      })()}`}
+                    />
+                    {jerseyNumbers.trim() &&
+                      (() => {
+                        const isValid = jerseyNumbers
                           .split(",")
                           .map((n) => n.trim())
                           .filter((n) => n)
                           .every((n) => !isNaN(n) && n !== "");
-                      const isGirls = selectedCategory === "Girls";
+                        const validCount = jerseyNumbers
+                          .split(",")
+                          .map((n) => n.trim())
+                          .filter((n) => n && !isNaN(n)).length;
+                        const isGirls = selectedCategory === "Girls";
 
-                      if (hasInput && !isValid) {
-                        return darkMode
-                          ? "bg-slate-800/80 ring-2 ring-red-500/50 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-red-500 shadow-lg"
-                          : "bg-white ring-2 ring-red-300 text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-red-500 shadow-lg shadow-red-100/50";
-                      }
-                      return darkMode
-                        ? `bg-slate-800/80 ring-1 ring-white/10 text-white placeholder:text-slate-500 focus:ring-2 shadow-lg ${
-                            isGirls
-                              ? "focus:ring-pink-500"
-                              : "focus:ring-sky-500"
-                          }`
-                        : `bg-white ring-2 ring-slate-200 text-slate-900 placeholder:text-slate-400 focus:ring-2 shadow-lg shadow-slate-200/50 ${
-                            isGirls
-                              ? "focus:ring-pink-500"
-                              : "focus:ring-sky-500"
-                          }`;
-                    })()}`}
-                  />
-                  {jerseyNumbers.trim() &&
-                    (() => {
-                      const isValid = jerseyNumbers
-                        .split(",")
-                        .map((n) => n.trim())
-                        .filter((n) => n)
-                        .every((n) => !isNaN(n) && n !== "");
-                      const validCount = jerseyNumbers
-                        .split(",")
-                        .map((n) => n.trim())
-                        .filter((n) => n && !isNaN(n)).length;
-                      const isGirls = selectedCategory === "Girls";
-
-                      return (
-                        <div
-                          className={`mt-2.5 px-3 py-2 rounded-lg flex items-center gap-2 ${
-                            !isValid
-                              ? darkMode
-                                ? "bg-red-500/10 ring-1 ring-red-500/30"
-                                : "bg-red-50 ring-1 ring-red-200"
-                              : isGirls
-                                ? darkMode
-                                  ? "bg-pink-500/10 ring-1 ring-pink-500/30"
-                                  : "bg-pink-50 ring-1 ring-pink-200"
-                                : darkMode
-                                  ? "bg-sky-500/10 ring-1 ring-sky-500/30"
-                                  : "bg-sky-50 ring-1 ring-sky-200"
-                          }`}
-                        >
+                        return (
                           <div
-                            className={`w-2 h-2 rounded-full animate-pulse ${
-                              !isValid
-                                ? "bg-red-500"
-                                : isGirls
-                                  ? darkMode
-                                    ? "bg-pink-400"
-                                    : "bg-pink-600"
-                                  : darkMode
-                                    ? "bg-sky-400"
-                                    : "bg-sky-600"
-                            }`}
-                          />
-                          <p
-                            className={`text-xs sm:text-sm font-semibold ${
+                            className={`mt-2.5 px-3 py-2 rounded-lg flex items-center gap-2 ${
                               !isValid
                                 ? darkMode
-                                  ? "text-red-400"
-                                  : "text-red-600"
+                                  ? "bg-red-500/10 ring-1 ring-red-500/30"
+                                  : "bg-red-50 ring-1 ring-red-200"
                                 : isGirls
                                   ? darkMode
-                                    ? "text-pink-400"
-                                    : "text-pink-700"
+                                    ? "bg-pink-500/10 ring-1 ring-pink-500/30"
+                                    : "bg-pink-50 ring-1 ring-pink-200"
                                   : darkMode
-                                    ? "text-sky-400"
-                                    : "text-sky-700"
+                                    ? "bg-sky-500/10 ring-1 ring-sky-500/30"
+                                    : "bg-sky-50 ring-1 ring-sky-200"
                             }`}
                           >
-                            {isValid
-                              ? `${validCount} valid jersey number(s) detected`
-                              : "Invalid jersey number(s) detected"}
-                          </p>
-                        </div>
-                      );
-                    })()}
-                </div>
-
-                {/* Button Section - Right on desktop, Top on mobile */}
-                <div className="sm:w-48 flex flex-col justify-start">
-                  <button
-                    onClick={async () => {
-                      try {
-                        setSubmitting(true);
-
-                        const arrayOfStudentsJerseyNumberForMarkingAttendance =
-                          jerseyNumbers
-                            .split(",")
-                            .map((n) => Number(n.trim()))
-                            .filter((n) => !isNaN(n));
-
-                        if (
-                          arrayOfStudentsJerseyNumberForMarkingAttendance.length ===
-                          0
-                        ) {
-                          toast.error("Please enter valid jersey numbers");
-                          return;
-                        }
-
-                        await axios.post(
-                          `${API_URL}/admin/user/event/jerseysArray`,
-                          {
-                            jerseysArray:
-                              arrayOfStudentsJerseyNumberForMarkingAttendance,
-                            selectedEventId: selectedEvent,
-                          },
-                          { withCredentials: true },
+                            <div
+                              className={`w-2 h-2 rounded-full animate-pulse ${
+                                !isValid
+                                  ? "bg-red-500"
+                                  : isGirls
+                                    ? darkMode
+                                      ? "bg-pink-400"
+                                      : "bg-pink-600"
+                                    : darkMode
+                                      ? "bg-sky-400"
+                                      : "bg-sky-600"
+                              }`}
+                            />
+                            <p
+                              className={`text-xs sm:text-sm font-semibold ${
+                                !isValid
+                                  ? darkMode
+                                    ? "text-red-400"
+                                    : "text-red-600"
+                                  : isGirls
+                                    ? darkMode
+                                      ? "text-pink-400"
+                                      : "text-pink-700"
+                                    : darkMode
+                                      ? "text-sky-400"
+                                      : "text-sky-700"
+                              }`}
+                            >
+                              {isValid
+                                ? `${validCount} valid jersey number(s) detected`
+                                : "Invalid jersey number(s) detected"}
+                            </p>
+                          </div>
                         );
+                      })()}
+                  </div>
 
-                        toast.success("✅ Attendance marked successfully");
+                  {/* Button Section - Right on desktop, Top on mobile */}
+                  <div className="sm:w-48 flex flex-col justify-start">
+                    <button
+                      onClick={async () => {
+                        try {
+                          setSubmitting(true);
 
-                        // ✅ Refresh event stats
-                        await fetchEvents();
+                          const arrayOfStudentsJerseyNumberForMarkingAttendance =
+                            jerseyNumbers
+                              .split(",")
+                              .map((n) => Number(n.trim()))
+                              .filter((n) => !isNaN(n));
 
-                        // ✅ Clear input after success
-                        setJerseyNumbers("");
-                      } catch (error) {
-                        const message =
-                          error?.response?.data?.message ||
-                          "Something went wrong";
+                          if (
+                            arrayOfStudentsJerseyNumberForMarkingAttendance.length ===
+                            0
+                          ) {
+                            toast.error("Please enter valid jersey numbers");
+                            return;
+                          }
 
-                        if (message.includes("not found")) {
-                          toast.error(
-                            "❌ Some jersey numbers were not found. Please verify.",
+                          await axios.post(
+                            `${API_URL}/admin/user/event/jerseysArray`,
+                            {
+                              jerseysArray:
+                                arrayOfStudentsJerseyNumberForMarkingAttendance,
+                              selectedEventId: selectedEvent,
+                            },
+                            { withCredentials: true },
                           );
-                        } else if (message.includes("do not meet conditions")) {
-                          toast.warning(`⚠️ ${message}`);
-                        } else {
-                          toast.error(`❌ ${message}`);
+
+                          toast.success("Attendance marked successfully");
+
+                          // Refresh event stats
+                          await fetchEvents();
+
+                          // Clear input after success
+                          setJerseyNumbers("");
+                        } catch (error) {
+                          const message =
+                            error?.response?.data?.message ||
+                            "Something went wrong";
+
+                          if (message.includes("not found")) {
+                            toast.error(
+                              "❌ Some jersey numbers were not found. Please verify.",
+                            );
+                          } else if (
+                            message.includes("do not meet conditions")
+                          ) {
+                            toast.warning(`⚠️ ${message}`);
+                          } else {
+                            toast.error(`❌ ${message}`);
+                          }
+                        } finally {
+                          setSubmitting(false);
                         }
-                      } finally {
-                        setSubmitting(false);
+                      }}
+                      disabled={
+                        !jerseyNumbers.trim() ||
+                        submitting ||
+                        jerseyNumbers
+                          .split(",")
+                          .map((n) => n.trim())
+                          .filter((n) => n && !isNaN(n)).length === 0
                       }
-                    }}
-                    disabled={
-                      !jerseyNumbers.trim() ||
-                      submitting ||
-                      jerseyNumbers
-                        .split(",")
-                        .map((n) => n.trim())
-                        .filter((n) => n && !isNaN(n)).length === 0
-                    }
-                    className={`w-full h-full sm:min-h-[120px] px-6 py-4 font-bold rounded-xl transition-all text-base sm:text-lg flex items-center justify-center ${
-                      !jerseyNumbers.trim() ||
-                      submitting ||
-                      jerseyNumbers
-                        .split(",")
-                        .map((n) => n.trim())
-                        .filter((n) => n && !isNaN(n)).length === 0
-                        ? darkMode
-                          ? "bg-slate-700 text-slate-500 cursor-not-allowed"
-                          : "bg-slate-200 text-slate-400 cursor-not-allowed"
-                        : darkMode
-                          ? "bg-linear-to-br from-cyan-500 via-cyan-600 to-blue-600 text-white hover:from-cyan-600 hover:to-blue-700 shadow-xl shadow-cyan-500/30"
-                          : "bg-linear-to-br from-slate-800 via-slate-700 to-slate-900 text-white hover:brightness-110 shadow-xl shadow-slate-400/40 ring-2 ring-slate-300"
-                    }`}
-                  >
-                    {submitting ? (
-                      <>
-                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
-                        Marking...
-                      </>
-                    ) : (
-                      "Mark Attendance"
-                    )}
-                  </button>
+                      className={`w-full h-full sm:min-h-[120px] px-6 py-4 font-bold rounded-xl transition-all text-base sm:text-lg flex items-center justify-center ${
+                        !jerseyNumbers.trim() ||
+                        submitting ||
+                        jerseyNumbers
+                          .split(",")
+                          .map((n) => n.trim())
+                          .filter((n) => n && !isNaN(n)).length === 0
+                          ? darkMode
+                            ? "bg-slate-700 text-slate-500 cursor-not-allowed"
+                            : "bg-slate-200 text-slate-400 cursor-not-allowed"
+                          : darkMode
+                            ? "bg-linear-to-br from-cyan-500 via-cyan-600 to-blue-600 text-white hover:from-cyan-600 hover:to-blue-700 shadow-xl shadow-cyan-500/30"
+                            : "bg-linear-to-br from-slate-800 via-slate-700 to-slate-900 text-white hover:brightness-110 shadow-xl shadow-slate-400/40 ring-2 ring-slate-300"
+                      }`}
+                    >
+                      {submitting ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
+                          Marking...
+                        </>
+                      ) : (
+                        "Mark Attendance"
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
+          )}
+
+          {/* Instructions Footer */}
+          <div
+            className={`px-3 sm:px-5 py-4 border-t ${
+              darkMode ? "border-white/5" : "border-slate-100"
+            }`}
+          >
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2.5 text-xs sm:text-sm">
+              {[
+                "Select category",
+                "Choose event",
+                "Start scanning",
+                "Point at QR",
+              ].map((step, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <div
+                    className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black ring-2 ${
+                      darkMode
+                        ? "bg-cyan-500/20 text-cyan-400 ring-cyan-500/30"
+                        : "bg-linear-to-br from-slate-800 via-slate-700 to-slate-900 text-white ring-slate-300 shadow-lg shadow-slate-400/30"
+                    }`}
+                  >
+                    {i + 1}
+                  </div>
+                  <span
+                    className={`font-medium ${
+                      darkMode ? "text-slate-400" : "text-slate-700"
+                    }`}
+                  >
+                    {step}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Camera Permission Warning */}
+        {cameraPermission === "denied" && (
+          <div
+            className={`rounded-2xl p-4 flex items-start gap-3 ${
+              darkMode
+                ? "bg-red-500/10 ring-1 ring-red-500/30"
+                : "bg-red-50 ring-1 ring-red-200"
+            }`}
+          >
+            <span className="text-xl">⚠️</span>
+            <div>
+              <p
+                className={`font-semibold ${
+                  darkMode ? "text-red-300" : "text-red-800"
+                }`}
+              >
+                Camera Access Denied
+              </p>
+              <p
+                className={`text-sm mt-1 ${
+                  darkMode ? "text-red-400" : "text-red-600"
+                }`}
+              >
+                Please allow camera access in your browser settings to use the
+                QR scanner.
+              </p>
+            </div>
           </div>
         )}
-
-        {/* Instructions Footer */}
-        <div
-          className={`px-3 sm:px-5 py-4 border-t ${
-            darkMode ? "border-white/5" : "border-slate-100"
-          }`}
-        >
-          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2.5 text-xs sm:text-sm">
-            {[
-              "Select category",
-              "Choose event",
-              "Start scanning",
-              "Point at QR",
-            ].map((step, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <div
-                  className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black ring-2 ${
-                    darkMode
-                      ? "bg-cyan-500/20 text-cyan-400 ring-cyan-500/30"
-                      : "bg-linear-to-br from-slate-800 via-slate-700 to-slate-900 text-white ring-slate-300 shadow-lg shadow-slate-400/30"
-                  }`}
-                >
-                  {i + 1}
-                </div>
-                <span
-                  className={`font-medium ${
-                    darkMode ? "text-slate-400" : "text-slate-700"
-                  }`}
-                >
-                  {step}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
-
-      {/* Camera Permission Warning */}
-      {cameraPermission === "denied" && (
-        <div
-          className={`rounded-2xl p-4 flex items-start gap-3 ${
-            darkMode
-              ? "bg-red-500/10 ring-1 ring-red-500/30"
-              : "bg-red-50 ring-1 ring-red-200"
-          }`}
-        >
-          <span className="text-xl">⚠️</span>
-          <div>
-            <p
-              className={`font-semibold ${
-                darkMode ? "text-red-300" : "text-red-800"
-              }`}
-            >
-              Camera Access Denied
-            </p>
-            <p
-              className={`text-sm mt-1 ${
-                darkMode ? "text-red-400" : "text-red-600"
-              }`}
-            >
-              Please allow camera access in your browser settings to use the QR
-              scanner.
-            </p>
-          </div>
-        </div>
-      )}
-    </div>
+    </>
   );
 }
