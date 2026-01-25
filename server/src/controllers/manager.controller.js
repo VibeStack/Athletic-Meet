@@ -48,6 +48,22 @@ export const getAllEvents = asyncHandler(async (req, res) => {
   );
 });
 
+export const getAllUsers = asyncHandler(async (req, res) => {
+  const users = await User.find()
+    .select("fullname course branch year jerseyNumber urn selectedEvents")
+    .lean();
+
+  return res.status(200).json(
+    new ApiResponse(
+      {
+        count: users.length,
+        users,
+      },
+      "All users fetched successfully"
+    )
+  );
+});
+
 export const makeAsAdmin = asyncHandler(async (req, res) => {
   const { userId } = req.params;
 

@@ -72,73 +72,38 @@ const ICONS = {
 };
 
 /* -------------------- Static Data Constants -------------------- */
-// Course-branch mapping (matching backend courseBranchMap)
-const COURSE_BRANCH_MAP = {
-  "B.Tech": [
-    { id: "cse", name: "Computer Science & Engineering" },
-    { id: "it", name: "Information Technology" },
-    { id: "ee", name: "Electrical Engineering" },
-    { id: "me", name: "Mechanical Engineering" },
-    { id: "ce", name: "Civil Engineering" },
-    { id: "ece", name: "Electronics & Communication Engineering" },
-    { id: "rai", name: "Robotics & AI" },
-  ],
-  "M.Tech": [
-    { id: "cse", name: "Computer Science & Engineering" },
-    { id: "ee", name: "Electronics Engineering" },
-    { id: "me", name: "Mechanical Engineering" },
-    { id: "pe", name: "Production Engineering" },
-    { id: "gte", name: "Geo Technical Engineering" },
-    { id: "se", name: "Structural Engineering" },
-    { id: "ese", name: "Environmental Science & Engineering" },
-  ],
-  MBA: [
-    { id: "fin", name: "Finance" },
-    { id: "mkt", name: "Marketing" },
-    { id: "hr", name: "Human Resource" },
-  ],
-  MCA: [{ id: "ca", name: "Computer Applications" }],
-  "B.Voc.": [{ id: "id", name: "Interior Design" }],
-  "B.Com": [{ id: "ent", name: "Entrepreneurship" }],
-  BBA: [],
-  BCA: [],
-  "B.Arch": [],
-};
-
-const YEARS = ["1st Year", "2nd Year", "3rd Year", "4th Year", "5th Year"];
-const GENDERS = ["Male", "Female"];
-const ATTENDANCE_OPTIONS = ["Present", "Absent", "Not Marked"];
+// No additional static data needed for the simplified view.
 
 export default function ExportDataPage() {
   const { darkMode } = useTheme();
   const API_URL = import.meta.env.VITE_API_URL;
 
-  // Filter States
+  // Filter State
   const [selectedEvent, setSelectedEvent] = useState("");
-  const [selectedGender, setSelectedGender] = useState("");
-  const [selectedCourse, setSelectedCourse] = useState("");
-  const [selectedBranch, setSelectedBranch] = useState("");
-  const [selectedYear, setSelectedYear] = useState("");
-  const [attendanceFilter, setAttendanceFilter] = useState("");
 
   // Data States
   const [events, setEvents] = useState([]);
-  const [branches, setBranches] = useState([]);
+  const [allStudents, setAllStudents] = useState([]);
   const [exporting, setExporting] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [filteredStudents, setFilteredStudents] = useState([]);
-  const [fetchingPreview, setFetchingPreview] = useState(false);
 
-  // Fetch events on mount
+  // Fetch initial data on mount
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
       try {
-        const response = await axios.get(`${API_URL}/user/events`, {
-          withCredentials: true,
-        });
-        setEvents(response.data.data || []);
+        const [eventsRes, usersRes] = await Promise.all([
+          axios.get(`${API_URL}/manager/allEvents`, { withCredentials: true }),
+          axios.get(`${API_URL}/manager/export/allUsers`, {
+            withCredentials: true,
+          }),
+        ]);
+
+        // Access .events and .users based on ApiResponse structure
+        setEvents(eventsRes.data?.data?.events || eventsRes.data?.data || []);
+        setAllStudents(usersRes.data?.data?.users || usersRes.data?.data || []);
       } catch (err) {
-        console.error("Failed to fetch events", err);
+        console.error("Failed to fetch initial data", err);
       } finally {
         setLoading(false);
       }
@@ -146,107 +111,32 @@ export default function ExportDataPage() {
     fetchData();
   }, [API_URL]);
 
-  // Update branches when course changes
-  useEffect(() => {
-    if (selectedCourse) {
-      setBranches(COURSE_BRANCH_MAP[selectedCourse] || []);
-      setSelectedBranch("");
-    } else {
-      setBranches([]);
-      setSelectedBranch("");
-    }
-  }, [selectedCourse]);
-
-  // Fetch filtered students preview when filters change
-  useEffect(() => {
-    const fetchFilteredStudents = async () => {
-      if (!selectedEvent) {
-        setFilteredStudents([]);
-        return;
-      }
-
-      setFetchingPreview(true);
-      try {
-        const params = new URLSearchParams();
-        params.append("eventId", selectedEvent);
-        if (selectedGender) params.append("gender", selectedGender);
-        if (selectedCourse) params.append("course", selectedCourse);
-        if (selectedBranch) {
-          // Find branch name from the id
-          const branchObj = branches.find((b) => b.id === selectedBranch);
-          params.append("branch", branchObj?.name || selectedBranch);
-        }
-        if (selectedYear) params.append("year", selectedYear);
-        if (attendanceFilter)
-          params.append("attendance", attendanceFilter.toLowerCase());
-
-        const response = await axios.get(
-          `${API_URL}/admin/export/preview?${params.toString()}`,
-          { withCredentials: true },
+  // Local filtering based on selected event
+  const filteredStudents = selectedEvent
+    ? allStudents.filter((student) => {
+        const studentEvents = student.selectedEvents || [];
+        return studentEvents.some(
+          (se) => se.eventId === selectedEvent || se === selectedEvent,
         );
-        setFilteredStudents(response.data.data || []);
-      } catch (err) {
-        console.error("Failed to fetch preview", err);
-        setFilteredStudents([]);
-      } finally {
-        setFetchingPreview(false);
-      }
-    };
+      })
+    : allStudents;
 
-    fetchFilteredStudents();
-  }, [
-    selectedEvent,
-    selectedGender,
-    selectedCourse,
-    selectedBranch,
-    selectedYear,
-    attendanceFilter,
-    API_URL,
-  ]);
+  // Get current event details
+  const currentEvent = events.find((e) => (e.id || e._id) === selectedEvent);
+  const isFieldEvent = currentEvent?.type === "Field";
 
   const resetFilters = () => {
     setSelectedEvent("");
-    setSelectedGender("");
-    setSelectedCourse("");
-    setSelectedBranch("");
-    setSelectedYear("");
-    setAttendanceFilter("");
-  };
-
-  const getActiveFilterCount = () => {
-    let count = 0;
-    if (selectedEvent) count++;
-    if (selectedGender) count++;
-    if (selectedCourse) count++;
-    if (selectedBranch) count++;
-    if (selectedYear) count++;
-    if (attendanceFilter) count++;
-    return count;
   };
 
   const handleExport = async () => {
-    if (!selectedEvent) {
-      alert("Please select an event to export.");
-      return;
-    }
+    // If no event selected, we might want to export all users
+    const exportEventId = selectedEvent || "all";
 
     setExporting(true);
     try {
-      const params = new URLSearchParams();
-      if (selectedEvent) params.append("eventId", selectedEvent);
-      if (selectedGender) params.append("gender", selectedGender);
-      if (selectedCourse) params.append("course", selectedCourse);
-      if (selectedBranch) {
-        // Find branch name from the id
-        const branchObj = branches.find((b) => b.id === selectedBranch);
-        params.append("branch", branchObj?.name || selectedBranch);
-      }
-      if (selectedYear) params.append("year", selectedYear);
-      if (attendanceFilter)
-        params.append("attendance", attendanceFilter.toLowerCase());
-
       const response = await axios.get(
-        `${API_URL}/admin/export/event?${params.toString()}`,
+        `${API_URL}/admin/export/event?eventId=${exportEventId}`,
         {
           withCredentials: true,
           responseType: "blob",
@@ -257,8 +147,7 @@ export default function ExportDataPage() {
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
       link.href = url;
-      const eventName =
-        events.find((e) => e.id === selectedEvent)?.name || "export";
+      const eventName = selectedEvent ? currentEvent?.name : "All_Students";
       link.setAttribute(
         "download",
         `${eventName.replace(/\s+/g, "_")}_${new Date().toISOString().split("T")[0]}.xlsx`,
@@ -273,6 +162,28 @@ export default function ExportDataPage() {
     } finally {
       setExporting(false);
     }
+  };
+
+  // Helper to format event name with suffix
+  const formatEventName = (event) => {
+    if (!event || typeof event === "string") return event;
+    const name = event.name || "";
+    const genderStr = (event.category || event.gender || "").toLowerCase();
+    let suffix = "";
+    if (
+      genderStr.includes("girl") ||
+      genderStr.includes("female") ||
+      genderStr.includes("(g)")
+    ) {
+      suffix = " (G)";
+    } else if (
+      genderStr.includes("boy") ||
+      genderStr.includes("male") ||
+      genderStr.includes("(b)")
+    ) {
+      suffix = " (B)";
+    }
+    return name + suffix;
   };
 
   // Custom Select Component
@@ -312,10 +223,10 @@ export default function ExportDataPage() {
           <option value="">{placeholder}</option>
           {options.map((opt) => (
             <option
-              key={typeof opt === "string" ? opt : opt.id}
-              value={typeof opt === "string" ? opt : opt.id}
+              key={opt.id || opt._id || opt}
+              value={opt.id || opt._id || String(opt)}
             >
-              {typeof opt === "string" ? opt : opt.name}
+              {formatEventName(opt)}
             </option>
           ))}
         </select>
@@ -369,29 +280,14 @@ export default function ExportDataPage() {
               <p
                 className={`text-xs sm:text-sm ${darkMode ? "text-slate-500" : "text-slate-500"}`}
               >
-                Generate event-wise Excel sheets with custom filters
+                Generate event-wise Excel sheets
               </p>
             </div>
           </div>
-
-          {/* Active Filters Badge */}
-          {getActiveFilterCount() > 0 && (
-            <div
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold ${
-                darkMode
-                  ? "bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/30"
-                  : "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-300"
-              }`}
-            >
-              {ICONS.filter}
-              {getActiveFilterCount()} filter
-              {getActiveFilterCount() > 1 ? "s" : ""} active
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Filters Section */}
+      {/* Select Section */}
       <div
         className={`rounded-2xl overflow-hidden ${
           darkMode
@@ -419,17 +315,17 @@ export default function ExportDataPage() {
               <h2
                 className={`font-bold text-sm ${darkMode ? "text-white" : "text-slate-800"}`}
               >
-                Filter Options
+                Select Event
               </h2>
               <p
                 className={`text-xs ${darkMode ? "text-slate-500" : "text-slate-500"}`}
               >
-                Customize your export data
+                Choose an event to preview and export
               </p>
             </div>
           </div>
 
-          {getActiveFilterCount() > 0 && (
+          {selectedEvent && (
             <button
               onClick={resetFilters}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
@@ -439,77 +335,21 @@ export default function ExportDataPage() {
               }`}
             >
               {ICONS.reset}
-              Reset All
+              Reset
             </button>
           )}
         </div>
 
-        {/* Filter Grid */}
+        {/* Option Grid */}
         <div className="p-5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Event Filter - Required */}
-            <div className="sm:col-span-2 lg:col-span-3">
-              <SelectField
-                label="Event (Required)"
-                icon={ICONS.event}
-                value={selectedEvent}
-                onChange={setSelectedEvent}
-                options={events}
-                placeholder="Select an event..."
-              />
-            </div>
-
-            {/* Gender Filter */}
+          <div className="grid grid-cols-1 gap-4">
             <SelectField
-              label="Gender"
-              icon={ICONS.gender}
-              value={selectedGender}
-              onChange={setSelectedGender}
-              options={GENDERS}
-              placeholder="All Genders"
-            />
-
-            {/* Course Filter */}
-            <SelectField
-              label="Course"
-              icon={ICONS.course}
-              value={selectedCourse}
-              onChange={setSelectedCourse}
-              options={Object.keys(COURSE_BRANCH_MAP)}
-              placeholder="All Courses"
-            />
-
-            {/* Branch Filter */}
-            <SelectField
-              label="Branch"
-              icon={ICONS.branch}
-              value={selectedBranch}
-              onChange={setSelectedBranch}
-              options={branches}
-              placeholder={
-                selectedCourse ? "Select Branch" : "Select Course First"
-              }
-              disabled={!selectedCourse}
-            />
-
-            {/* Year Filter */}
-            <SelectField
-              label="Year"
-              icon={ICONS.year}
-              value={selectedYear}
-              onChange={setSelectedYear}
-              options={YEARS}
-              placeholder="All Years"
-            />
-
-            {/* Attendance Filter */}
-            <SelectField
-              label="Attendance Status"
-              icon={ICONS.attendance}
-              value={attendanceFilter}
-              onChange={setAttendanceFilter}
-              options={ATTENDANCE_OPTIONS}
-              placeholder="All Statuses"
+              label="Event (Required)"
+              icon={ICONS.event}
+              value={selectedEvent}
+              onChange={setSelectedEvent}
+              options={events}
+              placeholder="Select an event..."
             />
           </div>
         </div>
@@ -536,22 +376,17 @@ export default function ExportDataPage() {
                 className={`text-xs space-y-1 ${darkMode ? "text-emerald-300/70" : "text-emerald-700/80"}`}
               >
                 <p>
-                  <strong>Event:</strong>{" "}
+                  <strong>Selection:</strong>{" "}
                   {selectedEvent
-                    ? events.find((e) => e.id === selectedEvent)?.name ||
-                      "Selected"
-                    : "Not selected"}
-                </p>
-                <p>
-                  <strong>Filters:</strong>{" "}
-                  {getActiveFilterCount() > 1
-                    ? `${getActiveFilterCount() - 1} additional filter${getActiveFilterCount() > 2 ? "s" : ""} applied`
-                    : "No additional filters"}
+                    ? currentEvent?.name || "Selected Event"
+                    : "All Registered Students"}
                 </p>
                 <p
                   className={`text-[10px] mt-2 ${darkMode ? "text-emerald-400/50" : "text-emerald-600/50"}`}
                 >
-                  Columns: Sr.No, Jersey No., Name, Branch, URN, Attendance
+                  Columns: Sr.No, Jersey No., Name, Branch, URN
+                  {selectedEvent && ", Attendance"}
+                  {isFieldEvent && ", Attempt 1, Attempt 2"}
                 </p>
               </div>
             </div>
@@ -559,13 +394,11 @@ export default function ExportDataPage() {
             {/* Export Button */}
             <button
               onClick={handleExport}
-              disabled={exporting || !selectedEvent}
-              className={`flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm text-white transition-all shadow-lg min-w-[180px] ${
-                selectedEvent
-                  ? darkMode
-                    ? "bg-linear-to-r from-emerald-500 to-teal-600 hover:brightness-110 shadow-emerald-500/25"
-                    : "bg-linear-to-r from-emerald-500 to-teal-600 hover:brightness-110 shadow-emerald-500/30"
-                  : "bg-slate-500 cursor-not-allowed opacity-60"
+              disabled={exporting}
+              className={`flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm text-white transition-all shadow-lg min-w-[200px] ${
+                darkMode
+                  ? "bg-linear-to-r from-emerald-500 to-teal-600 hover:brightness-110 shadow-emerald-500/25"
+                  : "bg-linear-to-r from-emerald-500 to-teal-600 hover:brightness-110 shadow-emerald-500/30"
               } ${exporting ? "opacity-70 cursor-not-allowed" : ""}`}
             >
               {exporting ? (
@@ -576,7 +409,9 @@ export default function ExportDataPage() {
               ) : (
                 <>
                   {ICONS.download}
-                  <span>Export to Excel</span>
+                  <span>
+                    {selectedEvent ? "Export Event" : "Export All Students"}
+                  </span>
                 </>
               )}
             </button>
@@ -585,99 +420,126 @@ export default function ExportDataPage() {
       </div>
 
       {/* Students Preview Table */}
-      {selectedEvent && (
+      <div
+        className={`rounded-2xl overflow-hidden ${
+          darkMode
+            ? "bg-slate-900/80 ring-1 ring-white/8"
+            : "bg-white ring-1 ring-slate-200 shadow-lg"
+        }`}
+      >
+        {/* Table Header */}
         <div
-          className={`rounded-2xl overflow-hidden ${
-            darkMode
-              ? "bg-slate-900/80 ring-1 ring-white/8"
-              : "bg-white ring-1 ring-slate-200 shadow-lg"
+          className={`px-5 py-4 flex items-center justify-between border-b ${
+            darkMode ? "border-white/5" : "border-slate-100"
           }`}
         >
-          {/* Table Header */}
-          <div
-            className={`px-5 py-4 flex items-center justify-between border-b ${
-              darkMode ? "border-white/5" : "border-slate-100"
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <div
-                className={`w-9 h-9 rounded-lg flex items-center justify-center ${
-                  darkMode
-                    ? "bg-slate-800 text-slate-400"
-                    : "bg-slate-100 text-slate-600"
-                }`}
+          <div className="flex items-center gap-3">
+            <div
+              className={`w-9 h-9 rounded-lg flex items-center justify-center ${
+                darkMode
+                  ? "bg-slate-800 text-slate-400"
+                  : "bg-slate-100 text-slate-600"
+              }`}
+            >
+              {ICONS.users}
+            </div>
+            <div>
+              <h2
+                className={`font-bold text-sm ${darkMode ? "text-white" : "text-slate-800"}`}
               >
-                {ICONS.users}
-              </div>
-              <div>
-                <h2
-                  className={`font-bold text-sm ${darkMode ? "text-white" : "text-slate-800"}`}
-                >
-                  Preview ({filteredStudents.length} students)
-                </h2>
-                <p
-                  className={`text-xs ${darkMode ? "text-slate-500" : "text-slate-500"}`}
-                >
-                  {fetchingPreview
-                    ? "Loading students..."
-                    : filteredStudents.length > 0
-                      ? "Students matching your filters"
-                      : "No students match the selected filters"}
-                </p>
-              </div>
+                {selectedEvent ? "Event Preview" : "Global Student List"} (
+                {filteredStudents.length})
+              </h2>
+              <p
+                className={`text-xs ${darkMode ? "text-slate-500" : "text-slate-500"}`}
+              >
+                {filteredStudents.length > 0
+                  ? selectedEvent
+                    ? "Students registered for this event"
+                    : "All students registered in the system"
+                  : "No students found"}
+              </p>
             </div>
           </div>
+        </div>
 
-          {/* Table Content */}
-          <div className="overflow-x-auto">
-            {fetchingPreview ? (
-              <div className="flex items-center justify-center py-16">
-                <span
-                  className={`animate-spin h-8 w-8 border-3 rounded-full ${
+        {/* Table Content */}
+        <div className="overflow-x-auto">
+          {filteredStudents.length > 0 ? (
+            <table className="w-full">
+              <thead>
+                <tr
+                  className={`${
                     darkMode
-                      ? "border-slate-700 border-t-emerald-500"
-                      : "border-slate-200 border-t-emerald-600"
+                      ? "bg-slate-800/50 text-slate-400"
+                      : "bg-slate-50 text-slate-600"
                   }`}
-                />
-              </div>
-            ) : filteredStudents.length > 0 ? (
-              <table className="w-full">
-                <thead>
-                  <tr
-                    className={`${
-                      darkMode
-                        ? "bg-slate-800/50 text-slate-400"
-                        : "bg-slate-50 text-slate-600"
-                    }`}
-                  >
-                    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">
-                      Sr. No.
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">
-                      Jersey No.
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">
-                      Name
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">
-                      Branch
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">
-                      URN
-                    </th>
+                >
+                  <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">
+                    Sr. No.
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">
+                    Jersey No.
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">
+                    Name
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">
+                    Branch
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">
+                    URN
+                  </th>
+                  {selectedEvent && (
                     <th className="px-4 py-3 text-center text-xs font-bold uppercase tracking-wider">
                       Attendance
                     </th>
-                  </tr>
-                </thead>
-                <tbody
-                  className={`divide-y ${
-                    darkMode ? "divide-white/5" : "divide-slate-100"
-                  }`}
-                >
-                  {filteredStudents.map((student, index) => (
+                  )}
+                  {isFieldEvent && (
+                    <>
+                      <th className="px-4 py-3 text-center text-xs font-bold uppercase tracking-wider">
+                        Attempt 1
+                      </th>
+                      <th className="px-4 py-3 text-center text-xs font-bold uppercase tracking-wider">
+                        Attempt 2
+                      </th>
+                    </>
+                  )}
+                </tr>
+              </thead>
+              <tbody
+                className={`divide-y ${
+                  darkMode ? "divide-white/5" : "divide-slate-100"
+                }`}
+              >
+                {filteredStudents.map((student, index) => {
+                  const studentEvents = student.selectedEvents || [];
+                  const eventData = selectedEvent
+                    ? studentEvents.find(
+                        (se) =>
+                          (se.eventId || se._id) === selectedEvent ||
+                          se === selectedEvent,
+                      ) || {}
+                    : null;
+
+                  // From image: status field holds attendance mapping
+                  const rawStatus = eventData
+                    ? typeof eventData === "string"
+                      ? "notMarked"
+                      : eventData.status || "notMarked"
+                    : null;
+
+                  // Human readable status mapping
+                  const statusMap = {
+                    present: "Present",
+                    absent: "Absent",
+                    notMarked: "Not Marked",
+                  };
+                  const attendance = statusMap[rawStatus] || rawStatus;
+
+                  return (
                     <tr
-                      key={student.id || index}
+                      key={student.id || student._id || index}
                       className={`transition-colors ${
                         darkMode ? "hover:bg-slate-800/30" : "hover:bg-slate-50"
                       }`}
@@ -717,63 +579,87 @@ export default function ExportDataPage() {
                       >
                         {student.urn || "—"}
                       </td>
-                      <td className="px-4 py-3 text-center">
-                        <span
-                          className={`inline-flex items-center justify-center w-20 px-2 py-1 rounded-md text-xs font-bold ${
-                            student.attendance === "present"
-                              ? darkMode
-                                ? "bg-emerald-500/15 text-emerald-400"
-                                : "bg-emerald-100 text-emerald-700"
-                              : student.attendance === "absent"
+                      {selectedEvent && (
+                        <td className="px-4 py-3 text-center">
+                          <span
+                            className={`inline-flex items-center justify-center w-20 px-2 py-1 rounded-md text-xs font-bold ${
+                              attendance === "present" ||
+                              attendance === "Present"
                                 ? darkMode
-                                  ? "bg-red-500/15 text-red-400"
-                                  : "bg-red-100 text-red-700"
-                                : darkMode
-                                  ? "bg-amber-500/15 text-amber-400"
-                                  : "bg-amber-100 text-amber-700"
-                          }`}
-                        >
-                          {student.attendance === "present"
-                            ? "✓"
-                            : student.attendance === "absent"
-                              ? "✗"
-                              : "○"}
-                        </span>
-                      </td>
+                                  ? "bg-emerald-500/15 text-emerald-400"
+                                  : "bg-emerald-100 text-emerald-700"
+                                : attendance === "absent" ||
+                                    attendance === "Absent"
+                                  ? darkMode
+                                    ? "bg-red-500/15 text-red-400"
+                                    : "bg-red-100 text-red-700"
+                                  : darkMode
+                                    ? "bg-amber-500/15 text-amber-400"
+                                    : "bg-amber-100 text-amber-700"
+                            }`}
+                          >
+                            {attendance === "present" ||
+                            attendance === "Present"
+                              ? "✓"
+                              : attendance === "absent" ||
+                                  attendance === "Absent"
+                                ? "✗"
+                                : "○"}
+                          </span>
+                        </td>
+                      )}
+                      {isFieldEvent && (
+                        <>
+                          <td
+                            className={`px-4 py-3 text-sm text-center font-bold ${
+                              darkMode ? "text-slate-400" : "text-slate-500"
+                            }`}
+                          >
+                            —
+                          </td>
+                          <td
+                            className={`px-4 py-3 text-sm text-center font-bold ${
+                              darkMode ? "text-slate-400" : "text-slate-500"
+                            }`}
+                          >
+                            —
+                          </td>
+                        </>
+                      )}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-16 px-4">
-                <div
-                  className={`w-16 h-16 rounded-xl flex items-center justify-center mb-4 ${
-                    darkMode
-                      ? "bg-slate-800 text-slate-600"
-                      : "bg-slate-100 text-slate-400"
-                  }`}
-                >
-                  {ICONS.users}
-                </div>
-                <p
-                  className={`text-sm font-semibold mb-1 ${
-                    darkMode ? "text-slate-400" : "text-slate-500"
-                  }`}
-                >
-                  No students found
-                </p>
-                <p
-                  className={`text-xs ${
-                    darkMode ? "text-slate-600" : "text-slate-400"
-                  }`}
-                >
-                  Try adjusting your filters to see results
-                </p>
+                  );
+                })}
+              </tbody>
+            </table>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-16 px-4">
+              <div
+                className={`w-16 h-16 rounded-xl flex items-center justify-center mb-4 ${
+                  darkMode
+                    ? "bg-slate-800 text-slate-600"
+                    : "bg-slate-100 text-slate-400"
+                }`}
+              >
+                {ICONS.users}
               </div>
-            )}
-          </div>
+              <p
+                className={`text-sm font-semibold mb-1 ${
+                  darkMode ? "text-slate-400" : "text-slate-500"
+                }`}
+              >
+                No students found
+              </p>
+              <p
+                className={`text-xs ${
+                  darkMode ? "text-slate-600" : "text-slate-400"
+                }`}
+              >
+                Selected event has no registrations yet
+              </p>
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Info Card */}
       <div
@@ -798,18 +684,14 @@ export default function ExportDataPage() {
           <p
             className={`text-xs font-semibold ${darkMode ? "text-slate-300" : "text-slate-700"}`}
           >
-            Export Tips
+            Export Note
           </p>
-          <ul
-            className={`text-xs mt-1 space-y-0.5 ${darkMode ? "text-slate-500" : "text-slate-500"}`}
+          <p
+            className={`text-[10px] sm:text-[11px] mt-0.5 ${darkMode ? "text-slate-500" : "text-slate-500"}`}
           >
-            <li>• Select an event first - this is required for export</li>
-            <li>• Use filters to narrow down the data you need</li>
-            <li>
-              • The exported Excel file will include all registered students
-              matching your filters
-            </li>
-          </ul>
+            Excel sheets for **Field events** will automatically include columns
+            for **Attempt 1** and **Attempt 2** for manual marking.
+          </p>
         </div>
       </div>
     </div>

@@ -247,7 +247,7 @@ export default function CertificateControlsPage() {
             </div>
 
             {/* Right Side - Action Button */}
-            <div className="flex justify-center">
+            <div className="flex justify-center max-w-[200px]">
               <button
                 onClick={toggleLock}
                 disabled={updating}

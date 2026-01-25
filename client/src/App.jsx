@@ -25,6 +25,8 @@ import QRScannerPage from "./components/Portal/Admin/QRScannerPage";
 import ExportDataPage from "./components/Portal/Manager/ExportDataPage";
 import EventControlsPage from "./components/Portal/Manager/EventControlsPage";
 import CertificateControlsPage from "./components/Portal/Manager/CertificateControlsPage";
+import EventResultsPage from "./components/Portal/Manager/EventResultsPage";
+import BulkAddEventPage from "./components/Portal/Manager/BulkAddEventPage";
 
 function App() {
   return (
@@ -104,6 +106,22 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={["Manager"]}>
                   <CertificateControlsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="manager/event-results"
+              element={
+                <ProtectedRoute allowedRoles={["Manager"]}>
+                  <EventResultsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="manager/bulk-add-event"
+              element={
+                <ProtectedRoute allowedRoles={["Manager"]}>
+                  <BulkAddEventPage />
                 </ProtectedRoute>
               }
             />

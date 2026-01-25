@@ -73,6 +73,16 @@ const SettingsIcon = ({ className }) => (
   </svg>
 );
 
+const TrophyIcon = ({ className }) => (
+  <svg
+    className={className || "w-5 h-5"}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+  >
+    <path d="M19 5h-2V3H7v2H5a2 2 0 00-2 2v1c0 2.5 1.9 4.6 4.4 4.9A5 5 0 0011 15.9V19H7v2h10v-2h-4v-3.1a5 5 0 003.6-3C19.1 12.6 21 10.5 21 8V7a2 2 0 00-2-2z" />
+  </svg>
+);
+
 const ShieldIcon = ({ className }) => (
   <svg
     className={className || "w-5 h-5"}
@@ -80,6 +90,16 @@ const ShieldIcon = ({ className }) => (
     fill="currentColor"
   >
     <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z" />
+  </svg>
+);
+
+const AddEventIcon = ({ className }) => (
+  <svg
+    className={className || "w-5 h-5"}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+  >
+    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
   </svg>
 );
 
@@ -121,17 +141,33 @@ const menuSections = [
         label: "QR Scanner",
         path: "/portal/admin/scanner",
         roles: ["Admin", "Manager"],
-        gradient: "from-emerald-400 to-teal-600",
-        shadowColor: "shadow-emerald-500/30",
+        gradient: "from-cyan-500 to-blue-600",
+        shadowColor: "shadow-cyan-500/30",
         icon: QrIcon,
       },
       {
         label: "Event Controls",
         path: "/portal/manager/event-controls",
         roles: ["Manager"],
-        gradient: "from-orange-400 to-amber-600",
-        shadowColor: "shadow-orange-500/30",
+        gradient: "from-purple-500 to-indigo-600",
+        shadowColor: "shadow-purple-500/30",
         icon: SettingsIcon,
+      },
+      {
+        label: "Event Results",
+        path: "/portal/manager/event-results",
+        roles: ["Manager"],
+        gradient: "from-orange-500 to-rose-600",
+        shadowColor: "shadow-orange-500/30",
+        icon: TrophyIcon,
+      },
+      {
+        label: "Bulk Add Event",
+        path: "/portal/manager/bulk-add-event",
+        roles: ["Manager"],
+        gradient: "from-lime-500 to-green-600",
+        shadowColor: "shadow-lime-500/30",
+        icon: AddEventIcon,
       },
     ],
   },
@@ -367,8 +403,8 @@ export default function HamburgerMenu({ menuOpen, setMenuOpen, user }) {
                     user?.role === "Manager"
                       ? "#f59e0b"
                       : user?.role === "Admin"
-                      ? "#8b5cf6"
-                      : "#0ea5e9",
+                        ? "#8b5cf6"
+                        : "#0ea5e9",
                 }}
               />
               {user?.role || "Guest"} Portal
@@ -380,7 +416,7 @@ export default function HamburgerMenu({ menuOpen, setMenuOpen, user }) {
         <nav className="flex-1 px-3 py-5 overflow-y-auto">
           {menuSections.map((section, sectionIdx) => {
             const visibleItems = section.items.filter(
-              (item) => user?.role && item.roles.includes(user.role)
+              (item) => user?.role && item.roles.includes(user.role),
             );
 
             if (visibleItems.length === 0) return null;
@@ -418,8 +454,8 @@ export default function HamburgerMenu({ menuOpen, setMenuOpen, user }) {
                             active
                               ? `bg-linear-to-r ${item.gradient} text-white shadow-lg ${item.shadowColor}`
                               : darkMode
-                              ? "text-slate-400 hover:text-white hover:bg-white/5"
-                              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                                ? "text-slate-400 hover:text-white hover:bg-white/5"
+                                : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
                           }`}
                       >
                         {/* Active indicator line */}
@@ -433,8 +469,8 @@ export default function HamburgerMenu({ menuOpen, setMenuOpen, user }) {
                             active
                               ? "bg-white/20"
                               : darkMode
-                              ? "bg-slate-800 group-hover:bg-slate-700"
-                              : "bg-slate-100 group-hover:bg-slate-200"
+                                ? "bg-slate-800 group-hover:bg-slate-700"
+                                : "bg-slate-100 group-hover:bg-slate-200"
                           }`}
                         >
                           <Icon
@@ -442,8 +478,8 @@ export default function HamburgerMenu({ menuOpen, setMenuOpen, user }) {
                               active
                                 ? "text-white"
                                 : darkMode
-                                ? "text-slate-400 group-hover:text-slate-200"
-                                : "text-slate-500 group-hover:text-slate-700"
+                                  ? "text-slate-400 group-hover:text-slate-200"
+                                  : "text-slate-500 group-hover:text-slate-700"
                             }`}
                           />
                         </div>
