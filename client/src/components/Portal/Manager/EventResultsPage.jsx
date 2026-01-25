@@ -103,22 +103,31 @@ export default function EventResultsPage() {
 
   // Parse jersey numbers (same logic as QR Scanner - comma separated)
   const parseJerseyNumbers = (input) => {
-    return input
+    const numbers = input
       .split(",")
       .map((n) => n.trim())
-      .filter((n) => n)
-      .map((n) => Number(n))
-      .filter((n) => !isNaN(n));
+      .filter((n) => /^\d+$/.test(n)) // only whole numbers
+      .map((n) => Number(n));
+
+    // Remove duplicates using Set
+    return [...new Set(numbers)];
   };
 
   // Validate jersey numbers input
   const isValidJerseyInput = (input) => {
     if (!input.trim()) return false;
-    return input
+
+    const values = input
       .split(",")
       .map((n) => n.trim())
-      .filter((n) => n)
-      .every((n) => !isNaN(n) && n !== "");
+      .filter((n) => n);
+
+    // Must be only whole numbers
+    if (!values.every((n) => /^\d+$/.test(n))) return false;
+
+    // No duplicates allowed
+    const unique = new Set(values);
+    return unique.size === values.length;
   };
 
   const getValidCount = (input) => {
@@ -822,7 +831,7 @@ export default function EventResultsPage() {
                   {watchedValues.jerseyNumbers?.trim()
                     ? isValidJerseyInput(watchedValues.jerseyNumbers)
                       ? `${validCount} valid jersey number(s) detected`
-                      : "Invalid jersey number(s) - use numbers only"
+                      : "Duplicate or Invalid jersey number(s) — only whole numbers allowed"
                     : "Enter jersey numbers above"}
                 </p>
               </div>
