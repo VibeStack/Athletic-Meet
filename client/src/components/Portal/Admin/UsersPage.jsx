@@ -90,7 +90,6 @@ export default function UsersPage() {
   const API_URL = import.meta.env.VITE_API_URL;
   const { darkMode } = useTheme();
 
-  const location = useLocation();
   const navigate = useNavigate();
 
   const [query, setQuery] = useState("");
@@ -427,7 +426,7 @@ export default function UsersPage() {
                   <div className="flex items-start gap-4">
                     {/* Jersey Number Badge */}
                     <div
-                      className={`relative shrink-0 w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-black transition-transform duration-300 group-hover:scale-105
+                      className={`relative shrink-0 w-20 h-20 rounded-2xl flex items-center justify-center text-2xl font-black transition-transform duration-300 group-hover:scale-105
                       ${jerseyTheme}
                     `}
                     >

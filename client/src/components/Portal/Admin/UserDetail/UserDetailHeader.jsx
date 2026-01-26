@@ -245,7 +245,7 @@ export default function UserDetailHeader({
         {/* Left: Jersey + Info */}
         <div className="flex items-center gap-4">
           <div
-            className={`shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl font-black ${jerseyTheme}`}
+            className={`shrink-0 w-20 h-20 rounded-2xl flex items-center justify-center text-2xl font-black ${jerseyTheme}`}
           >
             {studentUserData.jerseyNumber || "—"}
           </div>
