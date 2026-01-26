@@ -5,7 +5,6 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 export const loginUser = asyncHandler(async (req, res) => {
-  const isProduction = process.env.NODE_ENV === "production";
   const { username, email, password } = req.body;
 
   const existingSid = req.signedCookies?.sid;
@@ -15,8 +14,8 @@ export const loginUser = asyncHandler(async (req, res) => {
     res.clearCookie("sid", {
       httpOnly: true,
       signed: true,
-      sameSite: isProduction ? "none" : "lax",
-      secure: isProduction,
+      secure: true,
+      sameSite: "none",
       path: "/",
     });
   }
@@ -45,8 +44,8 @@ export const loginUser = asyncHandler(async (req, res) => {
   res.cookie("sid", session.id, {
     httpOnly: true,
     signed: true,
-    sameSite: isProduction ? "none" : "lax",
-    secure: isProduction,
+    sameSite: "none",
+    secure: true,
     path: "/",
     maxAge: 1 * 24 * 60 * 60 * 1000,
   });
@@ -57,7 +56,6 @@ export const loginUser = asyncHandler(async (req, res) => {
 });
 
 export const logoutUser = asyncHandler(async (req, res) => {
-  const isProduction = process.env.NODE_ENV === "production";
   const { sid } = req.signedCookies;
   if (!sid) {
     throw new ApiError(401, "Not authenticated");
@@ -67,8 +65,8 @@ export const logoutUser = asyncHandler(async (req, res) => {
   res.clearCookie("sid", {
     httpOnly: true,
     signed: true,
-    sameSite: isProduction ? "none" : "lax",
-    secure: isProduction,
+    secure: true,
+    sameSite: "none",
     path: "/",
   });
 
