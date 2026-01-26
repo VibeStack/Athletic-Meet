@@ -473,7 +473,7 @@ export default function EventsPage() {
                   darkMode ? "text-slate-500" : "text-slate-500"
                 }`}
               >
-                64th Annual Meet • Feb 20-21, 2025
+                65th Annual Meet • Feb 19-20, 2026
               </p>
             </div>
           </div>

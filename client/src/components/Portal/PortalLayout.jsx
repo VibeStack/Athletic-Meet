@@ -84,7 +84,7 @@ export default function PortalLayout() {
       const { data: response } = await axios.post(
         `${API_URL}/auth/logout`,
         {},
-        { withCredentials: true }
+        { withCredentials: true },
       );
 
       if (response?.success) {
@@ -167,7 +167,7 @@ export default function PortalLayout() {
                         darkMode ? "text-cyan-400" : "text-slate-500"
                       }`}
                     >
-                      64th Athletic Meet
+                      65th Athletic Meet
                     </p>
                   </div>
                 </div>
@@ -289,12 +289,12 @@ export default function PortalLayout() {
                   userDetail?.role === "Manager"
                     ? "bg-red-500/20"
                     : userDetail?.role === "Admin"
-                    ? userDetail?.gender === "Male"
-                      ? "bg-sky-500/20"
-                      : userDetail?.gender === "Female"
-                      ? "bg-pink-500/20"
-                      : "bg-emerald-500/20"
-                    : "bg-slate-500/20"
+                      ? userDetail?.gender === "Male"
+                        ? "bg-sky-500/20"
+                        : userDetail?.gender === "Female"
+                          ? "bg-pink-500/20"
+                          : "bg-emerald-500/20"
+                      : "bg-slate-500/20"
                 }`}
               />
             )}
@@ -306,12 +306,12 @@ export default function PortalLayout() {
                   userDetail?.role === "Manager"
                     ? "bg-red-500/10"
                     : userDetail?.role === "Admin"
-                    ? userDetail?.gender === "Male"
-                      ? "bg-sky-500/10"
-                      : userDetail?.gender === "Female"
-                      ? "bg-pink-500/10"
-                      : "bg-emerald-500/10"
-                    : "bg-slate-500/10"
+                      ? userDetail?.gender === "Male"
+                        ? "bg-sky-500/10"
+                        : userDetail?.gender === "Female"
+                          ? "bg-pink-500/10"
+                          : "bg-emerald-500/10"
+                      : "bg-slate-500/10"
                 }`}
               >
                 <LogoutIcon
@@ -319,14 +319,14 @@ export default function PortalLayout() {
                     userDetail?.role === "Manager"
                       ? "text-red-500"
                       : userDetail?.role === "Admin"
-                      ? userDetail?.gender === "Male"
-                        ? "text-sky-500"
-                        : userDetail?.gender === "Female"
-                        ? "text-pink-500"
-                        : "text-emerald-500"
-                      : darkMode
-                      ? "text-slate-400"
-                      : "text-slate-600"
+                        ? userDetail?.gender === "Male"
+                          ? "text-sky-500"
+                          : userDetail?.gender === "Female"
+                            ? "text-pink-500"
+                            : "text-emerald-500"
+                        : darkMode
+                          ? "text-slate-400"
+                          : "text-slate-600"
                   }`}
                 />
               </div>
@@ -366,12 +366,12 @@ export default function PortalLayout() {
                     userDetail?.role === "Manager"
                       ? "bg-linear-to-r from-red-500 to-red-600 shadow-red-500/25"
                       : userDetail?.role === "Admin"
-                      ? userDetail?.gender === "Male"
-                        ? "bg-linear-to-r from-sky-500 to-blue-600 shadow-sky-500/25"
-                        : userDetail?.gender === "Female"
-                        ? "bg-linear-to-r from-pink-500 to-pink-600 shadow-pink-500/25"
-                        : "bg-linear-to-r from-emerald-500 to-emerald-600 shadow-emerald-500/25"
-                      : "bg-linear-to-r from-slate-700 to-slate-800 shadow-slate-500/25"
+                        ? userDetail?.gender === "Male"
+                          ? "bg-linear-to-r from-sky-500 to-blue-600 shadow-sky-500/25"
+                          : userDetail?.gender === "Female"
+                            ? "bg-linear-to-r from-pink-500 to-pink-600 shadow-pink-500/25"
+                            : "bg-linear-to-r from-emerald-500 to-emerald-600 shadow-emerald-500/25"
+                        : "bg-linear-to-r from-slate-700 to-slate-800 shadow-slate-500/25"
                   }`}
                 >
                   Logout

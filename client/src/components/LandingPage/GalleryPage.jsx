@@ -291,7 +291,7 @@ const GalleryPage = () => {
         <p
           className={`text-xs ${darkMode ? "text-gray-500" : "text-gray-400"}`}
         >
-          © 2025 Athletix. All rights reserved.
+          © 2026 Athletix. All rights reserved.
         </p>
       </footer>
     </div>

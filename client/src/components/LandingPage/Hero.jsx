@@ -52,7 +52,7 @@ const Hero = ({ scrollToSection }) => {
             Athletic Meet
           </span>
           <span className="block text-3xl sm:text-4xl md:text-5xl lg:text-6xl mt-2 text-cyan-400 font-bold">
-            2025
+            2026
           </span>
         </h1>
 

@@ -205,38 +205,74 @@ export default function BulkAddEventPage() {
       return;
     }
 
-    const payload = {
-      jerseyNumbers,
-      eventId: data.eventId,
-    };
-
-    console.log(payload);
-
     try {
       setSubmitting(true);
       setSubmitSuccess(false);
 
       const { data: response } = await axios.post(
         `${API_URL}/manager/event/bulkAdd`,
-        payload,
+        { jerseyNumbers, eventId: data.eventId },
         { withCredentials: true },
       );
 
       if (response.success) {
+        const { updatedUsers } = response.data || {};
+
         setSubmitSuccess(true);
+
         toast.success(
-          `✅ Successfully added event to ${jerseyNumbers.length} participant(s)!`,
+          `✅ Event added to ${updatedUsers ?? jerseyNumbers.length} participant(s)!`,
         );
+
         reset();
         setTimeout(() => setSubmitSuccess(false), 3000);
       }
     } catch (err) {
-      console.error("Failed to add event", err);
+      console.log(err.response)
+
+      // Extract error message and extra details from response
       const message =
         err.response?.data?.message || "Failed to add event. Please try again.";
+      const extraErrors = err.response?.data?.errors || [];
 
-      if (message.includes("not found")) {
-        toast.error("❌ Some jersey numbers were not found. Please verify.");
+      // ❌ Event not found
+      if (message.includes("Event not found")) {
+        toast.error("❌ Selected event does not exist.");
+
+        // ❌ No users
+      } else if (message.includes("No matching users")) {
+        toast.error("❌ No users found for the given jersey numbers.");
+
+        // ❌ Missing jersey numbers
+      } else if (message.includes("Some jersey numbers were not found in the system")) {
+        toast.error(
+          `❌ ${message}`,
+        );
+
+        // ❌ Max event limit
+      } else if (message.includes("max event limit")) {
+        toast.error(
+          `❌ These users already have 5 events: ${extraErrors.join(", ")}`,
+        );
+
+        // ❌ Already registered in event
+      } else if (message.includes("already have this event")) {
+        toast.error(
+          `❌ These users already have this event: ${extraErrors.join(", ")}`,
+        );
+
+        // ❌ Gender mismatch
+      } else if (message.includes("gender does not match")) {
+        const formatted = extraErrors
+          .map((u) => `${u.jerseyNumber} (${u.gender})`)
+          .join(", ");
+        console.log({ extraErrors });
+
+        const category = message.match(/\((.*?)\)/)?.[1] || "this category";
+
+        toast.error(
+          `❌ Gender mismatch — Event is for ${category}. Invalid jerseys: ${formatted}`,
+        );
       } else {
         toast.error(`❌ ${message}`);
       }

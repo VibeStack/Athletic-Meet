@@ -154,7 +154,7 @@ export default function Step3PersonalDetails({ nextStep }) {
           <SelectField
             label="Gender"
             id="gender"
-            options={["Male", "Female", "Other"]}
+            options={["Male", "Female"]}
             register={register}
             rules={{ required: { value: true, message: "Gender is required" } }}
             errors={errors?.gender}

@@ -21,7 +21,7 @@ const Contact = ({ darkMode }) => {
     <section
       id="contact"
       className={`py-14 sm:py-16 ${
-        darkMode ? "bg-gray-900" : "bg-gradient-to-b from-white to-gray-50/50"
+        darkMode ? "bg-gray-900" : "bg-linear-to-b from-white to-gray-50/50"
       }`}
     >
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -148,7 +148,7 @@ const Contact = ({ darkMode }) => {
                     darkMode ? "text-gray-300" : "text-gray-600"
                   }`}
                 >
-                  gndecathletic2025@gmail.com
+                  gndecathletic2026@gmail.com
                 </p>
                 <span
                   className={`text-xs ${

@@ -122,7 +122,7 @@ export default function PortalHome() {
                 darkMode ? "text-slate-400" : "text-slate-600"
               }`}
             >
-              64th Annual Athletic Meet • GNDEC Ludhiana
+              65th Annual Athletic Meet • GNDEC Ludhiana
             </p>
 
             <div

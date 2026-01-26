@@ -1,25 +1,29 @@
 import { ApiError } from "../utils/ApiError.js";
 
 export const errorHandler = (err, req, res, next) => {
-  console.log("🔥 Global Error Handler", err.message);
+  console.error("🔥 Global Error Handler:", err);
+  console.log("🔍 err.errors value:", err.errors);
+  console.log("🔍 Is array?:", Array.isArray(err.errors));
 
+  // Handle ApiError
   if (err instanceof ApiError) {
     return res.status(err.statusCode).json({
+      success: false,
       statusCode: err.statusCode,
-      data: err.data,
       message: err.message,
-      success: err.success,
-      error: err.error,
+      errors: Array.isArray(err.errors) ? err.errors : [],
+      data: null,
       stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
     });
   }
 
+  // Unknown errors fallback
   return res.status(500).json({
-    statusCode: 500,
-    data: null,
-    message: "Internal Server Error",
     success: false,
-    error: [err.message],
+    statusCode: 500,
+    message: err.message || "Internal Server Error",
+    errors: [],
+    data: null,
     stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
   });
 };

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   getAllEvents,
+  bulkAddEvents,
   getAllUsers,
   makeAsAdmin,
   removeAsAdmin,
@@ -8,14 +9,16 @@ import {
   activateEvents,
   deactivateEvents,
   getCertificateStatus,
-  lockCertificates,
   unlockCertificates,
+  lockCertificates,
 } from "../controllers/manager.controller.js";
 
 const router = Router();
 
 // GET all events
 router.route("/allEvents").get(getAllEvents);
+router.route("/event/bulkAdd").post(bulkAddEvents);
+
 router.route("/export/allUsers").get(getAllUsers);
 
 router.route("/user/:userId/makeAsAdmin").post(makeAsAdmin);

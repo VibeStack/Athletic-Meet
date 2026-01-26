@@ -95,7 +95,7 @@ const Footer = ({ darkMode, scrollToSection }) => {
                           {item}
                         </a>
                       </li>
-                    )
+                    ),
                   )}
                 </ul>
               </div>
@@ -195,7 +195,7 @@ const Footer = ({ darkMode, scrollToSection }) => {
               darkMode ? "text-gray-400" : "text-gray-600"
             }`}
           >
-            © 2025 Athletix — Built for real college athletic events.
+            © 2026 Athletix — Built for real college athletic events.
           </p>
           <p
             className={`text-xs mt-1 ${
