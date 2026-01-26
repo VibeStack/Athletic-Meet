@@ -483,3 +483,131 @@ export const unlockCertificates = asyncHandler(async (req, res) => {
       )
     );
 });
+
+export const markingResults = asyncHandler(async (req, res) => {
+  const session = await mongoose.startSession();
+  try {
+    session.startTransaction();
+    const { eventId, jerseyNumbers: jerseyNumbersArray, position } = req.body;
+
+    if (!Array.isArray(jerseyNumbersArray)) {
+      throw new ApiError(400, "Jersey numbers must be an array");
+    }
+
+    if (jerseyNumbersArray.length === 0) {
+      throw new ApiError(400, "No jersey numbers provided");
+    }
+
+    // Remove duplicates
+    const uniqueJerseys = [...new Set(jerseyNumbersArray)];
+
+    const selectedEventId = new mongoose.Types.ObjectId(eventId);
+
+    // Fetch event
+    const selectedEventObject =
+      await Event.findById(selectedEventId).session(session);
+    if (!selectedEventObject) {
+      throw new ApiError(404, "Event not found");
+    }
+
+    // Normalize gender
+    const category = selectedEventObject.category?.toLowerCase();
+
+    const selectedEventObjectValidGender = category?.includes("girl")
+      ? "Female"
+      : category?.includes("boy")
+        ? "Male"
+        : selectedEventObject.category;
+
+    // Fetch matching users
+    const users = await User.find(
+      {
+        jerseyNumber: { $in: uniqueJerseys },
+        gender: selectedEventObjectValidGender,
+      },
+      { jerseyNumber: 1, selectedEvents: 1 }
+    ).session(session);
+
+    // No users found
+    if (users.length === 0) {
+      throw new ApiError(
+        404,
+        "No matching users found for given jersey numbers"
+      );
+    }
+
+    // Missing or gender mismatch
+    if (users.length !== uniqueJerseys.length) {
+      const foundJerseys = users.map((u) => u.jerseyNumber);
+
+      const missingJerseys = uniqueJerseys.filter(
+        (j) => !foundJerseys.includes(j)
+      );
+
+      throw new ApiError(
+        400,
+        `Some jersey numbers are invalid — either they do not exist or their gender does not match the event (${selectedEventObjectValidGender})`,
+        missingJerseys
+      );
+    }
+
+    const usersNotEnrolledJerseyNumbers = users
+      .filter((u) =>
+        u.selectedEvents.every(
+          (ev) => ev.eventId.toString() !== selectedEventId.toString()
+        )
+      )
+      .map((u) => u.jerseyNumber);
+
+    if (usersNotEnrolledJerseyNumbers.length > 0) {
+      throw new ApiError(
+        400,
+        "Some users are NOT enrolled in this event",
+        usersNotEnrolledJerseyNumbers
+      );
+    }
+
+    const usersNotPresentJerseyNumbers = users
+      .filter((u) =>
+        u.selectedEvents.some(
+          (ev) =>
+            ev.eventId.toString() === selectedEventId.toString() &&
+            ev.status !== "present"
+        )
+      )
+      .map((u) => u.jerseyNumber);
+
+    if (usersNotPresentJerseyNumbers.length > 0) {
+      throw new ApiError(
+        400,
+        "Some users are enrolled but NOT marked present in this event",
+        usersNotPresentJerseyNumbers
+      );
+    }
+
+    await User.updateMany(
+      {
+        jerseyNumber: { $in: uniqueJerseys },
+        "selectedEvents.eventId": selectedEventId,
+        "selectedEvents.status": "present",
+      },
+      {
+        $set: {
+          "selectedEvents.$.position": position,
+        },
+      },
+      { session }
+    );
+
+    await session.commitTransaction();
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, "Results updated successfully"));
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
+});

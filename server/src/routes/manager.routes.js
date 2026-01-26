@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   getAllEvents,
   bulkAddEvents,
+  markingResults,
   getAllUsers,
   makeAsAdmin,
   removeAsAdmin,
@@ -18,6 +19,7 @@ const router = Router();
 // GET all events
 router.route("/allEvents").get(getAllEvents);
 router.route("/event/bulkAdd").post(bulkAddEvents);
+router.route("/event/results").post(markingResults);
 
 router.route("/export/allUsers").get(getAllUsers);
 

@@ -352,27 +352,88 @@ export const updateUserEvents = asyncHandler(async (req, res) => {
       );
     }
 
-    user.selectedEvents = updatedEventsIdsArray.map((eid) => {
+    const oldEventIds = user.selectedEvents.map((e) => e.eventId.toString());
+    const newEventIds = updatedEventsIdsArray.map((id) => id.toString());
+
+    const removedEventIds = oldEventIds.filter(
+      (id) => !newEventIds.includes(id)
+    );
+
+    const addedEventIds = newEventIds.filter((id) => !oldEventIds.includes(id));
+
+    // Only update studentsCount if events are ALREADY locked
+    // If not locked, lockUserEvents will handle the increment later
+    if (user.isEventsLocked) {
+      // Decrement counts for REMOVED events (by their current status)
+      if (removedEventIds.length > 0) {
+        for (const eventId of removedEventIds) {
+          const oldEvent = user.selectedEvents.find(
+            (e) => e.eventId.toString() === eventId
+          );
+          const status = oldEvent?.status || "notMarked";
+          const decrementField = `studentsCount.${status}`;
+
+          await Event.updateOne(
+            { _id: eventId },
+            { $inc: { [decrementField]: -1 } },
+            { session }
+          );
+        }
+      }
+
+      // Increment notMarked count for ADDED events
+      if (addedEventIds.length > 0) {
+        await Event.updateMany(
+          { _id: { $in: addedEventIds } },
+          { $inc: { "studentsCount.notMarked": 1 } },
+          { session }
+        );
+      }
+    }
+
+    // 3️⃣ Build new selectedEvents array (preserve status for unchanged events)
+    const newSelectedEvents = newEventIds.map((eventId) => {
+      const existing = user.selectedEvents.find(
+        (e) => e.eventId.toString() === eventId
+      );
+      if (existing) {
+        // Keep existing status and position for unchanged events
+        return {
+          eventId: existing.eventId,
+          status: existing.status,
+          position: existing.position || 0,
+        };
+      }
+      // New events start with notMarked
       return {
-        eventId: eid,
+        eventId: eventId,
+        status: "notMarked",
+        position: 0,
       };
     });
+
+    user.selectedEvents = newSelectedEvents;
     await user.save({ session });
 
     /* ---------- RESPONSE DATA ---------- */
     const events = await Event.find(
-      { _id: { $in: [...updatedEventsIdsArray] } },
+      { _id: { $in: newEventIds } },
       "name type day",
       { session }
     ).lean();
 
-    const formattedData = events.map((e) => ({
-      eventId: e._id.toString(),
-      eventName: e.name,
-      eventType: e.type,
-      eventDay: e.day,
-      attendanceStatus: "notMarked",
-    }));
+    const formattedData = events.map((e) => {
+      const userEvent = newSelectedEvents.find(
+        (se) => se.eventId.toString() === e._id.toString()
+      );
+      return {
+        eventId: e._id.toString(),
+        eventName: e.name,
+        eventType: e.type,
+        eventDay: e.day,
+        attendanceStatus: userEvent?.status || "notMarked",
+      };
+    });
 
     await session.commitTransaction();
 
@@ -579,36 +640,131 @@ export const markAttendanceByGivingJerseyArray = asyncHandler(
     session.startTransaction();
 
     try {
+      if (!Array.isArray(jerseysArray) || jerseysArray.length === 0) {
+        throw new ApiError(400, "Jersey numbers must be a non-empty array");
+      }
+
+      // Remove duplicates
+      const uniqueJerseys = [...new Set(jerseysArray)];
+
+      const eventObjectId = new mongoose.Types.ObjectId(selectedEventId);
+
+      // 1. Fetch and validate event
+      const selectedEvent =
+        await Event.findById(eventObjectId).session(session);
+      if (!selectedEvent) {
+        throw new ApiError(404, "Event not found");
+      }
+
+      // Normalize gender for event category
+      const category = selectedEvent.category?.toLowerCase();
+      const eventGender = category?.includes("girl")
+        ? "Female"
+        : category?.includes("boy")
+          ? "Male"
+          : selectedEvent.category;
+
+      // 2. Fetch matching users
       const users = await User.find(
-        { jerseyNumber: { $in: jerseysArray } },
-        { selectedEvents: 1, jerseyNumber: 1 }
+        {
+          jerseyNumber: { $in: uniqueJerseys },
+          gender: eventGender,
+        },
+        { selectedEvents: 1, jerseyNumber: 1, gender: 1 }
       ).session(session);
 
-      if (users.length !== jerseysArray.length) {
-        throw new ApiError(400, "Some jersey numbers were not found");
+      if (users.length === 0) {
+        throw new ApiError(
+          404,
+          "No matching users found for given jersey numbers"
+        );
       }
 
-      const failedUsers = users.filter((user) => {
-        return !user.selectedEvents.some(
-          (event) =>
-            event.eventId.toString() === selectedEventId.toString() &&
-            event.status === "notMarked" &&
-            event.position === 0
+      // 3. Check for missing or gender mismatch
+      if (users.length !== uniqueJerseys.length) {
+        const foundJerseys = users.map((u) => u.jerseyNumber);
+        const missingJerseys = uniqueJerseys.filter(
+          (j) => !foundJerseys.includes(j)
         );
-      });
-
-      if (failedUsers.length > 0) {
-        const failedJerseys = failedUsers.map((u) => u.jerseyNumber);
 
         throw new ApiError(
-          409,
-          `Update blocked. These jerseys do not meet conditions: ${failedJerseys.join(", ")}`
+          400,
+          `Some jersey numbers are invalid — either they do not exist or their gender does not match the event (${eventGender})`,
+          missingJerseys
         );
       }
 
+      // 4. Check if users are enrolled in this event
+      const notEnrolledUsers = users.filter(
+        (u) =>
+          !u.selectedEvents.some(
+            (ev) => ev.eventId.toString() === eventObjectId.toString()
+          )
+      );
+
+      if (notEnrolledUsers.length > 0) {
+        throw new ApiError(
+          400,
+          "Some users are NOT enrolled in this event",
+          notEnrolledUsers.map((u) => u.jerseyNumber)
+        );
+      }
+
+      // 5. Check if already marked present
+      const alreadyPresentUsers = users.filter((u) =>
+        u.selectedEvents.some(
+          (ev) =>
+            ev.eventId.toString() === eventObjectId.toString() &&
+            ev.status === "present"
+        )
+      );
+
+      if (alreadyPresentUsers.length > 0) {
+        throw new ApiError(
+          400,
+          "Some users are already marked present",
+          alreadyPresentUsers.map((u) => u.jerseyNumber)
+        );
+      }
+
+      // 6. Check if status is notMarked (not absent)
+      const notMarkableUsers = users.filter((u) =>
+        u.selectedEvents.some(
+          (ev) =>
+            ev.eventId.toString() === eventObjectId.toString() &&
+            ev.status !== "notMarked"
+        )
+      );
+
+      if (notMarkableUsers.length > 0) {
+        throw new ApiError(
+          400,
+          "Some users have invalid attendance status (not 'notMarked')",
+          notMarkableUsers.map((u) => u.jerseyNumber)
+        );
+      }
+
+      // 7. Check if position is already set
+      const positionSetUsers = users.filter((u) =>
+        u.selectedEvents.some(
+          (ev) =>
+            ev.eventId.toString() === eventObjectId.toString() &&
+            ev.position !== 0
+        )
+      );
+
+      if (positionSetUsers.length > 0) {
+        throw new ApiError(
+          400,
+          "Some users already have positions recorded",
+          positionSetUsers.map((u) => u.jerseyNumber)
+        );
+      }
+
+      // All validations passed - proceed with update
       await User.updateMany(
         {
-          jerseyNumber: { $in: jerseysArray },
+          jerseyNumber: { $in: uniqueJerseys },
         },
         {
           $set: { "selectedEvents.$[event].status": "present" },
@@ -618,22 +774,23 @@ export const markAttendanceByGivingJerseyArray = asyncHandler(
           runValidators: true,
           arrayFilters: [
             {
-              "event.eventId": selectedEventId,
+              "event.eventId": eventObjectId,
               "event.status": "notMarked",
               "event.position": 0,
             },
           ],
         }
       );
+
       await Event.findOneAndUpdate(
         {
-          _id: selectedEventId,
-          "studentsCount.notMarked": { $gte: jerseysArray.length },
+          _id: eventObjectId,
+          "studentsCount.notMarked": { $gte: uniqueJerseys.length },
         },
         {
           $inc: {
-            "studentsCount.present": jerseysArray.length,
-            "studentsCount.notMarked": -jerseysArray.length,
+            "studentsCount.present": uniqueJerseys.length,
+            "studentsCount.notMarked": -uniqueJerseys.length,
           },
         },
         { session }
@@ -643,7 +800,12 @@ export const markAttendanceByGivingJerseyArray = asyncHandler(
 
       return res
         .status(200)
-        .json(new ApiResponse(null, "Attendance marked successfully"));
+        .json(
+          new ApiResponse(
+            { markedCount: uniqueJerseys.length },
+            `Attendance marked successfully for ${uniqueJerseys.length} participant(s)`
+          )
+        );
     } catch (error) {
       await session.abortTransaction();
       throw error;
@@ -711,6 +873,20 @@ export const deleteUser = asyncHandler(async (req, res) => {
 
     if (!canDeleteUser(head.role, user.role)) {
       throw new ApiError(403, "You are not allowed to delete this user");
+    }
+
+    // Decrement event counts for user's enrolled events (if locked)
+    if (user.isEventsLocked && user.selectedEvents.length > 0) {
+      for (const selectedEvent of user.selectedEvents) {
+        const status = selectedEvent.status || "notMarked";
+        const decrementField = `studentsCount.${status}`;
+
+        await Event.updateOne(
+          { _id: selectedEvent.eventId },
+          { $inc: { [decrementField]: -1 } },
+          { session }
+        );
+      }
     }
 
     await User.deleteOne({ _id: user._id }).session(session);
