@@ -1,9 +1,7 @@
 import { ApiError } from "../utils/ApiError.js";
 
 export const errorHandler = (err, req, res, next) => {
-  console.error("🔥 Global Error Handler:", err);
-  console.log("🔍 err.errors value:", err.errors);
-  console.log("🔍 Is array?:", Array.isArray(err.errors));
+  console.error("🔥 Global Error Handler:", err.message);
 
   // Handle ApiError
   if (err instanceof ApiError) {

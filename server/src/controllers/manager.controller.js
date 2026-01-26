@@ -65,25 +65,37 @@ export const bulkAddEvents = asyncHandler(async (req, res) => {
       throw new ApiError(400, "No jersey numbers provided");
     }
 
+    // Remove duplicates
+    const uniqueJerseys = [...new Set(jerseyNumbersArray)];
+
     const selectedEventId = new mongoose.Types.ObjectId(eventId);
 
-    const eventObject = await Event.findById(selectedEventId).session(session);
-    if (!eventObject) {
+    // Fetch event
+    const selectedEventObject =
+      await Event.findById(selectedEventId).session(session);
+    if (!selectedEventObject) {
       throw new ApiError(404, "Event not found");
     }
 
-    // Normalize event gender
-    const eventGender = eventObject.category?.toLowerCase().includes("girl")
-      ? "female"
-      : eventObject.category?.toLowerCase().includes("boy")
-        ? "male"
-        : eventObject.category?.toLowerCase();
+    // Normalize gender
+    const category = selectedEventObject.category?.toLowerCase();
 
+    const selectedEventObjectValidGender = category?.includes("girl")
+      ? "Female"
+      : category?.includes("boy")
+        ? "Male"
+        : selectedEventObject.category;
+
+    // Fetch matching users
     const users = await User.find(
-      { jerseyNumber: { $in: jerseyNumbersArray } },
-      { jerseyNumber: 1, gender: 1, selectedEvents: 1 }
+      {
+        jerseyNumber: { $in: uniqueJerseys },
+        gender: selectedEventObjectValidGender,
+      },
+      { jerseyNumber: 1, selectedEvents: 1 }
     ).session(session);
 
+    // No users found
     if (users.length === 0) {
       throw new ApiError(
         404,
@@ -91,75 +103,52 @@ export const bulkAddEvents = asyncHandler(async (req, res) => {
       );
     }
 
-    // 3️⃣ Missing Jerseys Check
-    if (users.length !== jerseyNumbersArray.length) {
-      const usersJerseyNumberArray = users.map((u) => u.jerseyNumber);
+    // Missing or gender mismatch
+    if (users.length !== uniqueJerseys.length) {
+      const foundJerseys = users.map((u) => u.jerseyNumber);
 
-      const missingJerseyNumbers = jerseyNumbersArray.filter(
-        (j) => !usersJerseyNumberArray.includes(j)
+      const missingJerseys = uniqueJerseys.filter(
+        (j) => !foundJerseys.includes(j)
       );
 
       throw new ApiError(
         400,
-        "Some jersey numbers were not found in the system",
-        missingJerseyNumbers
+        `Some jersey numbers are invalid — either they do not exist or their gender does not match the event (${selectedEventObjectValidGender})`,
+        missingJerseys
       );
     }
 
-    // 4️⃣ Gender Mismatch Check
-    const invalidGenderUsers = users.filter(
-      (u) => u.gender && eventGender && u.gender.toLowerCase() !== eventGender
-    );
-    console.log(
-      "Array =",
-      invalidGenderUsers.map((u) => ({
-        jerseyNumber: u.jerseyNumber,
-        gender: u.gender,
-      }))
-    );
-
-    if (invalidGenderUsers.length > 0) {
-      throw new ApiError(
-        400,
-        `Some users gender does not match event category (${eventObject.category})`,
-        invalidGenderUsers.map((u) => ({
-          jerseyNumber: u.jerseyNumber,
-          gender: u.gender,
-        }))
-      );
-    }
-
-    // 5️⃣ Max Event Limit Check (>= 5 FAIL ALL)
-    const usersOverLimit = users.filter(
-      (u) => Array.isArray(u.selectedEvents) && u.selectedEvents.length >= 5
-    );
-
-    if (usersOverLimit.length > 0) {
-      throw new ApiError(
-        400,
-        "Some users already reached max event limit (5)",
-        usersOverLimit.map((u) => u.jerseyNumber)
-      );
-    }
-
-    // 6️⃣ Prevent adding duplicate event
-    const alreadyRegistered = users.filter((u) =>
+    // Already enrolled
+    const usersAlreadyHavingEvent = users.filter((u) =>
       u.selectedEvents?.some(
         (ev) => ev.eventId?.toString() === selectedEventId.toString()
       )
     );
 
-    if (alreadyRegistered.length > 0) {
+    if (usersAlreadyHavingEvent.length > 0) {
       throw new ApiError(
         400,
-        "Some users already have this event",
-        alreadyRegistered.map((u) => u.jerseyNumber)
+        "Some users are already enrolled in this event",
+        usersAlreadyHavingEvent.map((u) => u.jerseyNumber)
       );
     }
 
-    // 7️⃣ Add Event (Embedded Object)
+    // Max event limit
+    const usersReachedMaximumEventEnrollCount = users.filter(
+      (u) => (u.selectedEvents?.length || 0) >= 5
+    );
+
+    if (usersReachedMaximumEventEnrollCount.length > 0) {
+      throw new ApiError(
+        400,
+        "Some users reached maximum event limit (5)",
+        usersReachedMaximumEventEnrollCount.map((u) => u.jerseyNumber)
+      );
+    }
+
+    // Update only valid users
     const updateResult = await User.updateMany(
-      { jerseyNumber: { $in: uniqueJerseys } },
+      { jerseyNumber: { $in: users.map((u) => u.jerseyNumber) } },
       {
         $addToSet: {
           selectedEvents: {
@@ -172,18 +161,17 @@ export const bulkAddEvents = asyncHandler(async (req, res) => {
       { session }
     );
 
-    if (updateResult.modifiedCount !== uniqueJerseys.length) {
+    if (updateResult.modifiedCount !== users.length) {
       throw new ApiError(500, "Unexpected update mismatch — aborting");
     }
 
-    // 8️⃣ Increment Event Counter
+    // Update event counter
     await Event.updateOne(
       { _id: selectedEventId },
       { $inc: { "studentsCount.notMarked": updateResult.modifiedCount } },
       { session }
     );
 
-    // 9️⃣ Commit Transaction
     await session.commitTransaction();
 
     return res.status(200).json(
@@ -192,7 +180,7 @@ export const bulkAddEvents = asyncHandler(async (req, res) => {
           totalRequested: uniqueJerseys.length,
           updatedUsers: updateResult.modifiedCount,
         },
-        "Event added successfully to all participants"
+        `Event added successfully to ${updateResult.modifiedCount} participant(s)`
       )
     );
   } catch (error) {

@@ -131,10 +131,10 @@ export default function UsersPage() {
       if (!isNaN(query)) {
         const q = query.trim();
 
-        if (user.jerseyNumber?.toString() === q) score += 100;
+        if (user.jerseyNumber?.toString() === q) score += 10000;
         else if (user.jerseyNumber?.toString().includes(q)) score += 50;
 
-        if (user.urn?.toString() === q) score += 100;
+        if (user.urn?.toString() === q) score += 1000;
         else if (user.urn?.toString().includes(q)) score += 50;
 
         if (user.crn?.toString() === q) score += 100;
