@@ -8,6 +8,7 @@ export const loginUser = asyncHandler(async (req, res) => {
   const { username, email, password } = req.body;
 
   const isProduction = process.env.NODE_ENV === "production";
+  console.log({ isProduction });
 
   const existingSid = req.signedCookies?.sid;
   if (existingSid) {
