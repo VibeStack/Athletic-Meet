@@ -89,13 +89,13 @@ export default function Step2EmailOtp({ nextStep }) {
 
         await axios.post(
           `${import.meta.env.VITE_API_URL}/otp/registerOtpSender`,
-          { email }
+          { email },
         );
 
         setMessage(
           isResend
             ? "A new OTP has been sent to your email."
-            : "OTP sent successfully to your email."
+            : "OTP sent successfully to your email.",
         );
       } else {
         setMessage(`⏳ You can resend OTP after 2 minutes.`);
@@ -112,20 +112,50 @@ export default function Step2EmailOtp({ nextStep }) {
     const email = getValues("email");
     const otp = Array.from({ length: 6 }, (_, i) => data[`otp${i}`]).join("");
 
-    if (otp.length !== 6) return alert("Please enter all 6 digits of the OTP.");
+    if (otp.length !== 6) {
+      alert("❌ Please enter all 6 digits of the OTP.");
+      return;
+    }
 
     try {
       setLoading(true);
-      setMessage("Verifying OTP...");
-      await axios.post(
+      setMessage("🔄 Verifying OTP...");
+
+      const { data: response } = await axios.post(
         `${import.meta.env.VITE_API_URL}/otp/registerOtpVerifier`,
         { email, otp },
-        { withCredentials: true }
+        { withCredentials: true },
       );
-      setMessage("✅ OTP verified successfully!");
-      nextStep();
+
+      const msg = response?.message;
+
+      if (msg === "OTP verified successfully. Please complete your profile!") {
+        setMessage("✅ OTP verified successfully!");
+        nextStep();
+        return;
+      }
+
+      setMessage("⚠️ Unexpected response. Please continue.");
     } catch (error) {
-      setMessage("❌ Invalid or expired OTP. Please try again.");
+      console.error("OTP Verify Error:", error.response?.data);
+
+      const errMsg = error.response?.data?.message;
+
+      if (errMsg === "Invalid OTP") {
+        setMessage("❌ Invalid OTP. Please try again.");
+      } else if (errMsg === "No OTP found. Please request a new one.") {
+        setMessage("❌ OTP expired. Please request a new OTP.");
+      } else if (errMsg === "OTP already verified.") {
+        setMessage("⚠️ OTP already verified. Continue profile.");
+        nextStep();
+      } else if (errMsg === "Registration already completed") {
+        setMessage(
+          "⚠️ Registration already completed. Redirecting to login...",
+        );
+        navigate("/login");
+      } else {
+        setMessage("❌ OTP verification failed. Try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -180,8 +210,8 @@ export default function Step2EmailOtp({ nextStep }) {
               message.includes("success") || message.includes("✅")
                 ? "text-green-600"
                 : message.includes("Verifying")
-                ? "text-blue-600"
-                : "text-red-600"
+                  ? "text-blue-600"
+                  : "text-red-600"
             }`}
           >
             {message}

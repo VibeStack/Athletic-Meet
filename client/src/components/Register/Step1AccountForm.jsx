@@ -25,48 +25,55 @@ export default function Step1AccountForm({ nextStep, setStep }) {
           withCredentials: true,
         },
       );
+      const msg = response?.message;
+
+      if (msg === "Account already exists. Please log in.") {
+        alert("✅ Account already exists. Redirecting to login...");
+        navigate("/login");
+        return;
+      }
+
+      if (msg === "Email already verified. Please complete your profile.") {
+        alert("✅ Email already verified. Continue profile completion.");
+        setStep(3);
+        return;
+      }
+
+      if (msg === "OTP already sent. Please check your email.") {
+        alert("📩 OTP already sent. Check your inbox.");
+        nextStep();
+        return;
+      }
+
+      if (msg === "OTP sent successfully! Please verify your email.") {
+        alert("📨 OTP sent successfully! Verify to continue.");
+        nextStep();
+        return;
+      }
 
       if (
-        response.success &&
-        response.message === "Account already exists. Please log in."
+        msg === "Username already taken." ||
+        msg === "Username already taken. Please choose another."
       ) {
-        alert("Account already exists. Please log in.");
-        navigate("/login");
-      } else if (
-        response.success &&
-        response.message ===
-          "Email already verified. Please complete your profile."
-      ) {
-        alert("Email already verified. Please complete your profile.");
-        setStep(3);
-      } else if (
-        response.success &&
-        response.message === "OTP already sent. Please check your email."
-      ) {
-        alert("OTP already sent. Please check your email.");
-        nextStep();
-      } else if (
-        response.success &&
-        response.message === "OTP sent successfully! Please verify your email."
-      ) {
-        alert("✅ OTP sent to your email. Please verify to continue.");
-        nextStep();
-      } else if (
-        response.success &&
-        response.message ===
-          "Username already taken. Please choose another username."
-      ) {
-        alert("Username already taken. Please choose another username.");
+        alert("❌ Username already taken.");
         setError("username", {
           type: "manual",
           message: "Username already taken. Please choose another username.",
         });
+        return;
       } else {
-        alert("⚠️ Something Went Wrong!");
+        alert("⚠️ Unexpected response. Please try again.");
       }
     } catch (error) {
-      console.log(error.response.data.message);
-      alert("⚠️ Network Error!");
+      console.error("OTP Sender Error:", error.response?.data);
+
+      const errMsg = error.response?.data?.message;
+
+      if (errMsg) {
+        alert(`❌ ${errMsg}`);
+      } else {
+        alert("🌐 Network error. Please try again.");
+      }
     }
   };
 

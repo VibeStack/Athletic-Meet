@@ -16,30 +16,24 @@ export const registerOtpSender = asyncHandler(async (req, res) => {
     );
   }
 
-  if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-    throw new ApiError(
-      400,
-      "Username can contain only letters, numbers, and underscores."
-    );
-  }
-
   const user = await User.findOne({
     $or: [{ email }, { username: username.toLowerCase() }],
   });
 
   if (
     user &&
+    user.email !== email &&
+    user.username === username.toLowerCase()
+  ) {
+    throw new ApiError(409, "Username already taken.");
+  }
+
+  if (
+    user &&
     user.username === username.toLowerCase() &&
     user.email !== email
   ) {
-    return res
-      .status(200)
-      .json(
-        new ApiResponse(
-          null,
-          "Username already taken. Please choose another username."
-        )
-      );
+    throw new ApiError(409, "Username already taken. Please choose another.");
   }
 
   if (user) {
@@ -125,7 +119,7 @@ export const registerOtpVerifier = asyncHandler(async (req, res) => {
   if (!otpData)
     throw new ApiError(404, "No OTP found. Please request a new one.");
 
-  if (otpData.otp !== Number(otp)) {
+  if (String(otpData.otp) !== String(otp)) {
     throw new ApiError(401, "Invalid OTP");
   }
 

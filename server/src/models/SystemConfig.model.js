@@ -9,6 +9,7 @@ const systemConfigSchema = new Schema(
     lastAssignedJerseyNumber: {
       type: Number,
       required: true,
+      default: 0,
     },
     freeJerseyNumbers: {
       type: [Number],

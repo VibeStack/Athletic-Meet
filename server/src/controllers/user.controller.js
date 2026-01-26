@@ -7,43 +7,6 @@ import { Session } from "../models/Session.model.js";
 import { SystemConfig } from "../models/SystemConfig.model.js";
 import mongoose from "mongoose";
 
-const getNextJerseyNumber = async (session) => {
-  let counter = await SystemConfig.findById("GLOBAL").session(session);
-
-  if (!counter) {
-    const created = await SystemConfig.create(
-      [
-        {
-          _id: "GLOBAL",
-          lastAssignedJerseyNumber: 1,
-          freeJerseyNumbers: [],
-          areCertificatesLocked: false,
-        },
-      ],
-      { session }
-    );
-
-    return created[0].lastAssignedJerseyNumber;
-  }
-
-  if (counter.freeJerseyNumbers.length > 0) {
-    const reused = counter.freeJerseyNumbers[0];
-
-    await SystemConfig.updateOne(
-      { _id: "GLOBAL" },
-      { $pull: { freeJerseyNumbers: reused } },
-      { session }
-    );
-
-    return reused;
-  }
-
-  counter.lastAssignedJerseyNumber += 1;
-  await counter.save({ session });
-
-  return counter.lastAssignedJerseyNumber;
-};
-
 export const registerUser = asyncHandler(async (req, res) => {
   const session = await mongoose.startSession();
 
@@ -68,7 +31,7 @@ export const registerUser = asyncHandler(async (req, res) => {
     }).session(session);
 
     if (!user) {
-      throw new ApiError(400, "Invalid registration attempt");
+      throw new ApiError(404, "User not found. Please signup first.");
     }
 
     if (user.isUserDetailsComplete === "false") {
@@ -82,6 +45,14 @@ export const registerUser = asyncHandler(async (req, res) => {
         .json(new ApiResponse(null, "Account already exists"));
     }
 
+    if (user.isUserDetailsComplete !== "partial") {
+      throw new ApiError(400, "Invalid registration state");
+    }
+
+    if (user.jerseyNumber) {
+      throw new ApiError(409, "User already has a jersey number");
+    }
+
     user.fullname = fullname;
     user.gender = gender;
     user.course = course;
@@ -91,7 +62,19 @@ export const registerUser = asyncHandler(async (req, res) => {
     user.year = year;
     user.phone = phone;
 
-    user.jerseyNumber = await getNextJerseyNumber(session);
+    const config = await SystemConfig.findOneAndUpdate(
+      { _id: "GLOBAL" },
+      {
+        $inc: { lastAssignedJerseyNumber: 1 },
+        $setOnInsert: {
+          freeJerseyNumbers: [],
+          areCertificatesLocked: true,
+        },
+      },
+      { upsert: true, new: true, runValidators: true, session }
+    );
+
+    user.jerseyNumber = config.lastAssignedJerseyNumber;
     user.isUserDetailsComplete = "true";
 
     await user.save({ session });
