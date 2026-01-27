@@ -77,7 +77,6 @@ export const X = ({ className }) => (
   </svg>
 );
 
-
 export const Mail = ({ className }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -467,7 +466,6 @@ export const EventIcon = ({ className }) => (
   </svg>
 );
 
-
 export const Certificate = ({ className }) => (
   <svg
     className={className}
@@ -518,4 +516,4 @@ export const Download = ({ className }) => (
 
 export { UserIcon, MailIcon, LockIcon, CheckIcon } from "./FormIcons";
 
-export { AthletixLogo, AthletixIcon } from "./AthletixLogo";
+export { SprintSyncLogo, SprintSyncIcon } from "./SprintSyncLogo";

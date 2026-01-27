@@ -330,7 +330,6 @@ export const unlockEvents = asyncHandler(async (req, res) => {
   }
 });
 
-// Get user certificates
 export const getCertificates = asyncHandler(async (req, res) => {
   const user = req.user;
 

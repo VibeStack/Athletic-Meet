@@ -39,7 +39,7 @@ export default function PortalHome() {
     }
 
     const qrPayload = {
-      id: "GNDEC Athletix 2026",
+      id: "GNDEC SprintSync 2026",
       name: user.username,
       jerseyNumber: user.jerseyNumber,
     };

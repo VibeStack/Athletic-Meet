@@ -26,9 +26,17 @@ const Footer = ({ darkMode, scrollToSection }) => {
                   className="flex items-center space-x-2 mb-2 cursor-pointer"
                   onClick={() => handleScrollTo("home")}
                 >
-                  <Trophy className="w-7 h-7" />
+                  <img
+                    src={
+                      darkMode
+                        ? "/images/dark_mode_logo.png"
+                        : "/images/light_mode_logo.png"
+                    }
+                    alt="Logo"
+                    className="w-10 h-10 rounded-lg"
+                  />
                   <span className="font-black text-lg bg-linear-to-r from-cyan-500 to-blue-500 bg-clip-text text-transparent">
-                    Athletix
+                    SprintSync
                   </span>
                 </div>
                 <p
@@ -195,7 +203,7 @@ const Footer = ({ darkMode, scrollToSection }) => {
               darkMode ? "text-gray-400" : "text-gray-600"
             }`}
           >
-            © 2026 Athletix — Built for real college athletic events.
+            © 2026 SprintSync — Built for real college athletic events.
           </p>
           <p
             className={`text-xs mt-1 ${

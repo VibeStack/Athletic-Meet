@@ -1,1 +1,1 @@
-export const DB_NAME = "athletix";
+export const DB_NAME = "sprintsync";
