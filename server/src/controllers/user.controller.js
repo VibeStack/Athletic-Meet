@@ -8,90 +8,125 @@ import { SystemConfig } from "../models/SystemConfig.model.js";
 import mongoose from "mongoose";
 
 export const registerUser = asyncHandler(async (req, res) => {
-  const session = await mongoose.startSession();
+  const {
+    username,
+    email,
+    fullname,
+    gender,
+    course,
+    branch,
+    crn,
+    urn,
+    year,
+    phone,
+  } = req.body;
 
-  try {
-    session.startTransaction();
+  const user = await User.findOne({
+    $or: [{ email }, { username }],
+  });
 
-    const {
-      username,
-      email,
-      fullname,
-      gender,
-      course,
-      branch,
-      crn,
-      urn,
-      year,
-      phone,
-    } = req.body;
+  if (!user) {
+    throw new ApiError(404, "User not found. Please signup first.");
+  }
 
-    const user = await User.findOne({
-      $or: [{ email }, { username }],
-    }).session(session);
+  if (user.isUserDetailsComplete === "false") {
+    throw new ApiError(403, "Please verify OTP first");
+  }
 
-    if (!user) {
-      throw new ApiError(404, "User not found. Please signup first.");
-    }
+  if (user.isUserDetailsComplete === "true") {
+    return res
+      .status(200)
+      .json(new ApiResponse(null, "Account already exists"));
+  }
 
-    if (user.isUserDetailsComplete === "false") {
-      throw new ApiError(403, "Please verify OTP first");
-    }
+  if (user.isUserDetailsComplete !== "partial") {
+    throw new ApiError(400, "Invalid registration state");
+  }
 
-    if (user.isUserDetailsComplete === "true") {
-      await session.commitTransaction();
-      return res
-        .status(200)
-        .json(new ApiResponse(null, "Account already exists"));
-    }
+  if (user.jerseyNumber) {
+    throw new ApiError(409, "User already has a jersey number");
+  }
 
-    if (user.isUserDetailsComplete !== "partial") {
-      throw new ApiError(400, "Invalid registration state");
-    }
+  let jerseyNumber;
 
-    if (user.jerseyNumber) {
-      throw new ApiError(409, "User already has a jersey number");
-    }
+  const reused = await SystemConfig.findOneAndUpdate(
+    { _id: "GLOBAL", freeJerseyNumbers: { $exists: true, $ne: [] } },
+    [
+      {
+        $set: {
+          freeJerseyNumbers: {
+            $sortArray: { input: "$freeJerseyNumbers", sortBy: 1 },
+          },
+        },
+      },
+      {
+        $set: {
+          jerseyToAssign: { $arrayElemAt: ["$freeJerseyNumbers", 0] },
+        },
+      },
+      {
+        $set: {
+          freeJerseyNumbers: {
+            $slice: ["$freeJerseyNumbers", 1, { $size: "$freeJerseyNumbers" }],
+          },
+        },
+      },
+    ],
+    { new: true }
+  );
 
-    user.fullname = fullname;
-    user.gender = gender;
-    user.course = course;
-    user.branch = branch;
-    user.crn = crn;
-    user.urn = urn;
-    user.year = year;
-    user.phone = phone;
+  if (reused?.jerseyToAssign) {
+    jerseyNumber = reused.jerseyToAssign;
+  }
 
-    const config = await SystemConfig.findOneAndUpdate(
+  if (!jerseyNumber) {
+    const incremented = await SystemConfig.findOneAndUpdate(
       { _id: "GLOBAL" },
       {
         $inc: { lastAssignedJerseyNumber: 1 },
-        $setOnInsert: {
-          freeJerseyNumbers: [],
-          areCertificatesLocked: true,
-        },
+        $setOnInsert: { freeJerseyNumbers: [], areCertificatesLocked: true },
       },
-      { upsert: true, new: true, runValidators: true, session }
+      { upsert: true, new: true }
     );
 
-    user.jerseyNumber = config.lastAssignedJerseyNumber;
-    user.isUserDetailsComplete = "true";
-
-    await user.save({ session });
-
-    await session.commitTransaction();
-
-    return res
-      .status(200)
-      .json(new ApiResponse(null, "Registration completed successfully"));
-  } catch (error) {
-    if (session.inTransaction()) {
-      await session.abortTransaction();
-    }
-    throw error;
-  } finally {
-    session.endSession();
+    jerseyNumber = incremented.lastAssignedJerseyNumber;
   }
+
+  const updatedUser = await User.findOneAndUpdate(
+    {
+      email,
+      isUserDetailsComplete: "partial",
+      jerseyNumber: { $exists: false },
+    },
+    {
+      $set: {
+        fullname,
+        gender,
+        course,
+        branch,
+        crn,
+        urn,
+        year,
+        phone,
+        jerseyNumber,
+        isUserDetailsComplete: "true",
+      },
+    },
+    { new: true }
+  );
+
+  if (!updatedUser) {
+    throw new ApiError(
+      409,
+      "User already completed registration or invalid state."
+    );
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse({ jerseyNumber }, "Registration completed successfully")
+    );
 });
 
 export const getCurrentUser = asyncHandler(async (req, res) => {
@@ -394,3 +429,18 @@ export const getCertificates = asyncHandler(async (req, res) => {
     )
   );
 });
+
+export const markAllDetailsCompleteAsPartial = asyncHandler(
+  async (req, res) => {
+    const users = await User.find({});
+
+    for (const user of users) {
+      user.isUserDetailsComplete = "partial";
+      await user.save();
+    }
+
+    return res
+      .status(200)
+      .json(new ApiResponse(null, "Details marked as partial successfully"));
+  }
+);

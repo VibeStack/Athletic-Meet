@@ -8,6 +8,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 
 export const registerOtpSender = asyncHandler(async (req, res) => {
   const { username, email, password } = req.body;
+  const normalizedUsername = username?.toLowerCase().trim();
 
   if (!username || !email || !password) {
     throw new ApiError(
@@ -17,23 +18,16 @@ export const registerOtpSender = asyncHandler(async (req, res) => {
   }
 
   const user = await User.findOne({
-    $or: [{ email }, { username: username.toLowerCase() }],
+    $or: [{ email }, { username: normalizedUsername }],
   });
 
-  if (
-    user &&
-    user.email !== email &&
-    user.username === username.toLowerCase()
-  ) {
-    throw new ApiError(409, "Username already taken.");
-  }
-
-  if (
-    user &&
-    user.username === username.toLowerCase() &&
-    user.email !== email
-  ) {
-    throw new ApiError(409, "Username already taken. Please choose another.");
+  if (user) {
+    if (user.username === normalizedUsername && user.email !== email) {
+      throw new ApiError(409, "Username already taken.");
+    }
+    if (user.email === email && user.username !== normalizedUsername) {
+      throw new ApiError(409, "Email already linked to another username.");
+    }
   }
 
   if (user) {
@@ -64,22 +58,29 @@ export const registerOtpSender = asyncHandler(async (req, res) => {
             .json(
               new ApiResponse(
                 null,
-                "OTP already sent. Please check your email."
-              )
-            );
-        } else {
-          const otp = otpGenerator();
-          await Otp.create({ email, otp });
-          await mailSender(email, otp);
-          return res
-            .status(200)
-            .json(
-              new ApiResponse(
-                null,
-                "OTP sent successfully! Please verify your email."
+                "OTP already sent. Please wait before requesting again."
               )
             );
         }
+
+        const otp = otpGenerator();
+
+        await Otp.findOneAndUpdate(
+          { email },
+          { otp, createdAt: new Date() },
+          { upsert: true, new: true }
+        );
+
+        await mailSender(email, otp);
+
+        return res
+          .status(200)
+          .json(
+            new ApiResponse(
+              null,
+              "OTP sent successfully! Please verify your email."
+            )
+          );
       }
 
       default:
@@ -92,14 +93,25 @@ export const registerOtpSender = asyncHandler(async (req, res) => {
 
   const otp = otpGenerator();
 
-  await User.create({
-    username: username.toLowerCase(),
-    email,
-    password,
-    isUserDetailsComplete: "false",
-  });
+  await User.findOneAndUpdate(
+    { email },
+    {
+      $setOnInsert: {
+        username: normalizedUsername,
+        email,
+        password,
+        isUserDetailsComplete: "false",
+      },
+    },
+    { upsert: true, new: true }
+  );
 
-  await Otp.create({ email, otp });
+  await Otp.findOneAndUpdate(
+    { email },
+    { otp, createdAt: new Date() },
+    { upsert: true, new: true }
+  );
+
   await mailSender(email, otp);
 
   return res
@@ -114,7 +126,7 @@ export const registerOtpVerifier = asyncHandler(async (req, res) => {
 
   if (!email || !otp) throw new ApiError(400, "Email and OTP are required");
 
-  const otpData = await Otp.findOne({ email });
+  const otpData = await Otp.findOneAndDelete({ email });
 
   if (!otpData)
     throw new ApiError(404, "No OTP found. Please request a new one.");
@@ -128,23 +140,19 @@ export const registerOtpVerifier = asyncHandler(async (req, res) => {
   if (!user) {
     throw new ApiError(404, "User not found.");
   }
-  if (user && user.isUserDetailsComplete === "partial") {
-    throw new ApiError(409, "OTP already verified.");
-  }
-  if (user && user.isUserDetailsComplete === "true") {
-    throw new ApiError(409, "Registration already completed");
+  if (user.isUserDetailsComplete !== "false") {
+    throw new ApiError(409, "OTP already verified or registration completed.");
   }
 
-  await User.findOneAndUpdate(
-    {
-      email,
-      isUserDetailsComplete: "false",
-    },
-    {
-      $set: { isUserDetailsComplete: "partial" },
-    }
+  const updatedUser = await User.findOneAndUpdate(
+    { email, isUserDetailsComplete: "false" },
+    { $set: { isUserDetailsComplete: "partial" } },
+    { new: true }
   );
-  await Otp.findByIdAndDelete(otpData.id);
+
+  if (!updatedUser) {
+    throw new ApiError(409, "OTP already verified or user state invalid.");
+  }
 
   return res.json(
     new ApiResponse(
