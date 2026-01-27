@@ -8,7 +8,7 @@ const client = mongoose.connection.getClient();
 
 try {
   const db = mongoose.connection.db;
-  const command = "create";
+  const command = "collMod";
 
   await db.command({
     [command]: "users",
@@ -23,8 +23,6 @@ try {
           "password",
           "role",
           "isUserDetailsComplete",
-          "selectedEvents",
-          "isEventsLocked",
         ],
 
         properties: {

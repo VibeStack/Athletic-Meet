@@ -79,7 +79,7 @@ const userSchema = new mongoose.Schema(
       type: Number,
       unique: true,
       min: [1, "Jersey number must be at least 1"],
-      max: [10000, "Jersey number cannot exceed 10000"],
+      max: [50000, "Jersey number cannot exceed 50000"],
     },
     isUserDetailsComplete: {
       type: String,
