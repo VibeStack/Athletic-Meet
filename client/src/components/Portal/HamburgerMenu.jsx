@@ -342,35 +342,15 @@ export default function HamburgerMenu({ menuOpen, setMenuOpen, user }) {
           <div className="flex flex-col items-center pt-4 pb-2">
             {/* Logo with gradient border */}
             <div className="relative mb-4">
-              {/* Outer glow */}
-              <div
-                className="absolute -inset-3 rounded-[20px] blur-xl opacity-50"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #06b6d4, #3b82f6, #8b5cf6, #d946ef)",
-                }}
+              <img
+                src={
+                  darkMode
+                    ? "/images/dark_mode_logo.png"
+                    : "/images/light_mode_logo.png"
+                }
+                alt="Logo"
+                className="w-16 h-16 rounded-2xl shadow-lg"
               />
-              {/* Gradient border */}
-              <div
-                className="relative p-[2.5px] rounded-[18px] overflow-hidden"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #06b6d4, #3b82f6, #8b5cf6, #d946ef)",
-                }}
-              >
-                <div
-                  className="w-16 h-16 rounded-2xl flex items-center justify-center font-black text-2xl text-white overflow-hidden relative"
-                  style={{
-                    background: darkMode
-                      ? "linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)"
-                      : "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
-                  }}
-                >
-                  {/* Shine effect */}
-                  <span className="absolute inset-0 bg-linear-to-br from-white/25 via-transparent to-transparent" />
-                  <span className="relative z-10">A</span>
-                </div>
-              </div>
             </div>
 
             {/* Brand name */}
@@ -385,7 +365,7 @@ export default function HamburgerMenu({ menuOpen, setMenuOpen, user }) {
                 backgroundClip: "text",
               }}
             >
-              Athletix
+              SprintSync
             </h2>
 
             {/* Role badge */}

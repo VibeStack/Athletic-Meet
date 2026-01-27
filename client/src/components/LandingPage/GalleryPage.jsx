@@ -113,9 +113,17 @@ const GalleryPage = () => {
                 className="flex items-center gap-2 cursor-pointer group"
                 onClick={() => navigate("/")}
               >
-                <Trophy className="w-7 h-7 transform group-hover:rotate-6 transition-transform duration-300" />
+                <img
+                  src={
+                    darkMode
+                      ? "/images/dark_mode_logo.png"
+                      : "/images/light_mode_logo.png"
+                  }
+                  alt="Logo"
+                  className="w-12 h-12 rounded-2xl"
+                />
                 <span className="font-black text-xl bg-linear-to-r from-cyan-500 via-blue-500 to-purple-500 bg-clip-text text-transparent">
-                  Athletix
+                  SprintSync
                 </span>
               </div>
             </div>
@@ -291,7 +299,7 @@ const GalleryPage = () => {
         <p
           className={`text-xs ${darkMode ? "text-gray-500" : "text-gray-400"}`}
         >
-          © 2026 Athletix. All rights reserved.
+          © 2026 SprintSync. All rights reserved.
         </p>
       </footer>
     </div>

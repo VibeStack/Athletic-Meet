@@ -127,32 +127,15 @@ export default function PortalLayout() {
                 </button>
 
                 <div className="flex items-center gap-3">
-                  <div
-                    className={`relative w-10 h-10 rounded-xl flex items-center justify-center font-black overflow-hidden ${
+                  <img
+                    src={
                       darkMode
-                        ? "bg-linear-to-br from-cyan-400 to-blue-600 text-white"
-                        : "text-white"
-                    }`}
-                    style={
-                      !darkMode
-                        ? {
-                            background:
-                              "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%)",
-                          }
-                        : {}
+                        ? "/images/dark_mode_logo.png"
+                        : "/images/light_mode_logo.png"
                     }
-                  >
-                    {/* Crystal shine overlay for light mode */}
-                    {!darkMode && (
-                      <>
-                        <span className="absolute inset-0 bg-linear-to-br from-white/20 via-transparent to-transparent" />
-                        <span className="absolute top-0 left-0 w-full h-px bg-linear-to-r from-transparent via-white/40 to-transparent" />
-                        <span className="absolute top-0 left-0 h-full w-px bg-linear-to-b from-white/30 via-transparent to-transparent" />
-                      </>
-                    )}
-                    <span className="relative z-10">A</span>
-                    <span className="absolute inset-0 rounded-xl ring-1 ring-white/20" />
-                  </div>
+                    alt="Logo"
+                    className="w-10 h-10 rounded-xl"
+                  />
 
                   <div className="hidden sm:block leading-tight">
                     <h1
@@ -160,11 +143,13 @@ export default function PortalLayout() {
                         darkMode ? "text-white" : "text-slate-900"
                       }`}
                     >
-                      Athletix
+                      SprintSync
                     </h1>
                     <p
                       className={`text-xs ${
-                        darkMode ? "text-cyan-400" : "text-slate-500"
+                        darkMode
+                          ? "bg-linear-to-r from-sky-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent font-semibold"
+                          : "text-slate-800 font-medium opacity-80"
                       }`}
                     >
                       65th Athletic Meet

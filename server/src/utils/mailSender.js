@@ -10,9 +10,9 @@ export const mailSender = async (email, otp) => {
   });
 
   await transporter.sendMail({
-    from: `"Athletix 2025" <${process.env.EMAIL_USER}>`,
+    from: `"SprintSync 2026" <${process.env.EMAIL_USER}>`,
     to: email,
-    subject: "Athletix 2025 - Verify Your Email",
+    subject: "SprintSync 2026 - Verify Your Email",
     html: `
       <!DOCTYPE html>
       <html>
@@ -33,7 +33,7 @@ export const mailSender = async (email, otp) => {
                 <!-- Logo / Brand -->
                 <tr>
                   <td align="center" style="padding-bottom:20px;">
-                    <h1 style="margin:0; color:#1e40af;">🏆 Athletix 2025</h1>
+                    <h1 style="margin:0; color:#1e40af;">🏆 SprintSync 2026</h1>
                     <p style="margin:6px 0 0; color:#64748b; font-size:14px;">
                       Secure Email Verification
                     </p>
@@ -53,7 +53,7 @@ export const mailSender = async (email, otp) => {
                     <p>Hello 👋,</p>
 
                     <p>
-                      To continue setting up your <strong>Athletix 2025</strong> account,
+                      To continue setting up your <strong>SprintSync 2026</strong> account,
                       please use the verification code below:
                     </p>
                   </td>
@@ -95,7 +95,7 @@ export const mailSender = async (email, otp) => {
                   <td style="padding-top:30px; font-size:13px; color:#6b7280;">
                     <p style="margin:0;">
                       Thanks,<br />
-                      <strong>Team Athletix 2025</strong>
+                      <strong>Team SprintSync 2026</strong>
                     </p>
                   </td>
                 </tr>
@@ -104,7 +104,7 @@ export const mailSender = async (email, otp) => {
 
               <!-- Footer Note -->
               <p style="margin-top:20px; font-size:12px; color:#9ca3af;">
-                © 2025 Athletix. All rights reserved.
+                © 2026 SprintSync. All rights reserved.
               </p>
 
             </td>

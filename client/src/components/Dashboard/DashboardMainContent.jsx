@@ -48,7 +48,6 @@ export default function DashboardMainContent() {
     return Object.entries(groups).map(([name, value]) => ({ name, value }));
   }, [filteredEvents]);
 
-
   const liveStatus = {
     meetTitle: "Annual Athletics Meet",
     eventsToday: 12,
@@ -56,16 +55,19 @@ export default function DashboardMainContent() {
     nextEvent: "Long Jump Final",
     ground: "Ground A",
     nextEta: "in 15 mins",
-    alert: "Reporting: 400m participants assemble near Track Gate."
+    alert: "Reporting: 400m participants assemble near Track Gate.",
   };
 
   return (
     <main className="flex-1 p-6 md:p-16 space-y-6 absolute right-0 bg-black">
-
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl md:text-3xl font-semibold">Athletix Dashboard</h1>
-          <p className="text-slate-400 text-sm">Analytics overview for the annual athletics meet (admin-only)</p>
+          <h1 className="text-2xl md:text-3xl font-semibold">
+            SprintSync Dashboard
+          </h1>
+          <p className="text-slate-400 text-sm">
+            Analytics overview for the annual athletics meet (admin-only)
+          </p>
         </div>
         <div className="w-full sm:w-auto">
           <QuickActionsCard />
@@ -73,10 +75,22 @@ export default function DashboardMainContent() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Total Participants" value={totals.participants} hint="After filters" />
-        <StatCard label="Events" value={totals.events} hint={`Filtered / ${eventsData.length} total`} />
+        <StatCard
+          label="Total Participants"
+          value={totals.participants}
+          hint="After filters"
+        />
+        <StatCard
+          label="Events"
+          value={totals.events}
+          hint={`Filtered / ${eventsData.length} total`}
+        />
         <StatCard label="Teams" value={meta.teams} hint="Registered" />
-        <StatCard label="Departments" value={meta.departments} hint="Participating" />
+        <StatCard
+          label="Departments"
+          value={meta.departments}
+          hint="Participating"
+        />
       </div>
 
       <FilterCard
@@ -97,7 +111,7 @@ export default function DashboardMainContent() {
       <UpcomingEventsCard events={upcomingData} />
 
       <p className="text-xs text-slate-500 text-center py-6">
-        © {new Date().getFullYear()} Athletix • Minimal Elegant Sports Admin
+        © {new Date().getFullYear()} SprintSync • Minimal Elegant Sports Admin
       </p>
     </main>
   );
