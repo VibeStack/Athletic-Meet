@@ -8,7 +8,7 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/images/dark_mode_logo.png",
+      "src": "/images/light_mode_logo.png",
       "sizes": "any",
       "type": "image/png"
     }
