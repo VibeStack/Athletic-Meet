@@ -1,9 +1,11 @@
 import axios from "axios";
 
-const API_URL = "http://athletic-meet-website-ba.vercel.app/api/v1/otp/registerOtpSender";
+const API_URL = "https://athletic-meet-website-ba.vercel.app/api/v1/otp/registerOtpSender";
 
-async function simulateUsers(count = 30) {
-  console.log(`🚀 Starting stress test for ${count} users...\n`);
+async function simulateUsers(count = 100) {
+  console.log(`🚀 Simulating ${count} users clicking OTP at SAME TIME...\n`);
+
+  const requests = [];
 
   for (let i = 1; i <= count; i++) {
     const user = {
@@ -12,21 +14,20 @@ async function simulateUsers(count = 30) {
       password: "TestPass123"
     };
 
-    try {
-      const res = await axios.post(API_URL, user, {
-        timeout: 10000,
-      });
-
-      console.log(`✅ User ${i}: ${res.data?.message}`);
-    } catch (err) {
-      console.log(`❌ User ${i}:`, err.message);
-      if (err.response) {
-        console.log("   ↳ Server says:", err.response.data);
-      }
-    }
+    requests.push(
+      axios.post(API_URL, user, { timeout: 15000 })
+        .then(res => {
+          console.log(`✅ User ${i}: ${res.data?.message}`);
+        })
+        .catch(err => {
+          console.log(`❌ User ${i}:`, err.response?.data?.message || err.message);
+        })
+    );
   }
 
-  console.log("\n🎯 Stress test complete");
+  await Promise.all(requests);
+
+  console.log("\n🎯 CONCURRENT OTP TEST COMPLETE");
 }
 
-simulateUsers(40);
+simulateUsers(100);

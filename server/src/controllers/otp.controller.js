@@ -71,7 +71,9 @@ export const registerOtpSender = asyncHandler(async (req, res) => {
           { upsert: true, new: true }
         );
 
-        await mailSender(email, otp);
+        mailSender(email, otp).catch((err) => {
+          console.error("❌ Email send failed:", err.message);
+        });
 
         return res
           .status(200)
@@ -112,7 +114,9 @@ export const registerOtpSender = asyncHandler(async (req, res) => {
     { upsert: true, new: true }
   );
 
-  await mailSender(email, otp);
+  mailSender(email, otp).catch((err) => {
+    console.error("❌ Email send failed:", err.message);
+  });
 
   return res
     .status(200)
