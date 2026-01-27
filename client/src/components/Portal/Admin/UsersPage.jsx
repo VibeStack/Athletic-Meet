@@ -93,6 +93,14 @@ export default function UsersPage() {
   const navigate = useNavigate();
 
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedQuery(query);
+    }, 1000);
+
+    return () => clearTimeout(handler);
+  }, [query]);
 
   const [allUsers, setAllUsers] = useState([]);
   const [totalUsersCount, setTotalUsersCount] = useState(0);
@@ -122,45 +130,49 @@ export default function UsersPage() {
     fetchUsers();
   }, []);
 
-  const filteredUsers = allUsers
-    .map((user) => {
-      let score = 0;
-      if (!query) return { user, score };
+  const filteredUsers = React.useMemo(() => {
+    return allUsers
+      .map((user) => {
+        let score = 0;
 
-      if (!isNaN(query)) {
-        const q = query.trim();
+        if (!debouncedQuery) return { user, score };
 
-        if (user.jerseyNumber?.toString() === q) score += 10000;
-        else if (user.jerseyNumber?.toString().includes(q)) score += 50;
+        if (!isNaN(debouncedQuery)) {
+          const q = debouncedQuery.trim();
 
-        if (user.urn?.toString() === q) score += 1000;
-        else if (user.urn?.toString().includes(q)) score += 50;
+          if (user.jerseyNumber?.toString() === q) score += 10000;
+          else if (user.jerseyNumber?.toString().includes(q)) score += 50;
 
-        if (user.crn?.toString() === q) score += 100;
-        else if (user.crn?.toString().includes(q)) score += 50;
-      } else {
-        const q = query.toLowerCase();
+          if (user.urn?.toString() === q) score += 1000;
+          else if (user.urn?.toString().includes(q)) score += 50;
 
-        if (
-          user.fullname?.toLowerCase().startsWith(q) ||
-          user.username?.toLowerCase().startsWith(q)
-        )
-          score += 100;
-        else if (
-          user.fullname?.toLowerCase().includes(q) ||
-          user.username?.toLowerCase().includes(q)
-        )
-          score += 50;
+          if (user.crn?.toString() === q) score += 100;
+          else if (user.crn?.toString().includes(q)) score += 50;
+        } else {
+          const q = debouncedQuery.toLowerCase();
 
-        if (user.email?.toLowerCase().startsWith(q)) score += 80;
-        else if (user.email?.toLowerCase().includes(q)) score += 40;
-      }
+          if (
+            user.fullname?.toLowerCase().startsWith(q) ||
+            user.username?.toLowerCase().startsWith(q)
+          ) {
+            score += 100;
+          } else if (
+            user.fullname?.toLowerCase().includes(q) ||
+            user.username?.toLowerCase().includes(q)
+          ) {
+            score += 50;
+          }
 
-      return { user, score };
-    })
-    .filter(({ score }) => !query || score > 0)
-    .sort((a, b) => b.score - a.score)
-    .map(({ user }) => user);
+          if (user.email?.toLowerCase().startsWith(q)) score += 80;
+          else if (user.email?.toLowerCase().includes(q)) score += 40;
+        }
+
+        return { user, score };
+      })
+      .filter(({ score }) => !debouncedQuery || score > 0)
+      .sort((a, b) => b.score - a.score)
+      .map(({ user }) => user);
+  }, [allUsers, debouncedQuery]);
 
   useEffect(() => {
     setVisibleUsersCount(filteredUsers.length);
@@ -229,7 +241,7 @@ export default function UsersPage() {
       </section>
 
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {filteredUsers.length === 0 && query ? (
+        {filteredUsers.length === 0 && debouncedQuery ? (
           <div
             className={`col-span-full rounded-3xl overflow-hidden border transition-all ${
               darkMode
