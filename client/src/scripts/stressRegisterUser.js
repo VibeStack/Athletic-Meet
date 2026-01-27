@@ -70,4 +70,4 @@ async function simulateStep3(count = 40) {
   console.log(`🧮 Unique jerseys assigned: ${assignedJerseys.size}`);
 }
 
-simulateStep3(40);
+simulateStep3(90);

@@ -50,7 +50,7 @@ export default function Step1AccountForm({ nextStep, setStep }) {
 
       // otp sent fresh go to otp screen
       if (msg === "OTP sent successfully! Please verify your email.") {
-        alert("📨 OTP sent successfully! Verify to continue.");
+        alert("✅ OTP sent successfully! Verify to continue.");
         nextStep();
         return;
       }

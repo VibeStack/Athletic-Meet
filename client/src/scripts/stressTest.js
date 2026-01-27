@@ -30,4 +30,4 @@ async function simulateUsers(count = 100) {
   console.log("\n🎯 CONCURRENT OTP TEST COMPLETE");
 }
 
-simulateUsers(100);
+simulateUsers(90);
