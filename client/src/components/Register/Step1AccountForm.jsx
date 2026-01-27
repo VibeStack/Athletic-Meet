@@ -17,53 +17,66 @@ export default function Step1AccountForm({ nextStep, setStep }) {
 
   const onSubmit = async (data) => {
     const API_URL = import.meta.env.VITE_API_URL;
+
     try {
       const { data: response } = await axios.post(
         `${API_URL}/otp/registerOtpSender`,
         data,
-        {
-          withCredentials: true,
-        },
+        { withCredentials: true },
       );
+
       const msg = response?.message;
 
+      // account already exists go to login page
       if (msg === "Account already exists. Please log in.") {
         alert("✅ Account already exists. Redirecting to login...");
         navigate("/login");
         return;
       }
 
+      // email already verified go to step 3
       if (msg === "Email already verified. Please complete your profile.") {
-        alert("✅ Email already verified. Continue profile completion.");
+        alert("✅ Email verified. Continue completing your profile.");
         setStep(3);
         return;
       }
 
-      if (msg === "OTP already sent. Please check your email.") {
-        alert("📩 OTP already sent. Check your inbox.");
+      // otp already sent go to otp screen
+      if (msg === "OTP already sent. Please wait before requesting again.") {
+        alert("📩 OTP already sent. Please check your inbox.");
         nextStep();
         return;
       }
 
+      // otp sent fresh go to otp screen
       if (msg === "OTP sent successfully! Please verify your email.") {
         alert("📨 OTP sent successfully! Verify to continue.");
         nextStep();
         return;
       }
 
-      if (
-        msg === "Username already taken." ||
-        msg === "Username already taken. Please choose another."
-      ) {
-        alert("❌ Username already taken.");
+      // username conflict
+      if (msg === "Username already taken.") {
         setError("username", {
           type: "manual",
           message: "Username already taken. Please choose another username.",
         });
+        alert("❌ Username already taken.");
         return;
-      } else {
-        alert("⚠️ Unexpected response. Please try again.");
       }
+
+      // email conflict
+      if (msg === "Email already linked to another username.") {
+        setError("email", {
+          type: "manual",
+          message: "This email is already linked to another username.",
+        });
+        alert("❌ Email already linked to another account.");
+        return;
+      }
+
+      // else case 
+      alert("⚠️ Unexpected response. Please try again.");
     } catch (error) {
       console.error("OTP Sender Error:", error.response?.data);
 

@@ -113,7 +113,7 @@ export default function Step2EmailOtp({ nextStep }) {
     const otp = Array.from({ length: 6 }, (_, i) => data[`otp${i}`]).join("");
 
     if (otp.length !== 6) {
-      alert("❌ Please enter all 6 digits of the OTP.");
+      setMessage("❌ Please enter all 6 digits of the OTP.");
       return;
     }
 
@@ -129,33 +129,53 @@ export default function Step2EmailOtp({ nextStep }) {
 
       const msg = response?.message;
 
+      // otp verified move to step 3
       if (msg === "OTP verified successfully. Please complete your profile!") {
         setMessage("✅ OTP verified successfully!");
         nextStep();
         return;
       }
 
-      setMessage("⚠️ Unexpected response. Please continue.");
+      // ⚠️ Already verified move to step 3
+      if (msg === "OTP already verified or registration completed.") {
+        setMessage("⚠️ OTP already verified. Continuing...");
+        nextStep();
+        return;
+      }
+
+      setMessage("⚠️ Unexpected response. Please try again.");
     } catch (error) {
       console.error("OTP Verify Error:", error.response?.data);
 
       const errMsg = error.response?.data?.message;
 
+      // ❌ Wrong OTP
       if (errMsg === "Invalid OTP") {
         setMessage("❌ Invalid OTP. Please try again.");
-      } else if (errMsg === "No OTP found. Please request a new one.") {
-        setMessage("❌ OTP expired. Please request a new OTP.");
-      } else if (errMsg === "OTP already verified.") {
-        setMessage("⚠️ OTP already verified. Continue profile.");
-        nextStep();
-      } else if (errMsg === "Registration already completed") {
-        setMessage(
-          "⚠️ Registration already completed. Redirecting to login...",
-        );
-        navigate("/login");
-      } else {
-        setMessage("❌ OTP verification failed. Try again.");
+        return;
       }
+
+      // ❌ OTP expired
+      if (errMsg === "No OTP found. Please request a new one.") {
+        setMessage("❌ OTP expired. Please request a new OTP.");
+        return;
+      }
+
+      // ❌ User missing
+      if (errMsg === "User not found.") {
+        setMessage("❌ User not found. Please register again.");
+        return;
+      }
+
+      // ❌ Already verified
+      if (errMsg === "OTP already verified or registration completed.") {
+        setMessage("⚠️ OTP already verified. Continuing...");
+        nextStep();
+        return;
+      }
+
+      // else case 
+      setMessage("❌ OTP verification failed. Try again.");
     } finally {
       setLoading(false);
     }
