@@ -110,6 +110,7 @@ export default function UserDetailHeader({
   lockUserEvents,
   unlockUserEvents,
   setShowDeletePopup,
+  updateUserInCache,
 }) {
   const { user } = useOutletContext(); // user is me and studentUserData is that student whole profile i am viewing it can be me also ok
   const API_URL = import.meta.env.VITE_API_URL;
@@ -189,6 +190,8 @@ export default function UserDetailHeader({
         { withCredentials: true },
       );
       setIsUserHavingAdminAccess(true);
+      // Update cache with new role
+      updateUserInCache(studentUserData.id, { role: "Admin" });
     } catch (error) {
       console.error(error.response?.data?.message || "Something went wrong");
     } finally {
@@ -206,6 +209,8 @@ export default function UserDetailHeader({
         { withCredentials: true },
       );
       setIsUserHavingAdminAccess(false);
+      // Update cache with new role
+      updateUserInCache(studentUserData.id, { role: "Student" });
     } catch (error) {
       console.error(error.response?.data?.message || "Something went wrong");
     } finally {

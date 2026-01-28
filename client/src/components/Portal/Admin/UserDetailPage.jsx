@@ -8,6 +8,7 @@ import UserDetailEvents from "./UserDetail/UserDetailEvents";
 import UserDetailInfo from "./UserDetail/UserDetailInfo";
 import ManagerDetailsAccessDenied from "./ManagerDetailsAccessDenied";
 import { useUserDetail } from "../../../context/UserDetailContext";
+import { useUsers } from "../../../context/UsersContext";
 
 export default function UserDetailPage() {
   const API_URL = import.meta.env.VITE_API_URL;
@@ -25,6 +26,8 @@ export default function UserDetailPage() {
 
   // Get current logged-in user
   const { user } = useOutletContext();
+  // Get cache update functions
+  const { updateUserInCache, removeUserFromCache } = useUsers();
   const { userDetail, setUserEventsList } = useUserDetail(); // user and userDetail are same ok
 
   const fetchUser = async () => {
@@ -67,6 +70,11 @@ export default function UserDetailPage() {
         setUserEventsList(response.data);
       }
       setStudentUserEventsList(response.data);
+      // Update cache with new events count
+      updateUserInCache(studentUserData.id, {
+        eventsCount: response.data.length,
+        isEventsLocked: true,
+      });
     } catch (err) {
       console.log(err.response);
       console.error("Failed to lock events", err);
@@ -85,6 +93,11 @@ export default function UserDetailPage() {
         setUserEventsList([]);
       }
       setStudentUserEventsList([]);
+      // Update cache with zero events count
+      updateUserInCache(studentUserData.id, {
+        eventsCount: 0,
+        isEventsLocked: false,
+      });
     } catch (err) {
       console.error("Failed to unlock events", err);
     }
@@ -97,6 +110,8 @@ export default function UserDetailPage() {
         withCredentials: true,
       });
       setDeleteState("success");
+      // Remove user from cache
+      removeUserFromCache(studentUserData.id);
       // Wait for success animation then navigate
       setTimeout(() => {
         setShowDeletePopup(false);
@@ -141,6 +156,7 @@ export default function UserDetailPage() {
           lockUserEvents={lockUserEvents}
           unlockUserEvents={unlockUserEvents}
           setShowDeletePopup={setShowDeletePopup}
+          updateUserInCache={updateUserInCache}
         />
 
         {/* ================= MAIN CONTENT - 60/40 SPLIT ================= */}

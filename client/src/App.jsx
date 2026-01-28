@@ -10,6 +10,7 @@ import ScrollToTop from "./components/LandingPage/ScrollToTop";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { UserDetailProvider } from "./context/UserDetailContext";
+import { UsersProvider } from "./context/UsersContext";
 import ProtectedRoute from "./context/ProtectedRoute";
 import PortalLayout from "./components/Portal/PortalLayout";
 import PortalHome from "./components/Portal/PortalHome";
@@ -47,9 +48,11 @@ function App() {
             element={
               <ProtectedRoute>
                 <ThemeProvider>
-                  <UserDetailProvider>
-                    <PortalLayout />
-                  </UserDetailProvider>
+                  <UsersProvider>
+                    <UserDetailProvider>
+                      <PortalLayout />
+                    </UserDetailProvider>
+                  </UsersProvider>
                 </ThemeProvider>
               </ProtectedRoute>
             }
