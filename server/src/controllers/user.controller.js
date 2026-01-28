@@ -21,6 +21,7 @@ export const registerUser = asyncHandler(async (req, res) => {
     phone,
   } = req.body;
 
+  // 1️⃣ Find user
   const user = await User.findOne({
     $or: [{ email }, { username }],
   });
@@ -43,42 +44,30 @@ export const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Invalid registration state");
   }
 
-  if (user.jerseyNumber) {
+  if (user.jerseyNumber != null) {
     throw new ApiError(409, "User already has a jersey number");
   }
 
-  let jerseyNumber;
+  let jerseyNumber = null;
 
-  const reused = await SystemConfig.findOneAndUpdate(
-    { _id: "GLOBAL", freeJerseyNumbers: { $exists: true, $ne: [] } },
-    [
-      {
-        $set: {
-          freeJerseyNumbers: {
-            $sortArray: { input: "$freeJerseyNumbers", sortBy: 1 },
-          },
-        },
-      },
-      {
-        $set: {
-          jerseyToAssign: { $arrayElemAt: ["$freeJerseyNumbers", 0] },
-        },
-      },
-      {
-        $set: {
-          freeJerseyNumbers: {
-            $slice: ["$freeJerseyNumbers", 1, { $size: "$freeJerseyNumbers" }],
-          },
-        },
-      },
-    ],
-    { new: true }
-  );
+  // 2️⃣ TRY REUSE JERSEY (SAFE READ)
+  const config = await SystemConfig.findOne({ _id: "GLOBAL" }).lean();
 
-  if (reused?.jerseyToAssign) {
-    jerseyNumber = reused.jerseyToAssign;
+  if (config?.freeJerseyNumbers?.length > 0) {
+    const smallest = [...config.freeJerseyNumbers].sort((a, b) => a - b)[0];
+
+    // Atomic remove that jersey
+    const popResult = await SystemConfig.updateOne(
+      { _id: "GLOBAL", freeJerseyNumbers: smallest },
+      { $pull: { freeJerseyNumbers: smallest } }
+    );
+
+    if (popResult.modifiedCount === 1) {
+      jerseyNumber = smallest;
+    }
   }
 
+  // 3️⃣ FALLBACK: AUTO INCREMENT IF NO FREE JERSEY
   if (!jerseyNumber) {
     const incremented = await SystemConfig.findOneAndUpdate(
       { _id: "GLOBAL" },
@@ -92,11 +81,12 @@ export const registerUser = asyncHandler(async (req, res) => {
     jerseyNumber = incremented.lastAssignedJerseyNumber;
   }
 
+  // 4️⃣ ATOMIC USER UPDATE (BLOCKS DOUBLE ASSIGNMENT)
   const updatedUser = await User.findOneAndUpdate(
     {
       email,
       isUserDetailsComplete: "partial",
-      jerseyNumber: { $exists: false },
+      $or: [{ jerseyNumber: { $exists: false } }, { jerseyNumber: null }],
     },
     {
       $set: {
@@ -115,19 +105,29 @@ export const registerUser = asyncHandler(async (req, res) => {
     { new: true }
   );
 
+  // 5️⃣ ROLLBACK IF USER UPDATE FAILED
   if (!updatedUser) {
+    // Put jersey back if user update failed
+    await SystemConfig.updateOne(
+      { _id: "GLOBAL" },
+      { $addToSet: { freeJerseyNumbers: jerseyNumber } }
+    );
+
     throw new ApiError(
       409,
-      "User already completed registration or invalid state."
+      "User already completed registration or concurrency conflict"
     );
   }
 
-  return res
-    .status(200)
-    .json(
-      new ApiResponse({ jerseyNumber }, "Registration completed successfully")
-    );
+  return res.status(200).json(
+    new ApiResponse(
+      { jerseyNumber },
+      "Registration completed successfully"
+    )
+  );
 });
+
+
 
 export const getCurrentUser = asyncHandler(async (req, res) => {
   if (!req.user) {

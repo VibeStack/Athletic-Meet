@@ -175,7 +175,7 @@ try {
     validator: {
       $jsonSchema: {
         bsonType: "object",
-        required: ["_id", "lastAssignedJerseyNumber", "freeJerseyNumbers"],
+        required: ["_id", "lastAssignedJerseyNumber"],
 
         properties: {
           _id: {
