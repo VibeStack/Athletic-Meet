@@ -1,27 +1,43 @@
 import mongoose from "mongoose";
 import { DB_NAME } from "../constants.js";
 
+// Global cached connection for serverless (Vercel-safe)
+let cached = global.mongoose;
+
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
+
 const connectDB = async () => {
   try {
-    if (mongoose.connection.readyState !== 0) {
+    // If connection already exists, reuse it
+    if (cached.conn) {
       console.log("✅ MongoDB already connected");
-      return mongoose.connection;
+      return cached.conn;
     }
 
-    const connection = await mongoose.connect(
-      `${process.env.MONGODB_URI}/${DB_NAME}`,
-      {
-        autoIndex: true,
-        serverSelectionTimeoutMS: 5000,
-      }
-    );
+    // If connection is in progress, wait for it
+    if (!cached.promise) {
+      cached.promise = mongoose.connect(
+        `${process.env.MONGODB_URI}/${DB_NAME}`,
+        {
+          autoIndex: false, // safer for production
+          maxPoolSize: 10, // LIMIT DB CONNECTIONS (IMPORTANT for Atlas M0)
+          serverSelectionTimeoutMS: 5000,
+          socketTimeoutMS: 45000,
+        }
+      );
+    }
+
+    const connection = await cached.promise;
+
+    cached.conn = connection;
 
     console.log("🟢 MongoDB connected successfully");
     console.log(`📦 Database: ${connection.connection.name}`);
     console.log(`🌐 Host: ${connection.connection.host}`);
 
     return connection.connection;
-
   } catch (error) {
     console.error("🔥 MongoDB connection failed");
 
@@ -35,7 +51,8 @@ const connectDB = async () => {
       console.error("❌ Unknown MongoDB error:", error);
     }
 
-    process.exit(1);
+    // ❌ DO NOT kill process on Vercel
+    throw error;
   }
 };
 
