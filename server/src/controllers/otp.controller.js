@@ -5,6 +5,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Otp } from "../models/Otp.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import bcrypt from "bcrypt";
 
 export const registerOtpSender = asyncHandler(async (req, res) => {
   const { username, email, password } = req.body;
@@ -95,6 +96,8 @@ export const registerOtpSender = asyncHandler(async (req, res) => {
       );
   }
 
+  const hashedPassword = await bcrypt.hash(password, 12);
+
   // 7️⃣ Ensure user exists without overwriting
   await User.updateOne(
     { email: normalizedEmail },
@@ -102,7 +105,7 @@ export const registerOtpSender = asyncHandler(async (req, res) => {
       $setOnInsert: {
         username: normalizedUsername,
         email: normalizedEmail,
-        password,
+        password: hashedPassword,
         role: "Student",
         isUserDetailsComplete: "false",
         isEventsLocked: false,

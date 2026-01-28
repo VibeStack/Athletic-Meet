@@ -23,9 +23,10 @@ export const registerUser = asyncHandler(async (req, res) => {
 
   // 1️⃣ Find user
   const normalizedUsername = username?.toLowerCase().trim();
+  const normalizedEmail = email?.toLowerCase().trim();
 
   const user = await User.findOne({
-    $or: [{ email }, { username: normalizedUsername }],
+    $or: [{ email: normalizedEmail }, { username: normalizedUsername }],
   });
 
   if (!user) {
@@ -86,7 +87,7 @@ export const registerUser = asyncHandler(async (req, res) => {
   // 4️⃣ ATOMIC USER UPDATE (BLOCKS DOUBLE ASSIGNMENT)
   const updatedUser = await User.findOneAndUpdate(
     {
-      email,
+      email: normalizedEmail,
       isUserDetailsComplete: "partial",
       $or: [{ jerseyNumber: { $exists: false } }, { jerseyNumber: null }],
     },

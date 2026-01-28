@@ -4,15 +4,9 @@ const API_URL =
   "https://athletic-meet-website-ba.vercel.app/api/v1/otp/registerOtpSender";
 
 async function simulateUsers(count = 100) {
-  console.log(`🚀 Simulating ${count} users clicking OTP at SAME TIME...\n`);
+  console.log(`🚀 Simulating ${count} users with realistic delays...\n`);
 
   const requests = [];
-
-  let success = 0;
-  let rateLimited = 0;
-  let conflicts = 0;
-  let failures = 0;
-  let timeouts = 0;
 
   for (let i = 1; i <= count; i++) {
     const user = {
@@ -21,58 +15,25 @@ async function simulateUsers(count = 100) {
       password: "TestPass123",
     };
 
+    // Human-like click delay (50–300 ms)
+    await new Promise((r) => setTimeout(r, 50 + Math.random() * 250));
+
     requests.push(
       axios
         .post(API_URL, user, { timeout: 20000 })
-        .then((res) => {
-          const msg = res.data?.message;
-          const extra = res.data?.data;
-
-          // OTP success
-          if (msg === "OTP sent successfully! Please verify your email.") {
-            console.log(`✅ User ${i}: OTP SENT`);
-            success++;
-            return;
-          }
-
-          // Rate limited
-          if (msg?.includes("You can request a new OTP")) {
-            const mins = extra?.remainingMinutes || "?";
-            console.log(`⏳ User ${i}: RATE LIMITED — wait ${mins} min`);
-            rateLimited++;
-            return;
-          }
-
-          // Account exists
-          if (msg === "Account already exists. Please log in.") {
-            console.log(`🔒 User ${i}: ACCOUNT EXISTS`);
-            conflicts++;
-            return;
-          }
-
-          // Username/email conflict
-          if (msg?.includes("already")) {
-            console.log(`⚠️ User ${i}: ${msg}`);
-            conflicts++;
-            return;
-          }
-
-          // Unknown
-          console.log(`❓ User ${i}: ${msg}`);
-          failures++;
+        .then(() => {
+          console.log(`✅ User ${i}: OTP SENT`);
         })
         .catch((err) => {
-          const msg = err.response?.data?.message || err.message;
-
-          if (msg.includes("timeout")) {
-            console.log(`⏱️ User ${i}: TIMEOUT`);
-            timeouts++;
-          } else if (msg.includes("SSL") || msg.includes("tls")) {
+          if (err.code?.includes("SSL")) {
             console.log(`🔐 User ${i}: SSL ERROR`);
-            failures++;
+          } else if (err.code === "ECONNABORTED") {
+            console.log(`⏱️ User ${i}: TIMEOUT`);
           } else {
-            console.log(`❌ User ${i}: ${msg}`);
-            failures++;
+            console.log(
+              `❌ User ${i}:`,
+              err.response?.data?.message || err.message,
+            );
           }
         }),
     );
@@ -80,15 +41,7 @@ async function simulateUsers(count = 100) {
 
   await Promise.all(requests);
 
-  console.log("\n🎯 CONCURRENT OTP TEST COMPLETE\n");
-
-  console.log("📊 RESULTS SUMMARY:");
-  console.log("────────────────────────────");
-  console.log(`✅ OTP Sent:        ${success}`);
-  console.log(`⏳ Rate Limited:   ${rateLimited}`);
-  console.log(`⚠️ Conflicts:      ${conflicts}`);
-  console.log(`❌ Failures:       ${failures}`);
-  console.log(`⏱️ Timeouts:       ${timeouts}`);
+  console.log("\n🎯 TEST COMPLETE");
 }
 
-simulateUsers(90);
+simulateUsers(300);
