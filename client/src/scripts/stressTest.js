@@ -8,7 +8,7 @@ async function simulateUsers(count = 100) {
 
   const requests = [];
 
-  for (let i = 1; i <= count; i++) {
+  for (let i = 2; i <= count; i++) {
     const user = {
       username: `testuser${i}`,
       email: `testuser${i}@gmail.com`,
@@ -44,4 +44,4 @@ async function simulateUsers(count = 100) {
   console.log("\n🎯 TEST COMPLETE");
 }
 
-simulateUsers(300);
+simulateUsers(100);

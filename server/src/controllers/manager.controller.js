@@ -614,15 +614,19 @@ export const markingResults = asyncHandler(async (req, res) => {
 
 export const markAllDetailsCompleteAsPartial = asyncHandler(
   async (req, res) => {
-    const users = await User.find({});
+    const result = await User.updateMany(
+      { isUserDetailsComplete: "false" }, // only false users
+      { $set: { isUserDetailsComplete: "partial" } }
+    );
 
-    for (const user of users) {
-      user.isUserDetailsComplete = "partial";
-      await user.save();
-    }
-
-    return res
-      .status(200)
-      .json(new ApiResponse(null, "Details marked as partial successfully"));
+    return res.status(200).json(
+      new ApiResponse(
+        {
+          matchedCount: result.matchedCount,
+          modifiedCount: result.modifiedCount,
+        },
+        "Only users with 'false' status marked as partial successfully"
+      )
+    );
   }
 );
