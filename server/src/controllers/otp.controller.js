@@ -8,114 +8,112 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 
 export const registerOtpSender = asyncHandler(async (req, res) => {
   const { username, email, password } = req.body;
-  const normalizedUsername = username?.toLowerCase().trim();
 
-  if (!username || !email || !password) {
-    throw new ApiError(
-      400,
-      "All fields (username, email, password) are required"
-    );
+  const normalizedUsername = username?.toLowerCase().trim();
+  const normalizedEmail = email?.toLowerCase().trim();
+
+  if (!normalizedUsername || !normalizedEmail || !password) {
+    throw new ApiError(400, "All fields are required");
   }
 
+  // 1️⃣ Fetch user once (lean = faster, lower memory)
   const user = await User.findOne({
-    $or: [{ email }, { username: normalizedUsername }],
-  });
+    $or: [{ email: normalizedEmail }, { username: normalizedUsername }],
+  }).lean();
 
+  // 2️⃣ Conflict checks
   if (user) {
-    if (user.username === normalizedUsername && user.email !== email) {
+    if (
+      user.username === normalizedUsername &&
+      user.email !== normalizedEmail
+    ) {
       throw new ApiError(409, "Username already taken.");
     }
-    if (user.email === email && user.username !== normalizedUsername) {
+    if (
+      user.email === normalizedEmail &&
+      user.username !== normalizedUsername
+    ) {
       throw new ApiError(409, "Email already linked to another username.");
     }
   }
 
-  if (user) {
-    switch (user.isUserDetailsComplete) {
-      case "true":
-        return res
-          .status(200)
-          .json(
-            new ApiResponse(null, "Account already exists. Please log in.")
-          );
-
-      case "partial":
-        return res
-          .status(200)
-          .json(
-            new ApiResponse(
-              null,
-              "Email already verified. Please complete your profile."
-            )
-          );
-
-      case "false": {
-        const existingOtp = await Otp.findOne({ email });
-
-        if (existingOtp) {
-          return res
-            .status(200)
-            .json(
-              new ApiResponse(
-                null,
-                "OTP already sent. Please wait before requesting again."
-              )
-            );
-        }
-
-        const otp = otpGenerator();
-
-        await Otp.findOneAndUpdate(
-          { email },
-          { otp, createdAt: new Date() },
-          { upsert: true, new: true }
-        );
-
-        mailSender(email, otp).catch((err) => {
-          console.error("❌ Email send failed:", err.message);
-        });
-
-        return res
-          .status(200)
-          .json(
-            new ApiResponse(
-              null,
-              "OTP sent successfully! Please verify your email."
-            )
-          );
-      }
-
-      default:
-        throw new ApiError(
-          500,
-          "Something went wrong while processing your request. Please try again later"
-        );
-    }
+  // 3️⃣ If fully registered → stop
+  if (user?.isUserDetailsComplete === "true") {
+    return res
+      .status(200)
+      .json(new ApiResponse(null, "Account already exists. Please log in."));
   }
 
-  const otp = otpGenerator();
+  // 4️⃣ If email already verified → stop
+  if (user?.isUserDetailsComplete === "partial") {
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          null,
+          "Email already verified. Please complete your profile."
+        )
+      );
+  }
 
-  await User.findOneAndUpdate(
-    { email },
+  // 5️⃣ OTP rate-limit + update in ONE ATOMIC QUERY (NO RACE CONDITION)
+  const now = Date.now();
+  const otp = otpGenerator(); // MUST RETURN STRING
+
+  const otpDoc = await Otp.findOneAndUpdate(
     {
-      $setOnInsert: {
-        username: normalizedUsername,
-        email,
-        password,
-        isUserDetailsComplete: "false",
+      email: normalizedEmail,
+      $or: [
+        { createdAt: { $lt: new Date(now - 5 * 60 * 1000) } }, // expired
+        { createdAt: { $exists: false } }, // none exists
+      ],
+    },
+    {
+      $set: {
+        otp,
+        createdAt: new Date(),
       },
     },
     { upsert: true, new: true }
   );
 
-  await Otp.findOneAndUpdate(
-    { email },
-    { otp, createdAt: new Date() },
-    { upsert: true, new: true }
+  // 6️⃣ If OTP NOT updated → still valid → block resend
+  if (!otpDoc) {
+    const existing = await Otp.findOne({ email: normalizedEmail }).lean();
+
+    const ageMs = Date.now() - existing.createdAt.getTime();
+    const remainingMs = 5 * 60 * 1000 - ageMs;
+    const remainingMinutes = Math.ceil(remainingMs / 60000);
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          { remainingMinutes },
+          `OTP already sent. You can request a new OTP after ${remainingMinutes} minute(s).`
+        )
+      );
+  }
+
+  // 7️⃣ Ensure user exists without overwriting
+  await User.updateOne(
+    { email: normalizedEmail },
+    {
+      $setOnInsert: {
+        username: normalizedUsername,
+        email: normalizedEmail,
+        password,
+        role: "Student",
+        isUserDetailsComplete: "false",
+        isEventsLocked: false,
+      },
+    },
+    { upsert: true }
   );
 
-  mailSender(email, otp).catch((err) => {
-    console.error("❌ Email send failed:", err.message);
+  // 8️⃣ Send email async (NON-BLOCKING, SAFE)
+  mailSender(normalizedEmail, otp).catch((err) => {
+    console.error("❌ OTP Mail Failed:", normalizedEmail, err.message);
   });
 
   return res

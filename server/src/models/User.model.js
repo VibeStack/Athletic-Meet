@@ -73,6 +73,7 @@ const userSchema = new mongoose.Schema(
     },
     phone: {
       type: String,
+      trim: true,
       minlength: 10,
       maxlength: 10,
       match: [/^[6-9]\d{9}$/, "Enter a valid 10-digit phone number"],

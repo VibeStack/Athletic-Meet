@@ -26,6 +26,7 @@ export default function Step1AccountForm({ nextStep, setStep }) {
       );
 
       const msg = response?.message;
+      const extra = response?.data;
 
       // account already exists go to login page
       if (msg === "Account already exists. Please log in.") {
@@ -41,9 +42,10 @@ export default function Step1AccountForm({ nextStep, setStep }) {
         return;
       }
 
-      // otp already sent go to otp screen
-      if (msg === "OTP already sent. Please wait before requesting again.") {
-        alert("📩 OTP already sent. Please check your inbox.");
+      // OTP resend blocked — show remaining time
+      if (msg?.includes("You can request a new OTP")) {
+        const remaining = extra?.remainingMinutes || "a few";
+        alert(`⏳ OTP already sent. Try again after ${remaining} minute(s).`);
         nextStep();
         return;
       }
@@ -75,7 +77,7 @@ export default function Step1AccountForm({ nextStep, setStep }) {
         return;
       }
 
-      // else case 
+      // fallback
       alert("⚠️ Unexpected response. Please try again.");
     } catch (error) {
       console.error("OTP Sender Error:", error.response?.data);

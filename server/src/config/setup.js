@@ -33,7 +33,7 @@ try {
             bsonType: "string",
             minLength: 3,
             maxLength: 20,
-            pattern: "^[a-zA-Z0-9_]+$",
+            pattern: "^[a-z0-9_]+$",
           },
 
           email: {
@@ -81,13 +81,11 @@ try {
             enum: ["1st Year", "2nd Year", "3rd Year", "4th Year"],
           },
 
-          // ✅ phone is STRING in your schema now
           phone: {
             bsonType: ["string", "null"],
             pattern: "^[6-9][0-9]{9}$",
           },
 
-          // ✅ sparse jerseyNumber support
           jerseyNumber: {
             bsonType: ["int", "null"],
             minimum: 1,
@@ -104,7 +102,6 @@ try {
             enum: ["Student", "Admin", "Manager"],
           },
 
-          // ✅ selectedEvents matches your Mongoose schema
           selectedEvents: {
             bsonType: "array",
             items: {
@@ -234,9 +231,9 @@ try {
           email: { bsonType: "string" },
 
           otp: {
-            bsonType: "int",
-            minimum: 0,
-            maximum: 999999,
+            bsonType: "string",
+            pattern: "^[0-9]{6}$",
+            description: "6-digit OTP string",
           },
 
           createdAt: { bsonType: "date" },
@@ -284,15 +281,15 @@ try {
           },
 
           category: {
+            bsonType: "string",
             enum: ["Boys", "Girls"],
             description: "Event category must be Boys or Girls",
           },
-
           day: {
+            bsonType: "string",
             enum: ["Day 1", "Day 2", "Both"],
             description: "Event day must be Day 1, Day 2, or Both",
           },
-
           isActive: {
             bsonType: "bool",
             description: "Event active status",
@@ -345,10 +342,6 @@ try {
   await db
     .collection("sessions")
     .createIndex({ createdAt: 1 }, { expireAfterSeconds: 1 * 24 * 60 * 60 });
-
-  await db
-    .collection("otps")
-    .createIndex({ createdAt: 1 }, { expireAfterSeconds: 300 });
 
   await db.collection("otps").createIndex({ email: 1 });
 

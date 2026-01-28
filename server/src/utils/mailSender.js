@@ -3,6 +3,9 @@ import nodemailer from "nodemailer";
 export const mailSender = async (email, otp) => {
   const transporter = nodemailer.createTransport({
     service: "gmail",
+    pool: true, // connection pooling
+    maxConnections: 5, // avoid Gmail rate limit
+    maxMessages: 100,
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
@@ -85,7 +88,7 @@ export const mailSender = async (email, otp) => {
                       ⏳ This OTP is valid for <strong>5 minutes</strong>.
                     </p>
                     <p>
-                      If you didn’t request this verification, you can safely ignore this email.
+                      If you didn't request this verification, you can safely ignore this email.
                     </p>
                   </td>
                 </tr>

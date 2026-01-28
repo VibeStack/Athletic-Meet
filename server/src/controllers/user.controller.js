@@ -22,8 +22,10 @@ export const registerUser = asyncHandler(async (req, res) => {
   } = req.body;
 
   // 1️⃣ Find user
+  const normalizedUsername = username?.toLowerCase().trim();
+
   const user = await User.findOne({
-    $or: [{ email }, { username }],
+    $or: [{ email }, { username: normalizedUsername }],
   });
 
   if (!user) {
@@ -119,15 +121,12 @@ export const registerUser = asyncHandler(async (req, res) => {
     );
   }
 
-  return res.status(200).json(
-    new ApiResponse(
-      { jerseyNumber },
-      "Registration completed successfully"
-    )
-  );
+  return res
+    .status(200)
+    .json(
+      new ApiResponse({ jerseyNumber }, "Registration completed successfully")
+    );
 });
-
-
 
 export const getCurrentUser = asyncHandler(async (req, res) => {
   if (!req.user) {
@@ -343,14 +342,14 @@ export const unlockEvents = asyncHandler(async (req, res) => {
         await Event.updateOne(
           { _id: selectedEvent.eventId },
           { $inc: { [decrementField]: -1 } },
-          { mongoSession }
+          { session: mongoSession }
         );
       }
     }
 
     user.isEventsLocked = false;
     user.selectedEvents = [];
-    await user.save({ mongoSession });
+    await user.save({ session: mongoSession });
 
     await mongoSession.commitTransaction();
     mongoSession.endSession();
