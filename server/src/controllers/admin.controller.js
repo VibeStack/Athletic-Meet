@@ -456,335 +456,247 @@ export const markAttendance = asyncHandler(async (req, res) => {
     throw new ApiError(400, "jerseyNumber, eventId and status are required");
   }
 
-  const allowedStatuses = ["present", "absent", "notMarked"];
-  if (!allowedStatuses.includes(status)) {
+  const allowed = ["present", "absent", "notMarked"];
+  if (!allowed.includes(status)) {
     throw new ApiError(400, "Invalid attendance status");
   }
 
-  const session = await mongoose.startSession();
-  session.startTransaction();
+  // Step 1: Fetch user role + event entry (light query)
+  const user = await User.findOne({ jerseyNumber }).select(
+    "role isEventsLocked selectedEvents"
+  );
 
-  try {
-    const user = await User.findOne({ jerseyNumber }).session(session);
-    if (!user) throw new ApiError(404, "User not found");
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
 
-    if (
-      !(
-        head.role === "Manager" ||
-        (head.role === "Admin" && user.role !== "Manager")
-      )
-    ) {
-      throw new ApiError(
-        403,
-        "You are not allowed to mark attendance for this user"
-      );
+  // Step 2: Role authorization
+  if (
+    !(
+      head.role === "Manager" ||
+      (head.role === "Admin" && user.role !== "Manager")
+    )
+  ) {
+    throw new ApiError(403, "Unauthorized");
+  }
+
+  // Step 3: Events must be locked
+  if (!user.isEventsLocked) {
+    throw new ApiError(400, "User events not locked");
+  }
+
+  // Step 4: Find event entry
+  const eventEntry = user.selectedEvents.find(
+    (e) => e.eventId.toString() === eventId
+  );
+
+  if (!eventEntry) {
+    throw new ApiError(400, "Event not selected by user");
+  }
+
+  const prev = eventEntry.status;
+
+  if (prev === status) {
+    return res.status(200).json(new ApiResponse(null, "No change"));
+  }
+
+  if (!allowed.includes(prev)) {
+    throw new ApiError(400, "Corrupted attendance state");
+  }
+
+  // Step 5: Atomic event counter update
+  const eventUpdate = await Event.updateOne(
+    {
+      _id: eventId,
+      [`studentsCount.${prev}`]: { $gt: 0 },
+    },
+    {
+      $inc: {
+        [`studentsCount.${prev}`]: -1,
+        [`studentsCount.${status}`]: 1,
+      },
     }
-    if (!user.isEventsLocked) {
-      throw new ApiError(400, "User events are not locked");
+  );
+
+  if (!eventUpdate.modifiedCount) {
+    throw new ApiError(409, "Event counter conflict");
+  }
+
+  // Step 6: Atomic user attendance update
+  const userUpdate = await User.updateOne(
+    {
+      jerseyNumber,
+      "selectedEvents.eventId": eventId,
+      "selectedEvents.status": prev,
+    },
+    {
+      $set: { "selectedEvents.$.status": status },
     }
+  );
 
-    const selectedEvent = user.selectedEvents.find(
-      (e) => e.eventId.toString() === eventId
-    );
-    if (!selectedEvent) {
-      throw new ApiError(400, "Event not selected by user");
-    }
-
-    const prevStatus = selectedEvent.status;
-    if (prevStatus === status) {
-      await session.abortTransaction();
-      return res.status(200).json(new ApiResponse(null, "No state changed"));
-    }
-
-    if (!allowedStatuses.includes(prevStatus)) {
-      throw new ApiError(400, "Corrupted attendance data");
-    }
-
-    const event = await Event.findById(eventId).session(session);
-    if (!event) throw new ApiError(404, "Event not found");
-
-    if (event.studentsCount[prevStatus] <= 0) {
-      throw new ApiError(400, "Invalid attendance transition");
-    }
-
+  // If user update failed → rollback event counters
+  if (!userUpdate.modifiedCount) {
     await Event.updateOne(
       { _id: eventId },
       {
         $inc: {
-          [`studentsCount.${prevStatus}`]: -1,
-          [`studentsCount.${status}`]: 1,
+          [`studentsCount.${prev}`]: 1,
+          [`studentsCount.${status}`]: -1,
         },
-      },
-      { session }
+      }
     );
 
-    await User.updateOne(
-      { jerseyNumber, "selectedEvents.eventId": eventId },
-      { $set: { "selectedEvents.$.status": status } },
-      { session }
-    );
-
-    await session.commitTransaction();
-    session.endSession();
-
-    return res
-      .status(200)
-      .json(new ApiResponse(null, "Attendance marked successfully"));
-  } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
-    throw error;
+    throw new ApiError(409, "Attendance race conflict");
   }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(null, "Attendance marked successfully"));
 });
 
 export const markAttendanceByQr = asyncHandler(async (req, res) => {
-  const athleteData = req.body;
+  const { recognitionId, jerseyNumber, eventId } = req.body;
 
-  if (athleteData.recognitionId !== "GNDEC SprintSync 2026") {
+  if (!recognitionId || !jerseyNumber || !eventId) {
+    throw new ApiError(400, "Missing required QR fields");
+  }
+
+  if (recognitionId !== "GNDEC SprintSync 2026") {
     throw new ApiError(404, "Invalid QR Code");
   }
 
-  const { sid } = req.signedCookies;
-  if (!sid) throw new ApiError(401, "Session missing");
-
-  const sessionDoc = await Session.findById(sid);
-  if (!sessionDoc) throw new ApiError(401, "Invalid session");
-
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
-  try {
-    const user = await User.findById(sessionDoc.userId)
-      .select("role selectedEvents isEventsLocked")
-      .session(session);
-
-    if (!user) throw new ApiError(404, "User not found");
-
-    if (user.role === "Student") {
-      throw new ApiError(403, "Unauthorized Access");
-    }
-
-    const targetUser = await User.findOne({
-      jerseyNumber: athleteData.jerseyNumber,
-    }).session(session);
-
-    if (!targetUser) {
-      throw new ApiError(404, "Athlete not found");
-    }
-
-    if (!targetUser.isEventsLocked) {
-      throw new ApiError(400, "Events are not locked for this user");
-    }
-
-    const targetUserEvent = targetUser.selectedEvents.find(
-      (ev) => ev.eventId.toString() === athleteData.eventId
-    );
-
-    if (!targetUserEvent) {
-      throw new ApiError(404, "User not registered for this event");
-    }
-
-    if (targetUserEvent.status === "present") {
-      throw new ApiError(400, "Attendance already marked");
-    }
-
-    if (targetUserEvent.status !== "notMarked") {
-      throw new ApiError(400, "Invalid attendance state");
-    }
-
-    targetUserEvent.status = "present";
-    await targetUser.save({ session });
-
-    const updatedTargetedUserEvent = await Event.findOneAndUpdate(
-      {
-        _id: athleteData.eventId,
-        "studentsCount.notMarked": { $gt: 0 },
-      },
-      {
-        $inc: {
-          "studentsCount.notMarked": -1,
-          "studentsCount.present": 1,
-        },
-      },
-      { new: true, session }
-    );
-
-    if (!updatedTargetedUserEvent) {
-      throw new ApiError(404, "Event not found or invalid counter state");
-    }
-
-    await session.commitTransaction();
-
-    return res
-      .status(200)
-      .json(
-        new ApiResponse(
-          200,
-          { eventId: athleteData.eventId, status: "present" },
-          "Attendance marked successfully"
-        )
-      );
-  } catch (error) {
-    await session.abortTransaction();
-    throw error;
-  } finally {
-    session.endSession();
+  const staff = req.user;
+  if (!staff || staff.role === "Student") {
+    throw new ApiError(403, "Unauthorized");
   }
+
+  // Atomically update athlete
+  const updatedUser = await User.findOneAndUpdate(
+    {
+      jerseyNumber,
+      isEventsLocked: true,
+      "selectedEvents.eventId": eventId,
+      "selectedEvents.status": "notMarked",
+    },
+    {
+      $set: { "selectedEvents.$.status": "present" },
+    },
+    { new: true }
+  );
+
+  if (!updatedUser) {
+    throw new ApiError(400, "Attendance not markable");
+  }
+
+  // Atomic event counter update
+  const counterUpdate = await Event.updateOne(
+    {
+      _id: eventId,
+      "studentsCount.notMarked": { $gt: 0 },
+    },
+    {
+      $inc: {
+        "studentsCount.notMarked": -1,
+        "studentsCount.present": 1,
+      },
+    }
+  );
+
+  if (!counterUpdate.modifiedCount) {
+    await User.updateOne(
+      {
+        jerseyNumber,
+        "selectedEvents.eventId": eventId,
+      },
+      {
+        $set: { "selectedEvents.$.status": "notMarked" },
+      }
+    );
+
+    throw new ApiError(409, "Event counter conflict");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        { eventId, status: "present" },
+        "Attendance marked successfully"
+      )
+    );
 });
 
 export const markAttendanceByGivingJerseyArray = asyncHandler(
   async (req, res) => {
     const { jerseysArray, selectedEventId } = req.body;
 
+    if (!Array.isArray(jerseysArray) || jerseysArray.length === 0) {
+      throw new ApiError(400, "Jersey numbers must be a non-empty array");
+    }
+
+    const uniqueJerseys = [...new Set(jerseysArray)];
+    const eventId = new mongoose.Types.ObjectId(selectedEventId);
+
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
-      if (!Array.isArray(jerseysArray) || jerseysArray.length === 0) {
-        throw new ApiError(400, "Jersey numbers must be a non-empty array");
-      }
+      // 1️⃣ Load event once
+      const event = await Event.findById(eventId)
+        .select("category studentsCount")
+        .session(session);
 
-      // Remove duplicates
-      const uniqueJerseys = [...new Set(jerseysArray)];
+      if (!event) throw new ApiError(404, "Event not found");
 
-      const eventObjectId = new mongoose.Types.ObjectId(selectedEventId);
-
-      // 1. Fetch and validate event
-      const selectedEvent =
-        await Event.findById(eventObjectId).session(session);
-      if (!selectedEvent) {
-        throw new ApiError(404, "Event not found");
-      }
-
-      // Normalize gender for event category
-      const category = selectedEvent.category?.toLowerCase();
+      // 2️⃣ Resolve event gender rule
+      const category = event.category?.toLowerCase();
       const eventGender = category?.includes("girl")
         ? "Female"
         : category?.includes("boy")
           ? "Male"
-          : selectedEvent.category;
+          : event.category;
 
-      // 2. Fetch matching users
-      const users = await User.find(
+      // 3️⃣ Atomically update eligible users
+      const userUpdate = await User.updateMany(
         {
           jerseyNumber: { $in: uniqueJerseys },
           gender: eventGender,
-        },
-        { selectedEvents: 1, jerseyNumber: 1, gender: 1 }
-      ).session(session);
-
-      if (users.length === 0) {
-        throw new ApiError(
-          404,
-          "No matching users found for given jersey numbers"
-        );
-      }
-
-      // 3. Check for missing or gender mismatch
-      if (users.length !== uniqueJerseys.length) {
-        const foundJerseys = users.map((u) => u.jerseyNumber);
-        const missingJerseys = uniqueJerseys.filter(
-          (j) => !foundJerseys.includes(j)
-        );
-
-        throw new ApiError(
-          400,
-          `Some jersey numbers are invalid — either they do not exist or their gender does not match the event (${eventGender})`,
-          missingJerseys
-        );
-      }
-
-      // 4. Check if users are enrolled in this event
-      const notEnrolledUsers = users.filter(
-        (u) =>
-          !u.selectedEvents.some(
-            (ev) => ev.eventId.toString() === eventObjectId.toString()
-          )
-      );
-
-      if (notEnrolledUsers.length > 0) {
-        throw new ApiError(
-          400,
-          "Some users are NOT enrolled in this event",
-          notEnrolledUsers.map((u) => u.jerseyNumber)
-        );
-      }
-
-      // 5. Check if already marked present
-      const alreadyPresentUsers = users.filter((u) =>
-        u.selectedEvents.some(
-          (ev) =>
-            ev.eventId.toString() === eventObjectId.toString() &&
-            ev.status === "present"
-        )
-      );
-
-      if (alreadyPresentUsers.length > 0) {
-        throw new ApiError(
-          400,
-          "Some users are already marked present",
-          alreadyPresentUsers.map((u) => u.jerseyNumber)
-        );
-      }
-
-      // 6. Check if status is notMarked (not absent)
-      const notMarkableUsers = users.filter((u) =>
-        u.selectedEvents.some(
-          (ev) =>
-            ev.eventId.toString() === eventObjectId.toString() &&
-            ev.status !== "notMarked"
-        )
-      );
-
-      if (notMarkableUsers.length > 0) {
-        throw new ApiError(
-          400,
-          "Some users have invalid attendance status (not 'notMarked')",
-          notMarkableUsers.map((u) => u.jerseyNumber)
-        );
-      }
-
-      // 7. Check if position is already set
-      const positionSetUsers = users.filter((u) =>
-        u.selectedEvents.some(
-          (ev) =>
-            ev.eventId.toString() === eventObjectId.toString() &&
-            ev.position !== 0
-        )
-      );
-
-      if (positionSetUsers.length > 0) {
-        throw new ApiError(
-          400,
-          "Some users already have positions recorded",
-          positionSetUsers.map((u) => u.jerseyNumber)
-        );
-      }
-
-      // All validations passed - proceed with update
-      await User.updateMany(
-        {
-          jerseyNumber: { $in: uniqueJerseys },
+          isEventsLocked: true,
+          selectedEvents: {
+            $elemMatch: {
+              eventId,
+              status: "notMarked",
+              position: 0,
+            },
+          },
         },
         {
-          $set: { "selectedEvents.$[event].status": "present" },
+          $set: { "selectedEvents.$[ev].status": "present" },
         },
         {
           session,
-          runValidators: true,
           arrayFilters: [
             {
-              "event.eventId": eventObjectId,
-              "event.status": "notMarked",
-              "event.position": 0,
+              "ev.eventId": eventId,
+              "ev.status": "notMarked",
+              "ev.position": 0,
             },
           ],
         }
       );
 
-      await Event.findOneAndUpdate(
+      // 4️⃣ Ensure all jerseys updated
+      if (userUpdate.modifiedCount !== uniqueJerseys.length) {
+        throw new ApiError(
+          400,
+          "Some jerseys invalid, wrong gender, unlocked, not enrolled, or already marked"
+        );
+      }
+
+      // 5️⃣ Atomic event counter update
+      const eventUpdate = await Event.updateOne(
         {
-          _id: eventObjectId,
+          _id: eventId,
           "studentsCount.notMarked": { $gte: uniqueJerseys.length },
         },
         {
@@ -796,6 +708,10 @@ export const markAttendanceByGivingJerseyArray = asyncHandler(
         { session }
       );
 
+      if (!eventUpdate.modifiedCount) {
+        throw new ApiError(409, "Event counter conflict — retry");
+      }
+
       await session.commitTransaction();
 
       return res
@@ -803,12 +719,12 @@ export const markAttendanceByGivingJerseyArray = asyncHandler(
         .json(
           new ApiResponse(
             { markedCount: uniqueJerseys.length },
-            `Attendance marked successfully for ${uniqueJerseys.length} participant(s)`
+            `Attendance marked for ${uniqueJerseys.length} athletes`
           )
         );
-    } catch (error) {
+    } catch (err) {
       await session.abortTransaction();
-      throw error;
+      throw err;
     } finally {
       session.endSession();
     }

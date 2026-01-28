@@ -12,6 +12,7 @@ import {
   getCertificateStatus,
   unlockCertificates,
   lockCertificates,
+  markAllDetailsCompleteAsPartial,
 } from "../controllers/manager.controller.js";
 
 const router = Router();
@@ -39,5 +40,7 @@ router.route("/events/deactivate").post(deactivateEvents);
 router.route("/certificates/status").get(getCertificateStatus);
 router.route("/certificates/lock").post(lockCertificates);
 router.route("/certificates/unlock").post(unlockCertificates);
+
+router.route("/markAllDetailsCompleteAsPartial").post(markAllDetailsCompleteAsPartial);
 
 export default router;

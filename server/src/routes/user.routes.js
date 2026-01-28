@@ -6,7 +6,6 @@ import {
   lockEvents,
   unlockEvents,
   getCertificates,
-  markAllDetailsCompleteAsPartial,
 } from "../controllers/user.controller.js";
 import {
   checkAuth,
@@ -23,5 +22,4 @@ router.route("/events/unlock").post(checkAuth, requireAdminAccess, unlockEvents)
 router.route("/certificates").get(checkAuth, getCertificates);
 
 
-router.route("/markAllDetailsCompleteAsPartial").post(markAllDetailsCompleteAsPartial);
 export default router;

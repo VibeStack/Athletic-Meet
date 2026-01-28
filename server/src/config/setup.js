@@ -23,6 +23,7 @@ try {
           "password",
           "role",
           "isUserDetailsComplete",
+          "isEventsLocked",
         ],
 
         properties: {
@@ -37,7 +38,6 @@ try {
 
           email: {
             bsonType: "string",
-            description: "User email address",
           },
 
           password: {
@@ -46,16 +46,18 @@ try {
           },
 
           fullname: {
-            bsonType: "string",
+            bsonType: ["string", "null"],
             minLength: 3,
             maxLength: 50,
           },
 
           gender: {
+            bsonType: ["string", "null"],
             enum: ["Male", "Female"],
           },
 
           course: {
+            bsonType: ["string", "null"],
             enum: [
               "B.Tech",
               "M.Tech",
@@ -75,52 +77,63 @@ try {
           urn: { bsonType: ["int", "null"] },
 
           year: {
+            bsonType: ["string", "null"],
             enum: ["1st Year", "2nd Year", "3rd Year", "4th Year"],
           },
 
-          phone: { bsonType: ["double", "int", "null"] },
-          jerseyNumber: { bsonType: ["int", "null"] },
+          // ✅ phone is STRING in your schema now
+          phone: {
+            bsonType: ["string", "null"],
+            pattern: "^[6-9][0-9]{9}$",
+          },
+
+          // ✅ sparse jerseyNumber support
+          jerseyNumber: {
+            bsonType: ["int", "null"],
+            minimum: 1,
+            maximum: 50000,
+          },
 
           isUserDetailsComplete: {
+            bsonType: "string",
             enum: ["false", "partial", "true"],
           },
 
           role: {
+            bsonType: "string",
             enum: ["Student", "Admin", "Manager"],
           },
 
+          // ✅ selectedEvents matches your Mongoose schema
           selectedEvents: {
             bsonType: "array",
-            description:
-              "List of events selected by the user with attendance status",
             items: {
               bsonType: "object",
-              required: ["eventId", "status"],
-              additionalProperties: false,
+              required: ["eventId", "status", "position"],
+
               properties: {
                 eventId: {
                   bsonType: "objectId",
-                  description: "Referenced Event ID",
                 },
+
                 status: {
                   bsonType: "string",
                   enum: ["present", "absent", "notMarked"],
-                  description: "Attendance status for the event",
                 },
+
                 position: {
                   bsonType: "int",
                   enum: [0, 1, 2, 3],
-                  description: "Event result position (0 = no position)",
                 },
               },
+
               additionalProperties: false,
             },
           },
 
           isEventsLocked: {
             bsonType: "bool",
-            description:
-              "Whether event selection or attendance is locked for the user",
+            description: "Whether event selection or attendance is locked",
           },
 
           createdAt: { bsonType: "date" },
@@ -265,6 +278,7 @@ try {
           },
 
           type: {
+            bsonType: "string",
             enum: ["Field", "Team", "Track"],
             description: "Event type must be Field, Team, or Track",
           },
@@ -289,15 +303,15 @@ try {
             required: ["present", "absent", "notMarked"],
             properties: {
               present: {
-                bsonType: "int",
+                bsonType: ["int", "long"],
                 minimum: 0,
               },
               absent: {
-                bsonType: "int",
+                bsonType: ["int", "long"],
                 minimum: 0,
               },
               notMarked: {
-                bsonType: "int",
+                bsonType: ["int", "long"],
                 minimum: 0,
               },
             },

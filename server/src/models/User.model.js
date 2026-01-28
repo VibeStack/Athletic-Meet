@@ -72,12 +72,15 @@ const userSchema = new mongoose.Schema(
       enum: ["1st Year", "2nd Year", "3rd Year", "4th Year"],
     },
     phone: {
-      type: Number,
+      type: String,
+      minlength: 10,
+      maxlength: 10,
       match: [/^[6-9]\d{9}$/, "Enter a valid 10-digit phone number"],
     },
     jerseyNumber: {
       type: Number,
       unique: true,
+      sparse: true,
       min: [1, "Jersey number must be at least 1"],
       max: [50000, "Jersey number cannot exceed 50000"],
     },
@@ -111,15 +114,21 @@ const userSchema = new mongoose.Schema(
             default: 0,
             validate: {
               validator: function (value) {
-                if (value > 0) return this.status === "present";
-                return true;
+                return value === 0 || this.status === "present";
               },
-              message:"Position can only be assigned if student is present"
+              message: "Position can only be assigned if student is present",
             },
           },
         },
       ],
       default: [],
+      validate: {
+        validator: function (events) {
+          const ids = events.map((e) => e.eventId.toString());
+          return ids.length === new Set(ids).size;
+        },
+        message: "Duplicate event enrollment is not allowed",
+      },
     },
     isEventsLocked: {
       type: Boolean,

@@ -429,18 +429,3 @@ export const getCertificates = asyncHandler(async (req, res) => {
     )
   );
 });
-
-export const markAllDetailsCompleteAsPartial = asyncHandler(
-  async (req, res) => {
-    const users = await User.find({});
-
-    for (const user of users) {
-      user.isUserDetailsComplete = "partial";
-      await user.save();
-    }
-
-    return res
-      .status(200)
-      .json(new ApiResponse(null, "Details marked as partial successfully"));
-  }
-);
