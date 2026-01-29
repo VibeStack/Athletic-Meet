@@ -354,7 +354,7 @@ export default function BulkAdminPage() {
         >
           <button
             onClick={() => setActiveTab("promote")}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-bold text-sm transition-all duration-200 ${
+            className={`flex-1 flex items-center text-center justify-center py-3 px-4 rounded-lg font-bold text-sm transition-all duration-200 ${
               activeTab === "promote"
                 ? darkMode
                   ? "bg-linear-to-r from-teal-500 to-cyan-600 text-white shadow-lg shadow-teal-500/30"
@@ -369,7 +369,7 @@ export default function BulkAdminPage() {
           </button>
           <button
             onClick={() => setActiveTab("demote")}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-bold text-sm transition-all duration-200 ${
+            className={`flex-1 flex items-center text-center justify-center py-3 px-4 rounded-lg font-bold text-sm transition-all duration-200 ${
               activeTab === "demote"
                 ? darkMode
                   ? "bg-linear-to-r from-slate-500 to-gray-600 text-white shadow-lg shadow-slate-500/30"
