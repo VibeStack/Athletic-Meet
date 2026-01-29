@@ -93,6 +93,17 @@ const ShieldIcon = ({ className }) => (
   </svg>
 );
 
+const ShieldAdminIcon = ({ className }) => (
+  <svg
+    className={className || "w-5 h-5"}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+  >
+    <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm7 10c0 4.08-3.05 7.44-7 7.93V12H5V6.3l7-3.11V19.93c3.95-.49 7-3.85 7-7.93V6.3l-2-.89V11z" />
+    <path d="M11 7h2v4h-2zm0 6h2v2h-2z" />
+  </svg>
+);
+
 const AddEventIcon = ({ className }) => (
   <svg
     className={className || "w-5 h-5"}
@@ -123,6 +134,14 @@ const menuSections = [
         gradient: "from-sky-400 to-blue-600",
         shadowColor: "shadow-sky-500/30",
         icon: UsersIcon,
+      },
+      {
+        label: "Bulk Admin",
+        path: "/portal/manager/bulk-admin",
+        roles: ["Manager"],
+        gradient: "from-teal-500 to-cyan-600",
+        shadowColor: "shadow-teal-500/30",
+        icon: ShieldAdminIcon,
       },
     ],
   },

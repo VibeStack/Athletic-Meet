@@ -245,6 +245,57 @@ export const makeSingleAsAdmin = asyncHandler(async (req, res) => {
   throw new ApiError(403, "Only eligible students can be promoted to Admin");
 });
 
+export const makeMultipleAsAdmin = asyncHandler(async (req, res) => {
+  const { jerseyNumbers } = req.body;
+
+  if (!Array.isArray(jerseyNumbers) || jerseyNumbers.length === 0) {
+    throw new ApiError(400, "Jersey numbers array is required");
+  }
+
+  // Fetch relevant users once
+  const users = await User.find({
+    jerseyNumber: { $in: jerseyNumbers },
+  }).select("_id jerseyNumber role isUserDetailsComplete");
+
+
+  if (!users.length) {
+    throw new ApiError(404, "No users found for given jersey numbers");
+  }
+
+  // Split users by state
+  const alreadyAdmins = users
+    .filter((u) => u.role === "Admin")
+    .map((u) => u.jerseyNumber);
+
+  const eligibleStudents = users
+    .filter((u) => u.role === "Student" && u.isUserDetailsComplete === "true")
+    .map((u) => u._id);
+
+  // Promote only eligible students
+  let modifiedCount = 0;
+
+  if (eligibleStudents.length > 0) {
+    const updateResult = await User.updateMany(
+      { _id: { $in: eligibleStudents } },
+      { $set: { role: "Admin" } }
+    );
+
+    modifiedCount = updateResult.modifiedCount;
+  }
+
+  return res.status(200).json(
+    new ApiResponse(
+      {
+        totalRequested: jerseyNumbers.length,
+        promotedCount: modifiedCount,
+        alreadyAdminCount: alreadyAdmins.length,
+        alreadyAdmins, // send jersey numbers
+      },
+      `${modifiedCount} promoted to Admin, ${alreadyAdmins.length} already Admin`
+    )
+  );
+});
+
 export const removeSingleAsAdmin = asyncHandler(async (req, res) => {
   const { userId } = req.params;
 
@@ -282,6 +333,55 @@ export const removeSingleAsAdmin = asyncHandler(async (req, res) => {
   throw new ApiError(403, "Only Admin can be demoted to Student");
 });
 
+export const removeMultipleAsAdmin = asyncHandler(async (req, res) => {
+  const { jerseyNumbers } = req.body;
+
+  if (!Array.isArray(jerseyNumbers) || jerseyNumbers.length === 0) {
+    throw new ApiError(400, "Jersey numbers array is required");
+  }
+
+  // Fetch users once
+  const users = await User.find({
+    jerseyNumber: { $in: jerseyNumbers },
+  }).select("_id jerseyNumber role");
+
+  if (!users.length) {
+    throw new ApiError(404, "No users found for given jersey numbers");
+  }
+
+  // Split users by role state
+  const alreadyStudents = users
+    .filter((u) => u.role === "Student")
+    .map((u) => u.jerseyNumber);
+
+  const eligibleAdmins = users
+    .filter((u) => u.role === "Admin")
+    .map((u) => u._id);
+
+  // Demote only eligible admins
+  let modifiedCount = 0;
+
+  if (eligibleAdmins.length > 0) {
+    const updateResult = await User.updateMany(
+      { _id: { $in: eligibleAdmins } },
+      { $set: { role: "Student" } }
+    );
+
+    modifiedCount = updateResult.modifiedCount;
+  }
+
+  return res.status(200).json(
+    new ApiResponse(
+      {
+        totalRequested: jerseyNumbers.length,
+        demotedCount: modifiedCount,
+        alreadyStudentCount: alreadyStudents.length,
+        alreadyStudents, // jersey numbers list
+      },
+      `${modifiedCount} demoted to Student, ${alreadyStudents.length} already Student`
+    )
+  );
+});
 
 export const toggleEvent = asyncHandler(async (req, res) => {
   const user = req.user;
