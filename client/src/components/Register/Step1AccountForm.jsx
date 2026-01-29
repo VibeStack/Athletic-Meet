@@ -28,46 +28,48 @@ export default function Step1AccountForm({ nextStep, setStep }) {
       const msg = response?.message;
       const extra = response?.data;
 
-      // account already exists go to login page
+      // ✅ Account already exists → Login
       if (msg === "Account already exists. Please log in.") {
         alert("✅ Account already exists. Redirecting to login...");
         navigate("/login");
         return;
       }
 
-      // email already verified go to step 3
+      // ✅ Email already verified → Skip OTP → Step 3
       if (msg === "Email already verified. Please complete your profile.") {
         alert("✅ Email verified. Continue completing your profile.");
         setStep(3);
         return;
       }
 
-      // OTP resend blocked — show remaining time
-      if (msg?.includes("You can request a new OTP")) {
+      // ✅ OTP already exists (NEW FLOW)
+      if (msg === "OTP already sent. Please check your email.") {
         const remaining = extra?.remainingMinutes || "a few";
-        alert(`⏳ OTP already sent. Try again after ${remaining} minute(s).`);
-        nextStep();
+        alert(
+          `📩 OTP already sent! Check your email. Valid for ${remaining} minute(s).`,
+        );
+        nextStep(); // Move to OTP screen
         return;
       }
 
-      // otp sent fresh go to otp screen
+      // ✅ OTP sent fresh
       if (msg === "OTP sent successfully! Please verify your email.") {
-        alert("✅ OTP sent successfully! Verify to continue.");
+        alert("✅ OTP sent successfully! Enter it to continue.");
         nextStep();
         return;
       }
 
-      // username conflict
+      // ❌ Username conflict
       if (msg === "Username already taken.") {
         setError("username", {
           type: "manual",
-          message: "Username already taken. Please choose another username.",
+          message: "Username already taken. Choose another.",
         });
         alert("❌ Username already taken.");
         return;
       }
 
-      // email conflict
+      // ❌ Email conflict
       if (msg === "Email already linked to another username.") {
         setError("email", {
           type: "manual",
@@ -77,7 +79,6 @@ export default function Step1AccountForm({ nextStep, setStep }) {
         return;
       }
 
-      // fallback
       alert("⚠️ Unexpected response. Please try again.");
     } catch (error) {
       console.error("OTP Sender Error:", error.response?.data);

@@ -236,6 +236,12 @@ try {
             description: "6-digit OTP string",
           },
 
+          attempts: {
+            bsonType: "int",
+            minimum: 0,
+            description: "Number of failed attempts",
+          },
+
           createdAt: { bsonType: "date" },
 
           __v: { bsonType: "int" },

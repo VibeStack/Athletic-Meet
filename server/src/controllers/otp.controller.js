@@ -57,44 +57,44 @@ export const registerOtpSender = asyncHandler(async (req, res) => {
       );
   }
 
-  // 5️⃣ OTP rate-limit + update in ONE ATOMIC QUERY (NO RACE CONDITION)
   const now = Date.now();
-  const otp = otpGenerator(); // MUST RETURN STRING
+  const otpExpiryMs = 5 * 60 * 1000;
 
-  const otpDoc = await Otp.findOneAndUpdate(
-    {
-      email: normalizedEmail,
-      $or: [
-        { createdAt: { $lt: new Date(now - 5 * 60 * 1000) } }, // expired
-        { createdAt: { $exists: false } }, // none exists
-      ],
-    },
+  // 🔍 Check existing OTP
+  const existingOtp = await Otp.findOne({ email: normalizedEmail }).lean();
+
+  // ✅ If OTP exists and still valid → BLOCK resend
+  if (existingOtp) {
+    const ageMs = now - new Date(existingOtp.createdAt).getTime();
+
+    if (ageMs < otpExpiryMs) {
+      const remainingMs = otpExpiryMs - ageMs;
+      const remainingMinutes = Math.ceil(remainingMs / 60000);
+
+      return res
+        .status(200)
+        .json(
+          new ApiResponse(
+            { remainingMinutes },
+            "OTP already sent. Please check your email."
+          )
+        );
+    }
+  }
+
+  // ✅ OTP expired OR doesn't exist → Generate new
+  const otp = otpGenerator();
+
+  await Otp.updateOne(
+    { email: normalizedEmail },
     {
       $set: {
         otp,
         createdAt: new Date(),
       },
     },
-    { upsert: true, new: true }
+    { upsert: true }
   );
-
-  // 6️⃣ If OTP NOT updated → still valid → block resend
-  if (!otpDoc) {
-    const existing = await Otp.findOne({ email: normalizedEmail }).lean();
-
-    const ageMs = Date.now() - existing.createdAt.getTime();
-    const remainingMs = 5 * 60 * 1000 - ageMs;
-    const remainingMinutes = Math.ceil(remainingMs / 60000);
-
-    return res
-      .status(200)
-      .json(
-        new ApiResponse(
-          { remainingMinutes },
-          `OTP already sent. You can request a new OTP after ${remainingMinutes} minute(s).`
-        )
-      );
-  }
 
   const hashedPassword = await bcrypt.hash(password, 12);
 
@@ -115,9 +115,16 @@ export const registerOtpSender = asyncHandler(async (req, res) => {
   );
 
   // 8️⃣ Send email async (NON-BLOCKING, SAFE)
-  mailSender(normalizedEmail, otp).catch((err) => {
+  try {
+    await mailSender(normalizedEmail, otp);
+  } catch (err) {
     console.error("❌ OTP Mail Failed:", normalizedEmail, err.message);
-  });
+
+    // Optional rollback OTP so user can retry
+    await Otp.deleteOne({ email: normalizedEmail });
+
+    throw new ApiError(500, "Failed to send OTP. Please try again.");
+  }
 
   return res
     .status(200)
@@ -128,41 +135,87 @@ export const registerOtpSender = asyncHandler(async (req, res) => {
 
 export const registerOtpVerifier = asyncHandler(async (req, res) => {
   const { email, otp } = req.body;
+  const normalizedEmail = email?.toLowerCase().trim();
 
-  if (!email || !otp) throw new ApiError(400, "Email and OTP are required");
-
-  const otpData = await Otp.findOneAndDelete({ email });
-
-  if (!otpData)
-    throw new ApiError(404, "No OTP found. Please request a new one.");
-
-  if (String(otpData.otp) !== String(otp)) {
-    throw new ApiError(401, "Invalid OTP");
+  if (!normalizedEmail || !otp) {
+    throw new ApiError(400, "Email and OTP are required.");
   }
 
-  const user = await User.findOne({ email });
+  // 🔍 Check user exists
+  const user = await User.findOne({ email: normalizedEmail });
 
   if (!user) {
     throw new ApiError(404, "User not found.");
   }
-  if (user.isUserDetailsComplete !== "false") {
-    throw new ApiError(409, "OTP already verified or registration completed.");
+
+  const otpExpiryMs = 5 * 60 * 1000;
+  const now = Date.now();
+
+  // 🔍 Fetch OTP document
+  const otpDoc = await Otp.findOne({ email: normalizedEmail });
+
+  if (!otpDoc) {
+    throw new ApiError(400, "No OTP found. Please request a new one.");
   }
 
-  const updatedUser = await User.findOneAndUpdate(
-    { email, isUserDetailsComplete: "false" },
-    { $set: { isUserDetailsComplete: "partial" } },
-    { new: true }
-  );
+  // ⏳ Expiry check
+  const ageMs = now - new Date(otpDoc.createdAt).getTime();
 
-  if (!updatedUser) {
-    throw new ApiError(409, "OTP already verified or user state invalid.");
+  if (ageMs > otpExpiryMs) {
+    await Otp.deleteOne({ email: normalizedEmail });
+    throw new ApiError(400, "OTP expired. Please request a new one.");
   }
 
-  return res.json(
-    new ApiResponse(
-      null,
-      "OTP verified successfully. Please complete your profile!"
-    )
+  // ❌ WRONG OTP → atomic attempt increment
+  if (otpDoc.otp !== otp) {
+    const updated = await Otp.findOneAndUpdate(
+      { email: normalizedEmail },
+      { $inc: { attempts: 1 } },
+      { new: true }
+    );
+
+    // 🚫 If attempts >= 3 → expire OTP
+    if (updated.attempts >= 3) {
+      await Otp.deleteOne({ email: normalizedEmail });
+
+      throw new ApiError(
+        400,
+        "Too many invalid attempts. OTP expired. Please request a new one."
+      );
+    }
+
+    throw new ApiError(
+      400,
+      `Invalid OTP. ${3 - updated.attempts} attempt(s) remaining.`
+    );
+  }
+
+  // ✅ CORRECT OTP → atomic consume OTP
+  const consumedOtp = await Otp.findOneAndDelete({
+    email: normalizedEmail,
+    otp,
+  });
+
+  // ⚠️ If OTP was already used by another request
+  if (!consumedOtp) {
+    throw new ApiError(
+      400,
+      "OTP already used or expired. Please request a new one."
+    );
+  }
+
+  // ✅ Mark user verified
+  await User.updateOne(
+    { email: normalizedEmail },
+    { $set: { isUserDetailsComplete: "partial" } }
   );
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        null,
+        "OTP verified successfully. Please complete your profile!"
+      )
+    );
 });

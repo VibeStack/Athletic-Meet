@@ -129,14 +129,14 @@ export default function Step2EmailOtp({ nextStep }) {
 
       const msg = response?.message;
 
-      // otp verified move to step 3
+      // ✅ OTP verified → Step 3
       if (msg === "OTP verified successfully. Please complete your profile!") {
         setMessage("✅ OTP verified successfully!");
         nextStep();
         return;
       }
 
-      // ⚠️ Already verified move to step 3
+      // ⚠️ Already verified → Step 3
       if (msg === "OTP already verified or registration completed.") {
         setMessage("⚠️ OTP already verified. Continuing...");
         nextStep();
@@ -157,24 +157,26 @@ export default function Step2EmailOtp({ nextStep }) {
 
       // ❌ OTP expired
       if (errMsg === "No OTP found. Please request a new one.") {
-        setMessage("❌ OTP expired. Please request a new OTP.");
+        setMessage("⏳ OTP expired. Go back and request a new OTP.");
+        setTimeout(() => {
+          nextStep(-1);
+        }, 2000);
         return;
       }
 
       // ❌ User missing
       if (errMsg === "User not found.") {
-        setMessage("❌ User not found. Please register again.");
+        setMessage("❌ User not found. Please restart registration.");
         return;
       }
 
-      // ❌ Already verified
+      // ⚠️ Already verified
       if (errMsg === "OTP already verified or registration completed.") {
         setMessage("⚠️ OTP already verified. Continuing...");
         nextStep();
         return;
       }
 
-      // else case 
       setMessage("❌ OTP verification failed. Try again.");
     } finally {
       setLoading(false);
