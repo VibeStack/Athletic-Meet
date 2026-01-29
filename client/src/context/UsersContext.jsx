@@ -104,7 +104,7 @@ export function UsersProvider({ children }) {
     >
       {children}
     </UsersContext.Provider>
-  );
+  ); 
 }
 
 export function useUsers() {
