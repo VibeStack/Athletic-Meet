@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   getAllUsers,
   deleteUser,
+  unlockMyEvents,
   changeUserDetails,
   markAttendance,
   lockUserEvents,
@@ -16,6 +17,8 @@ const router = Router();
 
 router.route("/users").get(getAllUsers);
 router.route("/user/:userId").get(getUserDetails);
+
+router.route("/events/unlock").post(unlockMyEvents);
 
 router.route("/user/event/attendance").post(markAttendance);
 router.route("/user/event/qrAttendance").post(markAttendanceByQr);

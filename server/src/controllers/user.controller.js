@@ -7,7 +7,7 @@ import { Session } from "../models/Session.model.js";
 import { SystemConfig } from "../models/SystemConfig.model.js";
 import mongoose from "mongoose";
 
-const userGenderIsToEventCategory = function (gender) {
+export const userGenderIsToEventCategory = function (gender) {
   if (gender === "Male") {
     return "Boys";
   }
@@ -284,75 +284,6 @@ export const lockEvents = asyncHandler(async (req, res) => {
     return res
       .status(200)
       .json(new ApiResponse(returningEventsData, "Events Locked Successfully"));
-  } catch (error) {
-    await mongoSession.abortTransaction();
-    mongoSession.endSession();
-    throw error;
-  }
-});
-
-export const unlockEvents = asyncHandler(async (req, res) => {
-  const { sid } = req.signedCookies;
-
-  if (!sid) {
-    throw new ApiError(401, "Session not found");
-  }
-
-  const mongoSession = await mongoose.startSession();
-  mongoSession.startTransaction();
-
-  try {
-    const sessionDoc = await Session.findById(sid).session(mongoSession);
-    if (!sessionDoc) {
-      throw new ApiError(401, "Invalid session");
-    }
-
-    const user = await User.findById(sessionDoc.userId).session(mongoSession);
-    if (!user) {
-      throw new ApiError(404, "User not found");
-    }
-
-    if (user.isEventsLocked && user.role === "Student") {
-      throw new ApiError(
-        409,
-        "Events already locked. Contact admin to unlock."
-      );
-    }
-
-    const eventObjectIds = user.selectedEvents.map(({ eventId }) => eventId);
-
-    const validEvents = await Event.find({
-      _id: { $in: eventObjectIds },
-      isActive: true,
-    }).session(mongoSession);
-
-    if (validEvents.length !== user.selectedEvents.length) {
-      throw new ApiError(400, "One or more events are invalid or inactive");
-    }
-
-    if (user.selectedEvents.length > 0) {
-      for (const selectedEvent of user.selectedEvents) {
-        const status = selectedEvent.status || "notMarked";
-        const decrementField = `studentsCount.${status}`;
-
-        await Event.updateOne(
-          { _id: selectedEvent.eventId },
-          { $inc: { [decrementField]: -1 } },
-          { session: mongoSession }
-        );
-      }
-    }
-
-    user.isEventsLocked = false;
-    user.selectedEvents = [];
-    await user.save({ session: mongoSession });
-
-    await mongoSession.commitTransaction();
-    mongoSession.endSession();
-
-    return res
-      .status(200)
-      .json(new ApiResponse(null, "Events Unlocked successfully"));
   } catch (error) {
     await mongoSession.abortTransaction();
     mongoSession.endSession();

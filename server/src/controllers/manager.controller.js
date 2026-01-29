@@ -630,3 +630,16 @@ export const markAllDetailsCompleteAsPartial = asyncHandler(
     );
   }
 );
+
+export const showEventsStatus = asyncHandler(async (req, res) => {
+  const events = await Event.find({}).select("_id studentsCount").lean();
+  let i = 1;
+  const formattedData = events.map(
+    (event) =>
+      `${i++}. _id: ${event._id}, { present: ${event.studentsCount.present}, absent: ${event.studentsCount.absent}, notMarked: ${event.studentsCount.notMarked} }`
+  );
+
+  return res
+    .status(200)
+    .json(new ApiResponse(formattedData, "Events status fetched successfully"));
+});

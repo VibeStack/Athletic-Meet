@@ -223,21 +223,41 @@ export default function EventsPage() {
 
   const handleUnlockEvents = async () => {
     setLocking(true);
+
     try {
       await axios.post(
-        `${API_URL}/user/events/unlock`,
+        `${API_URL}/admin/events/unlock`,
         {},
         { withCredentials: true },
       );
 
       setUserEventsList([]);
       setPendingSelections([]);
+
       alert(
         "✅ Events unlocked successfully! You can now select events again.",
       );
     } catch (err) {
       console.error("Failed to unlock events", err);
-      alert("❌ Failed to unlock events. Please try again.");
+
+      const errorMessage =
+        err?.response?.data?.message ||
+        "Something went wrong. Please try again.";
+
+      // Handle specific backend messages
+      if (errorMessage.includes("already unlocked")) {
+        alert("🔓 Your events are already unlocked.");
+      } else if (errorMessage.includes("No events to unlock")) {
+        alert("⚠️ You have no events selected to unlock.");
+      } else if (errorMessage.includes("attendance has already been marked")) {
+        alert(
+          "🚫 You cannot unlock events because attendance is already marked.",
+        );
+      } else if (errorMessage.includes("invalid, inactive")) {
+        alert("⚠️ Unlock failed due to event mismatch or inactive events.");
+      } else {
+        alert(`❌ ${errorMessage}`);
+      }
     } finally {
       setLocking(false);
     }
