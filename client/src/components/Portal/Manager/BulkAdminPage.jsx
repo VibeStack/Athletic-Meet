@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTheme } from "../../../context/ThemeContext";
+import { useUsers } from "../../../context/UsersContext";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -55,8 +56,27 @@ const ICONS = {
   ),
 };
 
+// Helper: Convert trailing space to comma for jersey number input
+const handleJerseyInput = (e, setValue) => {
+  let newValue = e.target.value;
+  // If ends with space, replace with comma (but not if already ends with comma)
+  if (newValue.endsWith(" ")) {
+    const trimmed = newValue.trimEnd();
+    // Only add comma if doesn't already end with comma
+    if (!trimmed.endsWith(",") && trimmed.length > 0) {
+      newValue = trimmed + ", ";
+    } else {
+      newValue = trimmed + " ";
+    }
+  }
+  // Clean up multiple consecutive commas/spaces
+  newValue = newValue.replace(/,\s*,+/g, ",").replace(/\s+/g, " ");
+  setValue("jerseyNumbers", newValue, { shouldValidate: true });
+};
+
 export default function BulkAdminPage() {
   const { darkMode } = useTheme();
+  const { allUsers, updateUserInCache } = useUsers();
   const API_URL = import.meta.env.VITE_API_URL;
 
   const [activeTab, setActiveTab] = useState("promote"); // 'promote' or 'demote'
@@ -69,6 +89,7 @@ export default function BulkAdminPage() {
     handleSubmit,
     reset,
     watch,
+    setValue,
     formState: { errors },
   } = useForm({
     defaultValues: { jerseyNumbers: "" },
@@ -149,6 +170,14 @@ export default function BulkAdminPage() {
         }
 
         reset();
+        // Update users cache directly for affected users (faster than refetching all)
+        const newRole = activeTab === "promote" ? "Admin" : "Student";
+        jerseyNumbers.forEach((jerseyNum) => {
+          const user = allUsers.find((u) => u.jerseyNumber === jerseyNum);
+          if (user) {
+            updateUserInCache(user.id, { role: newRole });
+          }
+        });
         setTimeout(() => setSubmitSuccess(false), 3000);
       }
     } catch (err) {
@@ -483,7 +512,7 @@ export default function BulkAdminPage() {
                 Jersey Numbers
               </label>
               <textarea
-                placeholder="Enter jersey numbers: 1, 5, 12, 23"
+                placeholder="Enter jersey numbers: 1, 5, 12, 23 (spaces auto-convert to commas)"
                 rows={5}
                 {...register("jerseyNumbers", {
                   required: "Jersey numbers are required",
@@ -491,6 +520,7 @@ export default function BulkAdminPage() {
                     isValidJerseyInput(value) ||
                     "Please enter valid jersey numbers (comma separated)",
                 })}
+                onChange={(e) => handleJerseyInput(e, setValue)}
                 className={`w-full px-4 py-3 rounded-xl text-sm transition-all duration-200 resize-none focus:outline-none ${(() => {
                   const hasInput = watchedValues.jerseyNumbers?.trim();
                   const isValid =

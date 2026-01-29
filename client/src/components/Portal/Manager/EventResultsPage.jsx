@@ -90,6 +90,7 @@ export default function EventResultsPage() {
     handleSubmit,
     reset,
     watch,
+    setValue,
     formState: { errors },
   } = useForm({
     defaultValues: {
@@ -566,7 +567,7 @@ export default function EventResultsPage() {
                   Jersey Numbers
                 </label>
                 <textarea
-                  placeholder="Enter jersey numbers: 1, 5, 12, 23"
+                  placeholder="Enter jersey numbers: 1, 5, 12, 23 (spaces auto-convert to commas)"
                   rows={8}
                   {...register("jerseyNumbers", {
                     required: "Jersey numbers are required",
@@ -574,6 +575,24 @@ export default function EventResultsPage() {
                       isValidJerseyInput(value) ||
                       "Please enter valid jersey numbers (comma separated)",
                   })}
+                  onChange={(e) => {
+                    // Only add comma when space is typed at end
+                    let newValue = e.target.value;
+                    if (newValue.endsWith(" ")) {
+                      const trimmed = newValue.trimEnd();
+                      if (!trimmed.endsWith(",") && trimmed.length > 0) {
+                        newValue = trimmed + ", ";
+                      } else {
+                        newValue = trimmed + " ";
+                      }
+                    }
+                    newValue = newValue
+                      .replace(/,\s*,+/g, ",")
+                      .replace(/\s+/g, " ");
+                    setValue("jerseyNumbers", newValue, {
+                      shouldValidate: true,
+                    });
+                  }}
                   className={`w-full flex-1 px-4 py-3 rounded-xl text-sm transition-all duration-200 resize-none focus:outline-none ${(() => {
                     const hasInput = watchedValues.jerseyNumbers?.trim();
                     const isValid =

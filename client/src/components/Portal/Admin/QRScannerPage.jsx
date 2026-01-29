@@ -308,8 +308,7 @@ export default function QRScannerPage() {
 
         playSound("success");
       } else if (status === 409 && message.includes("counter busy")) {
-
-      /* ---------- COUNTER BUSY / HIGH LOAD ---------- */
+        /* ---------- COUNTER BUSY / HIGH LOAD ---------- */
         toast.warning("⚠️ System busy. Please scan again.", {
           position: "bottom-right",
         });
@@ -322,8 +321,7 @@ export default function QRScannerPage() {
 
         playSound("error");
       } else if (status === 404 && message.includes("Invalid QR")) {
-
-      /* ---------- INVALID QR ---------- */
+        /* ---------- INVALID QR ---------- */
         toast.error("❌ Invalid QR Code", { position: "bottom-right" });
 
         setScanResult({
@@ -333,8 +331,7 @@ export default function QRScannerPage() {
 
         playSound("error");
       } else {
-
-      /* ---------- OTHER ERRORS ---------- */
+        /* ---------- OTHER ERRORS ---------- */
         toast.error(`❌ ${message}`, { position: "bottom-right" });
 
         setScanResult({
@@ -972,8 +969,26 @@ export default function QRScannerPage() {
                   <div className="flex-1">
                     <textarea
                       value={jerseyNumbers}
-                      onChange={(e) => setJerseyNumbers(e.target.value)}
-                      placeholder="Enter jersey numbers: 1, 5, 12, 23"
+                      onChange={(e) => {
+                        // Only add comma when space is typed at end (not replacing all spaces)
+                        let newValue = e.target.value;
+                        // If ends with space, replace with comma (but not if already ends with comma)
+                        if (newValue.endsWith(" ")) {
+                          const trimmed = newValue.trimEnd();
+                          // Only add comma if doesn't already end with comma
+                          if (!trimmed.endsWith(",") && trimmed.length > 0) {
+                            newValue = trimmed + ", ";
+                          } else {
+                            newValue = trimmed + " ";
+                          }
+                        }
+                        // Clean up multiple consecutive commas/spaces
+                        newValue = newValue
+                          .replace(/,\s*,+/g, ",")
+                          .replace(/\s+/g, " ");
+                        setJerseyNumbers(newValue);
+                      }}
+                      placeholder="Enter jersey numbers: 1, 5, 12, 23 (spaces auto-convert to commas)"
                       rows={4}
                       className={`w-full px-4 py-3 rounded-xl text-sm sm:text-base font-medium transition-all resize-none focus:outline-none ${(() => {
                         const hasInput = jerseyNumbers.trim();
@@ -1006,15 +1021,18 @@ export default function QRScannerPage() {
                     />
                     {jerseyNumbers.trim() &&
                       (() => {
-                        const isValid = jerseyNumbers
+                        const values = jerseyNumbers
                           .split(",")
                           .map((n) => n.trim())
-                          .filter((n) => n)
-                          .every((n) => !isNaN(n) && n !== "");
-                        const validCount = jerseyNumbers
-                          .split(",")
-                          .map((n) => n.trim())
-                          .filter((n) => n && !isNaN(n)).length;
+                          .filter((n) => n);
+                        const isValidFormat = values.every(
+                          (n) => !isNaN(n) && n !== "",
+                        );
+                        const uniqueValues = new Set(values);
+                        const hasDuplicates =
+                          uniqueValues.size !== values.length;
+                        const isValid = isValidFormat && !hasDuplicates;
+                        const validCount = uniqueValues.size;
                         const isGirls = selectedCategory === "Girls";
 
                         return (
@@ -1061,9 +1079,11 @@ export default function QRScannerPage() {
                                       : "text-sky-700"
                               }`}
                             >
-                              {isValid
-                                ? `${validCount} valid jersey number(s) detected`
-                                : "Invalid jersey number(s) detected"}
+                              {!isValidFormat
+                                ? "Invalid jersey number(s) detected"
+                                : hasDuplicates
+                                  ? "Duplicate jersey number(s) detected"
+                                  : `${validCount} valid jersey number(s) detected`}
                             </p>
                           </div>
                         );

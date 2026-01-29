@@ -486,16 +486,7 @@ export const deactivateEvents = asyncHandler(async (req, res) => {
 });
 
 export const getCertificateStatus = asyncHandler(async (req, res) => {
-  const user = req.user;
-
-  if (!user) {
-    throw new ApiError(401, "Not authenticated");
-  }
-
-  if (user.role !== "Manager") {
-    throw new ApiError(403, "Access denied. Manager role required.");
-  }
-
+  
   let config = await SystemConfig.findById("GLOBAL");
 
   if (!config) {
