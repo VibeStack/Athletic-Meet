@@ -273,7 +273,7 @@ export default function QRScannerPage() {
       );
 
       /* ---------- SUCCESS ---------- */
-      toast.success(`Jersey Number ${parsedData.jerseyNumber} Attendance Marked Present!`, {
+      toast.success(`✅ Jersey ${parsedData.jerseyNumber} marked PRESENT`, {
         position: "bottom-right",
       });
 
@@ -281,7 +281,7 @@ export default function QRScannerPage() {
         success: true,
         jerseyNumber: parsedData.jerseyNumber,
         name: parsedData.name || "Student",
-        message: "Attendance marked!",
+        message: "Attendance marked successfully",
         alreadyPresent: false,
       });
 
@@ -292,8 +292,9 @@ export default function QRScannerPage() {
       const message =
         err.response?.data?.message || "Failed to process QR code";
 
-      if (status === 400 && message === "Attendance already marked") {
-        toast.info(`Jersey Number ${parsedData?.jerseyNumber} Already Present`, {
+      /* ---------- ALREADY MARKED ---------- */
+      if (status === 400 && message.includes("already marked")) {
+        toast.info(`ℹ️ Jersey ${parsedData?.jerseyNumber} already PRESENT`, {
           position: "bottom-right",
         });
 
@@ -306,8 +307,35 @@ export default function QRScannerPage() {
         });
 
         playSound("success");
+      } else if (status === 409 && message.includes("counter busy")) {
+
+      /* ---------- COUNTER BUSY / HIGH LOAD ---------- */
+        toast.warning("⚠️ System busy. Please scan again.", {
+          position: "bottom-right",
+        });
+
+        setScanResult({
+          success: false,
+          jerseyNumber: parsedData?.jerseyNumber,
+          message: "Temporary conflict — retry scan",
+        });
+
+        playSound("error");
+      } else if (status === 404 && message.includes("Invalid QR")) {
+
+      /* ---------- INVALID QR ---------- */
+        toast.error("❌ Invalid QR Code", { position: "bottom-right" });
+
+        setScanResult({
+          success: false,
+          message: "Invalid QR Code",
+        });
+
+        playSound("error");
       } else {
-        toast.error(message, { position: "bottom-right" });
+
+      /* ---------- OTHER ERRORS ---------- */
+        toast.error(`❌ ${message}`, { position: "bottom-right" });
 
         setScanResult({
           success: false,
@@ -1073,7 +1101,9 @@ export default function QRScannerPage() {
                             { withCredentials: true },
                           );
 
-                          toast.success(`${arrayOfStudentsJerseyNumberForMarkingAttendance.length} Student's Attendance Marked Successfully`);
+                          toast.success(
+                            `${arrayOfStudentsJerseyNumberForMarkingAttendance.length} Student's Attendance Marked Successfully`,
+                          );
 
                           // Refresh event stats
                           await fetchEvents();

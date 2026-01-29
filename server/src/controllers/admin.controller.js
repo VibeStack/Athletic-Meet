@@ -644,17 +644,29 @@ export const markAttendanceByQr = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Invalid QR Code");
   }
 
-  const staff = req.user;
-  if (!staff || staff.role === "Student") {
-    throw new ApiError(403, "Unauthorized");
+  const eventObjectId = new mongoose.Types.ObjectId(eventId);
+
+  // Step 1: Check if already marked (FAST EXIT)
+  const alreadyMarked = await User.findOne({
+    jerseyNumber,
+    selectedEvents: {
+      $elemMatch: {
+        eventId: eventObjectId,
+        status: "present",
+      },
+    },
+  }).select("_id");
+
+  if (alreadyMarked) {
+    throw new ApiError(400, "Attendance already marked for this event");
   }
 
-  // Atomically update athlete
+  // Step 2: Mark attendance atomically
   const updatedUser = await User.findOneAndUpdate(
     {
       jerseyNumber,
       isEventsLocked: true,
-      "selectedEvents.eventId": eventId,
+      "selectedEvents.eventId": eventObjectId,
       "selectedEvents.status": "notMarked",
     },
     {
@@ -664,13 +676,14 @@ export const markAttendanceByQr = asyncHandler(async (req, res) => {
   );
 
   if (!updatedUser) {
-    throw new ApiError(400, "Attendance not markable");
+    throw new ApiError(400, "User not eligible or event mismatch");
   }
 
-  // Atomic event counter update
+  // Step 3: Update event counters safely
   const counterUpdate = await Event.updateOne(
     {
-      _id: eventId,
+      _id: eventObjectId,
+      isActive: true,
       "studentsCount.notMarked": { $gt: 0 },
     },
     {
@@ -682,17 +695,19 @@ export const markAttendanceByQr = asyncHandler(async (req, res) => {
   );
 
   if (!counterUpdate.modifiedCount) {
+    // revert user update ONLY if we changed it
     await User.updateOne(
       {
         jerseyNumber,
-        "selectedEvents.eventId": eventId,
+        "selectedEvents.eventId": eventObjectId,
+        "selectedEvents.status": "present",
       },
       {
         $set: { "selectedEvents.$.status": "notMarked" },
       }
     );
 
-    throw new ApiError(409, "Event counter conflict");
+    throw new ApiError(409, "Event counter out of sync. Contact admin.");
   }
 
   return res
