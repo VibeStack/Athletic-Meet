@@ -207,93 +207,81 @@ export const getAllUsers = asyncHandler(async (req, res) => {
   );
 });
 
-export const makeAsAdmin = asyncHandler(async (req, res) => {
+export const makeSingleAsAdmin = asyncHandler(async (req, res) => {
   const { userId } = req.params;
 
   if (!userId) {
-    throw {
-      code: 400,
-      message: "User ID is required",
-    };
+    throw new ApiError(400, "User ID is required");
   }
 
+  // Attempt atomic promotion
   const updatedUser = await User.findOneAndUpdate(
-    { _id: userId, role: "Student", isUserDetailsComplete: "true" },
+    {
+      _id: userId,
+      role: "Student",
+      isUserDetailsComplete: "true",
+    },
     { $set: { role: "Admin" } },
-    { new: true, runValidators: true }
-  );
+    { new: true }
+  ).select("_id role");
 
-  if (!updatedUser) {
-    const existingUser = await User.findById(userId).select("role");
-
-    if (!existingUser) {
-      throw {
-        code: 404,
-        message: "User not found",
-      };
-    }
-
-    if (existingUser.role === "Admin") {
-      throw {
-        code: 409,
-        message: "User is already an Admin",
-      };
-    }
-
-    throw {
-      code: 403,
-      message: "Only students can be promoted to Admin",
-    };
+  if (updatedUser) {
+    return res
+      .status(200)
+      .json(new ApiResponse(null, "Student promoted to Admin successfully"));
   }
 
-  res
-    .status(200)
-    .json(new ApiResponse(null, "Student promoted to Admin successfully"));
+  // Fallback check ONLY if update failed
+  const existingUser = await User.findById(userId).select("role");
+
+  if (!existingUser) {
+    throw new ApiError(404, "User not found");
+  }
+
+  if (existingUser.role === "Admin") {
+    throw new ApiError(409, "User is already an Admin");
+  }
+
+  throw new ApiError(403, "Only eligible students can be promoted to Admin");
 });
 
-export const removeAsAdmin = asyncHandler(async (req, res) => {
+export const removeSingleAsAdmin = asyncHandler(async (req, res) => {
   const { userId } = req.params;
 
   if (!userId) {
-    throw {
-      code: 400,
-      message: "User ID is required",
-    };
+    throw new ApiError(400, "User ID is required");
   }
 
   const updatedUser = await User.findOneAndUpdate(
-    { _id: userId, role: "Admin", isUserDetailsComplete: "true" },
+    {
+      _id: userId,
+      role: "Admin",
+      isUserDetailsComplete: "true",
+    },
     { $set: { role: "Student" } },
-    { new: true, runValidators: true }
-  );
+    { new: true }
+  ).select("_id role");
 
-  if (!updatedUser) {
-    const existingUser = await User.findById(userId).select("role");
-
-    if (!existingUser) {
-      throw {
-        code: 404,
-        message: "User not found",
-      };
-    }
-
-    if (existingUser.role === "Student") {
-      throw {
-        code: 409,
-        message: "User is already a Student",
-      };
-    }
-
-    throw {
-      code: 403,
-      message: "Only Admin can be demoted to Student",
-    };
+  if (updatedUser) {
+    return res
+      .status(200)
+      .json(new ApiResponse(null, "Admin demoted to Student successfully"));
   }
 
-  res
-    .status(200)
-    .json(new ApiResponse(null, "Admin demoted to Student successfully"));
+  // Fallback check ONLY if update failed
+  const existingUser = await User.findById(userId).select("role");
+
+  if (!existingUser) {
+    throw new ApiError(404, "User not found");
+  }
+
+  if (existingUser.role === "Student") {
+    throw new ApiError(409, "User is already a Student");
+  }
+
+  throw new ApiError(403, "Only Admin can be demoted to Student");
 });
+
 
 export const toggleEvent = asyncHandler(async (req, res) => {
   const user = req.user;

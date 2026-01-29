@@ -4,8 +4,8 @@ import {
   bulkAddEvents,
   markingResults,
   getAllUsers,
-  makeAsAdmin,
-  removeAsAdmin,
+  makeSingleAsAdmin,
+  removeSingleAsAdmin,
   toggleEvent,
   activateEvents,
   deactivateEvents,
@@ -25,8 +25,8 @@ router.route("/event/results").post(markingResults);
 
 router.route("/export/allUsers").get(getAllUsers);
 
-router.route("/user/:userId/makeAsAdmin").post(makeAsAdmin);
-router.route("/user/:userId/removeAsAdmin").post(removeAsAdmin);
+router.route("/user/:userId/makeSingleAsAdmin").post(makeSingleAsAdmin);
+router.route("/user/:userId/removeSingleAsAdmin").post(removeSingleAsAdmin);
 
 // Toggle single event
 router.route("/event/toggle").post(toggleEvent);
@@ -44,5 +44,7 @@ router.route("/certificates/unlock").post(unlockCertificates);
 
 router.route("/markAllDetailsCompleteAsPartial").post(markAllDetailsCompleteAsPartial);
 router.route("/showEventsStatus").get(showEventsStatus);
+
+
 
 export default router;
