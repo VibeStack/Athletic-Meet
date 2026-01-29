@@ -30,6 +30,7 @@ export const checkAuth = async (req, res, next) => {
         select: "_id name day type isActive",
       })
       .lean();
+
     if (!user) {
       res.clearCookie("sid", {
         httpOnly: true,
@@ -40,6 +41,7 @@ export const checkAuth = async (req, res, next) => {
       });
       throw new ApiError(401, "User not found");
     }
+
     user.selectedEvents = user.selectedEvents.map(
       ({ eventId, status, position }) => {
         return {
@@ -53,7 +55,9 @@ export const checkAuth = async (req, res, next) => {
         };
       }
     );
+
     req.user = user;
+    
     return next();
   } catch (error) {
     return next(error);

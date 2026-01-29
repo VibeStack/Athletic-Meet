@@ -7,6 +7,15 @@ import { Session } from "../models/Session.model.js";
 import { SystemConfig } from "../models/SystemConfig.model.js";
 import mongoose from "mongoose";
 
+const userGenderIsToEventCategory = function (gender) {
+  if (gender === "Male") {
+    return "Boys";
+  }
+  if (gender === "Female") {
+    return "Girls";
+  }
+};
+
 export const registerUser = asyncHandler(async (req, res) => {
   const {
     username,
@@ -190,12 +199,8 @@ export const getEvents = asyncHandler(async (req, res) => {
 });
 
 export const lockEvents = asyncHandler(async (req, res) => {
-  const { sid } = req.signedCookies;
+  const user = req.user;
   const { events: userSelectedEventsIdArray } = req.body;
-
-  if (!sid) {
-    throw new ApiError(401, "Session not found");
-  }
 
   if (
     !Array.isArray(userSelectedEventsIdArray) ||
@@ -204,60 +209,54 @@ export const lockEvents = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Events must be a non-empty array");
   }
 
-  if (userSelectedEventsIdArray.length > 5) {
-    throw new ApiError(400, "Maximum 5 events can be selected");
+  if (userSelectedEventsIdArray.length > 3) {
+    throw new ApiError(400, "Maximum 3 events can be selected");
   }
 
   const mongoSession = await mongoose.startSession();
   mongoSession.startTransaction();
 
   try {
-    const sessionDoc = await Session.findById(sid).session(mongoSession);
-    if (!sessionDoc) {
-      throw new ApiError(401, "Invalid session");
-    }
-
-    const user = await User.findById(sessionDoc.userId).session(mongoSession);
-    if (!user) {
-      throw new ApiError(404, "User not found");
-    }
-
-    if (user.isEventsLocked) {
-      throw new ApiError(
-        409,
-        "Events already locked. Contact admin to unlock."
-      );
-    }
-
     const eventObjectIds = userSelectedEventsIdArray.map(
       (id) => new mongoose.Types.ObjectId(id)
     );
 
     const validEvents = await Event.find({
       _id: { $in: eventObjectIds },
+      category: userGenderIsToEventCategory(user.gender),
       isActive: true,
     }).session(mongoSession);
 
     if (validEvents.length !== userSelectedEventsIdArray.length) {
-      throw new ApiError(400, "One or more events are invalid or inactive");
+      throw new ApiError(
+        400,
+        "One or more events are invalid (Gender Mismatch or Inactive)"
+      );
     }
 
-    const selectedEventsPayload = eventObjectIds.map((eventId) => ({
+    const userEventsToBeLocked = eventObjectIds.map((eventId) => ({
       eventId,
       position: 0,
       status: "notMarked",
     }));
 
-    const updatedData = await User.findOneAndUpdate(
-      { _id: user._id },
+    const updatedResult = await User.updateOne(
+      { _id: user._id, isEventsLocked: false },
       {
         $set: {
-          selectedEvents: selectedEventsPayload,
+          selectedEvents: userEventsToBeLocked,
           isEventsLocked: true,
         },
       },
       { session: mongoSession }
     );
+
+    if (updatedResult.modifiedCount === 0) {
+      throw new ApiError(
+        409,
+        "Events already locked. Contact admin to unlock."
+      );
+    }
 
     await Event.updateMany(
       { _id: { $in: eventObjectIds } },
@@ -269,19 +268,15 @@ export const lockEvents = asyncHandler(async (req, res) => {
       { session: mongoSession }
     );
 
-    const events = await Event.find({
-      _id: { $in: eventObjectIds },
-    });
-    const returningEventsData = events.map((e) => {
-      return {
-        eventId: e._id,
-        eventName: e.name,
-        eventType: e.type,
-        eventDay: e.day,
-        isEventActive: e.isActive,
-        userEventAttendance: "notMarked",
-      };
-    });
+    const returningEventsData = validEvents.map((e) => ({
+      eventId: e._id,
+      eventName: e.name,
+      eventDay: e.day,
+      eventType: e.type,
+      isEventActive: e.isActive,
+      userEventAttendance: "notMarked",
+      position: 0,
+    }));
 
     await mongoSession.commitTransaction();
     mongoSession.endSession();

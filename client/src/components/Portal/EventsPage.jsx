@@ -174,11 +174,12 @@ export default function EventsPage() {
       pendingSelections.length === 0 ||
       pendingSelections.length > MAX_EVENTS
     ) {
-      alert(`Please select 1-${MAX_EVENTS} events before locking.`);
+      alert(`⚠️ Please select 1 to ${MAX_EVENTS} events before locking.`);
       return;
     }
 
     setLocking(true);
+
     try {
       const { data: response } = await axios.post(
         `${API_URL}/user/events/lock`,
@@ -192,11 +193,29 @@ export default function EventsPage() {
       ) {
         setUserEventsList(response.data);
         setPendingSelections([]);
-        alert(`✅ Successfully locked ${pendingSelections.length} event(s)!`);
+        alert(`✅ Successfully locked ${response.data.length} event(s)!`);
       }
     } catch (err) {
       console.error("Failed to lock events", err);
-      alert("❌ Failed to lock events. Please try again.");
+
+      const errorMessage =
+        err?.response?.data?.message ||
+        "Something went wrong. Please try again.";
+
+      // Custom user-friendly alerts based on backend messages
+      if (errorMessage.includes("already locked")) {
+        alert("🔒 Your events are already locked. Contact admin to unlock.");
+      } else if (errorMessage.includes("Gender")) {
+        alert(
+          "🚫 One or more selected events are not allowed for your category.",
+        );
+      } else if (errorMessage.includes("inactive")) {
+        alert("⚠️ One or more selected events are inactive.");
+      } else if (errorMessage.includes("Maximum")) {
+        alert(`⚠️ You can select a maximum of ${MAX_EVENTS} events.`);
+      } else {
+        alert(`❌ ${errorMessage}`);
+      }
     } finally {
       setLocking(false);
     }
