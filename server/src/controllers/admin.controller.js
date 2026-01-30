@@ -270,137 +270,157 @@ export const lockUserEvents = asyncHandler(async (req, res) => {
   const { userId } = req.params;
   const head = req.user;
 
-  const session = await mongoose.startSession();
-  session.startTransaction();
+  const user = await User.findById(userId).select(
+    "role isEventsLocked selectedEvents"
+  );
 
-  try {
-    const user = await User.findById(userId).session(session);
-    if (!user) {
-      throw new ApiError(404, "User not found");
-    }
-    const userSelectedEventsIdArray = user.selectedEvents.map((ev) =>
-      ev.eventId.toString()
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  if (
+    !canModifyDetails(
+      { headId: head._id.toString(), headRole: head.role },
+      { userId: user._id.toString(), userRole: user.role }
+    )
+  ) {
+    throw new ApiError(403, "You are not allowed to lock this user's events");
+  }
+
+  if (user.isEventsLocked) {
+    throw new ApiError(409, "Events are already locked");
+  }
+
+  if (!user.selectedEvents?.length) {
+    await User.updateOne(
+      { _id: user._id, isEventsLocked: false },
+      { $set: { isEventsLocked: true } }
     );
 
-    if (
-      !canModifyDetails(
-        { headId: head.id || head._id.toString(), headRole: head.role },
-        { userId: user.id, userRole: user.role }
-      )
-    ) {
-      throw new ApiError(403, "You are not allowed to lock this user's events");
-    }
-
-    if (user.isEventsLocked) {
-      await session.commitTransaction();
-      return res
-        .status(200)
-        .json(new ApiResponse(null, "Events already locked"));
-    }
-
-    if (user.selectedEvents.length > 0) {
-      const eventIds = user.selectedEvents.map((e) => e.eventId);
-
-      await Event.updateMany(
-        { _id: { $in: eventIds } },
-        { $inc: { "studentsCount.notMarked": 1 } },
-        { session }
-      );
-
-      user.selectedEvents.forEach((ev) => {
-        ev.status = "notMarked";
-      });
-    }
-
-    user.isEventsLocked = true;
-    await user.save({ session });
-
-    const eventsArrayFromEventsDB = await Event.find({
-      _id: { $in: userSelectedEventsIdArray },
-    });
-    const formattedUserEventsData = eventsArrayFromEventsDB.map((ev) => {
-      return {
-        eventId: ev._id,
-        eventName: ev.name,
-        eventType: ev.type,
-        eventDay: ev.day,
-        attendanceStatus: "notMarked",
-      };
-    });
-
-    await session.commitTransaction();
     return res
       .status(200)
-      .json(
-        new ApiResponse(formattedUserEventsData, "Events locked successfully")
-      );
-  } catch (error) {
-    await session.abortTransaction();
-    throw error;
-  } finally {
-    session.endSession();
+      .json(new ApiResponse([], "Events locked successfully"));
   }
+
+  const eventIds = user.selectedEvents.map(
+    (e) => new mongoose.Types.ObjectId(e.eventId)
+  );
+
+  const eventUpdate = await Event.updateMany(
+    {
+      _id: { $in: eventIds },
+      isActive: true,
+    },
+    {
+      $inc: { "studentsCount.notMarked": 1 },
+    }
+  );
+
+  if (eventUpdate.modifiedCount !== eventIds.length) {
+    throw new ApiError(
+      409,
+      "Some events are inactive or missing — lock aborted"
+    );
+  }
+
+  const updateResult = await User.updateOne(
+    { _id: user._id, isEventsLocked: false },
+    { $set: { isEventsLocked: true } }
+  );
+
+  if (!updateResult.modifiedCount) {
+    throw new ApiError(409, "Failed to lock events — retry");
+  }
+
+  // Load event details for response
+  const events = await Event.find({ _id: { $in: eventIds } }).lean();
+
+  const formatted = events.map((e) => ({
+    eventId: e._id.toString(),
+    eventName: e.name,
+    eventType: e.type,
+    eventDay: e.day,
+    attendanceStatus: "notMarked",
+  }));
+
+  return res
+    .status(200)
+    .json(new ApiResponse(formatted, "Events locked successfully"));
 });
 
 export const unlockUserEvents = asyncHandler(async (req, res) => {
   const { userId } = req.params;
   const head = req.user;
 
-  const session = await mongoose.startSession();
-  session.startTransaction();
+  const user = await User.findById(userId).select(
+    "role isEventsLocked selectedEvents"
+  );
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
 
-  try {
-    const user = await User.findById(userId).session(session);
-    if (!user) {
-      throw new ApiError(404, "User not found");
-    }
-    if (
-      !canModifyDetails(
-        { headId: head.id || head._id.toString(), headRole: head.role },
-        { userId: user.id, userRole: user.role }
-      )
-    ) {
-      throw new ApiError(
-        403,
-        "You are not allowed to unlock this user's events"
-      );
-    }
+  // Permission check
+  if (
+    !canModifyDetails(
+      { headId: head._id.toString(), headRole: head.role },
+      { userId: user._id.toString(), userRole: user.role }
+    )
+  ) {
+    throw new ApiError(403, "You are not allowed to unlock this user's events");
+  }
 
-    if (!user.isEventsLocked) {
-      await session.commitTransaction();
-      return res
-        .status(200)
-        .json(new ApiResponse(null, "Events already unlocked"));
-    }
+  // Must be locked first
+  if (!user.isEventsLocked) {
+    throw new ApiError(409, "Events are already unlocked. Lock them first.");
+  }
 
-    if (user.selectedEvents.length > 0) {
-      for (const selectedEvent of user.selectedEvents) {
-        const status = selectedEvent.status || "notMarked";
-        const decrementField = `studentsCount.${status}`;
+  const selectedEvents = user.selectedEvents || [];
 
-        await Event.updateOne(
-          { _id: selectedEvent.eventId },
-          { $inc: { [decrementField]: -1 } },
-          { session }
-        );
-      }
-    }
-
-    user.isEventsLocked = false;
-    user.selectedEvents = [];
-    await user.save({ session });
-
-    await session.commitTransaction();
+  // If no events, just unlock
+  if (selectedEvents.length === 0) {
+    await User.updateOne(
+      { _id: user._id, isEventsLocked: true },
+      { $set: { isEventsLocked: false, selectedEvents: [] } }
+    );
 
     return res
       .status(200)
       .json(new ApiResponse(null, "Events unlocked successfully"));
-  } catch (error) {
-    await session.abortTransaction();
-    throw error;
-  } finally {
-    session.endSession();
   }
+
+  // Build bulk decrement operations
+  const bulkUpdates = selectedEvents.map((ev) => {
+    const status = ev.status || "notMarked";
+
+    return {
+      updateOne: {
+        filter: {
+          _id: new mongoose.Types.ObjectId(ev.eventId),
+          [`studentsCount.${status}`]: { $gt: 0 },
+        },
+        update: {
+          $inc: { [`studentsCount.${status}`]: -1 },
+        },
+      },
+    };
+  });
+
+  await Event.bulkWrite(bulkUpdates);
+
+  // Unlock user + clear selected events
+  await User.updateOne(
+    { _id: user._id, isEventsLocked: true },
+    {
+      $set: {
+        isEventsLocked: false,
+        selectedEvents: [],
+      },
+    }
+  );
+
+  return res
+    .status(200)
+    .json(new ApiResponse(null, "Events unlocked successfully"));
 });
 
 export const updateUserEvents = asyncHandler(async (req, res) => {
@@ -412,119 +432,109 @@ export const updateUserEvents = asyncHandler(async (req, res) => {
     throw new ApiError(400, "updatedEventsIdsArray must be an array");
   }
 
-  const session = await mongoose.startSession();
-  session.startTransaction();
+  if (updatedEventsIdsArray.length === 0) {
+    throw new ApiError(400, "At least one event must be selected");
+  }
 
-  try {
-    const user = await User.findById(userId).session(session);
-    if (!user) throw new ApiError(404, "User not found");
+  if (updatedEventsIdsArray.length > 3) {
+    throw new ApiError(400, "You can select a maximum of 3 events");
+  }
 
-    if (
-      !canModifyDetails(
-        { headId: head.id || head._id.toString(), headRole: head.role },
-        { userId: user.id, userRole: user.role }
-      )
-    ) {
+  // Deduplicate early
+  const uniqueEventIds = [...new Set(updatedEventsIdsArray.map(String))];
+
+  // Fetch user + permission check
+  const user = await User.findById(userId).select("role isEventsLocked");
+  if (!user) throw new ApiError(404, "User not found");
+
+  if (
+    !canModifyDetails(
+      { headId: head._id.toString(), headRole: head.role },
+      { userId: user._id.toString(), userRole: user.role }
+    )
+  ) {
+    throw new ApiError(403, "You are not allowed to update this user's events");
+  }
+
+  // Block update if locked
+  if (user.isEventsLocked) {
+    throw new ApiError(
+      409,
+      "User events are locked. Unlock events before modifying."
+    );
+  }
+
+  // Fetch event metadata once
+  const events = await Event.find(
+    { _id: { $in: uniqueEventIds }, isActive: true },
+    "name type day"
+  ).lean();
+
+  if (events.length !== uniqueEventIds.length) {
+    throw new ApiError(
+      400,
+      "One or more selected events are invalid or inactive"
+    );
+  }
+
+  // Single-pass validation
+  let trackCount = 0;
+  let fieldCount = 0;
+
+  for (const e of events) {
+    if (e.type === "Team") {
       throw new ApiError(
         403,
-        "You are not allowed to update this user's events"
+        "Team events cannot be added here. Use Manager panel."
       );
     }
 
-    const oldEventIds = user.selectedEvents.map((e) => e.eventId.toString());
-    const newEventIds = updatedEventsIdsArray.map((id) => id.toString());
-
-    const removedEventIds = oldEventIds.filter(
-      (id) => !newEventIds.includes(id)
-    );
-
-    const addedEventIds = newEventIds.filter((id) => !oldEventIds.includes(id));
-
-    // Only update studentsCount if events are ALREADY locked
-    // If not locked, lockUserEvents will handle the increment later
-    if (user.isEventsLocked) {
-      // Decrement counts for REMOVED events (by their current status)
-      if (removedEventIds.length > 0) {
-        for (const eventId of removedEventIds) {
-          const oldEvent = user.selectedEvents.find(
-            (e) => e.eventId.toString() === eventId
-          );
-          const status = oldEvent?.status || "notMarked";
-          const decrementField = `studentsCount.${status}`;
-
-          await Event.updateOne(
-            { _id: eventId },
-            { $inc: { [decrementField]: -1 } },
-            { session }
-          );
-        }
-      }
-
-      // Increment notMarked count for ADDED events
-      if (addedEventIds.length > 0) {
-        await Event.updateMany(
-          { _id: { $in: addedEventIds } },
-          { $inc: { "studentsCount.notMarked": 1 } },
-          { session }
-        );
-      }
-    }
-
-    // 3️⃣ Build new selectedEvents array (preserve status for unchanged events)
-    const newSelectedEvents = newEventIds.map((eventId) => {
-      const existing = user.selectedEvents.find(
-        (e) => e.eventId.toString() === eventId
-      );
-      if (existing) {
-        // Keep existing status and position for unchanged events
-        return {
-          eventId: existing.eventId,
-          status: existing.status,
-          position: existing.position || 0,
-        };
-      }
-      // New events start with notMarked
-      return {
-        eventId: eventId,
-        status: "notMarked",
-        position: 0,
-      };
-    });
-
-    user.selectedEvents = newSelectedEvents;
-    await user.save({ session });
-
-    /* ---------- RESPONSE DATA ---------- */
-    const events = await Event.find(
-      { _id: { $in: newEventIds } },
-      "name type day",
-      { session }
-    ).lean();
-
-    const formattedData = events.map((e) => {
-      const userEvent = newSelectedEvents.find(
-        (se) => se.eventId.toString() === e._id.toString()
-      );
-      return {
-        eventId: e._id.toString(),
-        eventName: e.name,
-        eventType: e.type,
-        eventDay: e.day,
-        attendanceStatus: userEvent?.status || "notMarked",
-      };
-    });
-
-    await session.commitTransaction();
-
-    return res
-      .status(200)
-      .json(new ApiResponse(formattedData, "User events updated successfully"));
-  } catch (error) {
-    await session.abortTransaction();
-    throw error;
-  } finally {
-    session.endSession();
+    if (e.type === "Track") trackCount++;
+    if (e.type === "Field") fieldCount++;
   }
+
+  if (trackCount > 2) {
+    throw new ApiError(400, "You can select a maximum of 2 Track events");
+  }
+
+  if (fieldCount > 2) {
+    throw new ApiError(400, "You can select a maximum of 2 Field events");
+  }
+
+  if (trackCount + fieldCount > 3) {
+    throw new ApiError(400, "You can select a maximum of 3 events");
+  }
+
+  // Build selectedEvents payload
+  const newSelectedEvents = uniqueEventIds.map((eventId) => ({
+    eventId: new mongoose.Types.ObjectId(eventId),
+    status: "notMarked",
+    position: 0,
+  }));
+
+  // Atomic user update (NO TRANSACTION NEEDED)
+  await User.updateOne(
+    { _id: user._id, isEventsLocked: false },
+    { $set: { selectedEvents: newSelectedEvents } }
+  );
+
+  // Build response from already-fetched events (no second DB call)
+  const formattedData = events.map((e) => ({
+    eventId: e._id.toString(),
+    eventName: e.name,
+    eventType: e.type,
+    eventDay: e.day,
+    attendanceStatus: "notMarked",
+  }));
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        formattedData,
+        "Events updated successfully. Lock events to confirm."
+      )
+    );
 });
 
 export const markAttendance = asyncHandler(async (req, res) => {

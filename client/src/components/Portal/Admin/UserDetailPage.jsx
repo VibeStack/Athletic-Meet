@@ -69,10 +69,10 @@ export default function UserDetailPage() {
       if (studentUserData.id === user.id) {
         setUserEventsList(response.data);
       }
-      setStudentUserEventsList(response.data);
+      setStudentUserEventsList(response.data || []);
       // Update cache with new events count
       updateUserInCache(studentUserData.id, {
-        eventsCount: response.data.length,
+        eventsCount: response.data?.length || 0,
         isEventsLocked: true,
       });
     } catch (err) {

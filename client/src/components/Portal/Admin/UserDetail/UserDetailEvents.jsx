@@ -98,10 +98,11 @@ export default function UserDetailEvents({
 
   const [allEvents, setAllEvents] = useState([]);
   const [updatedEventsArray, setupdatedEventsArray] = useState(
-    studentUserEventsList.map(({ eventId, eventType }) => {
-      return { eventId, eventType };
-    }),
+    (studentUserEventsList || [])
+      .filter((ev) => ev.eventType !== "Team")
+      .map(({ eventId, eventType }) => ({ eventId, eventType })),
   );
+
   const [showAddEventModal, setShowAddEventModal] = useState(false);
 
   const openAddEventModal = async () => {
@@ -111,8 +112,11 @@ export default function UserDetailEvents({
       });
       const gender = studentUserData.gender === "Male" ? "Boys" : "Girls";
       setAllEvents(
-        response.data.filter((e) => e.category === gender && e.isActive),
+        response.data.filter(
+          (e) => e.category === gender && e.isActive && e.type !== "Team",
+        ),
       );
+
       setShowAddEventModal(true);
     } catch (err) {
       console.error("Failed to fetch events", err);
@@ -610,91 +614,6 @@ export default function UserDetailEvents({
                                 ? "bg-slate-800/80 ring-1 ring-white/10 hover:ring-white/20"
                                 : "bg-slate-50 ring-1 ring-slate-200 hover:ring-slate-300"
                           } ${
-                            isDisabled ? "opacity-40 pointer-events-none" : ""
-                          }`}
-                        >
-                          <p
-                            className={`font-semibold text-xs ${
-                              darkMode ? "text-white" : "text-slate-800"
-                            }`}
-                          >
-                            {event.name}
-                          </p>
-
-                          <p
-                            className={`text-[9px] ${
-                              darkMode ? "text-slate-400" : "text-slate-500"
-                            }`}
-                          >
-                            {event.day}
-                          </p>
-
-                          {isSelected && (
-                            <span className="absolute bottom-2 right-2 text-[8px] font-bold text-emerald-500">
-                              {ICONS.check} Selected
-                            </span>
-                          )}
-                        </div>
-                      );
-                    })}
-                </div>
-              </div>
-
-              {/* Team Events */}
-              <div>
-                <h3
-                  className={`text-xs font-bold mb-2 flex items-center gap-2 ${
-                    darkMode ? "text-blue-400" : "text-blue-600"
-                  }`}
-                >
-                  <span
-                    className={`w-5 h-5 rounded flex items-center justify-center ${
-                      darkMode ? "bg-blue-500/20" : "bg-blue-100"
-                    }`}
-                  >
-                    {ICONS.team}
-                  </span>
-                  Team Events
-                </h3>
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-                  {allEvents
-                    .filter((e) => e.type === "Team")
-                    .map((event) => {
-                      const teamCount = updatedEventsArray.filter(
-                        (e) => e.eventType === "Team",
-                      ).length;
-
-                      const isSelected = updatedEventsArray.some(
-                        (e) => e.eventId === event.id,
-                      );
-
-                      const isDisabled = !isSelected && teamCount >= 2;
-
-                      return (
-                        <div
-                          key={event.id}
-                          onClick={() => {
-                            if (isDisabled) return;
-
-                            setupdatedEventsArray((prev) =>
-                              isSelected
-                                ? prev.filter((e) => e.eventId !== event.id)
-                                : [
-                                    ...prev,
-                                    { eventId: event.id, eventType: "Team" },
-                                  ],
-                            );
-                          }}
-                          className={`relative rounded-lg p-2.5 transition-all cursor-pointer ${
-                            isSelected
-                              ? darkMode
-                                ? "bg-emerald-900/50 ring-2 ring-emerald-500"
-                                : "bg-emerald-50 ring-2 ring-emerald-400"
-                              : darkMode
-                                ? "bg-slate-800/80 ring-1 ring-white/10 hover:ring-white/20"
-                                : "bg-slate-50 ring-1 ring-slate-200 hover:ring-slate-300"
-                          }${
                             isDisabled ? "opacity-40 pointer-events-none" : ""
                           }`}
                         >
