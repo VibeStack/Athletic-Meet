@@ -538,15 +538,15 @@ export const updateUserEvents = asyncHandler(async (req, res) => {
 });
 
 export const markAttendance = asyncHandler(async (req, res) => {
-  const { jerseyNumber, eventId, status } = req.body;
+  const { jerseyNumber, clickedEventId, prevStatus, newStatus } = req.body;
   const head = req.user;
 
-  if (!jerseyNumber || !eventId || !status) {
-    throw new ApiError(400, "jerseyNumber, eventId and status are required");
+  if (!jerseyNumber || !clickedEventId || !prevStatus || !newStatus) {
+    throw new ApiError(400, "Missing required attendance fields");
   }
 
   const allowed = ["present", "absent", "notMarked"];
-  if (!allowed.includes(status)) {
+  if (!allowed.includes(prevStatus) || !allowed.includes(newStatus)) {
     throw new ApiError(400, "Invalid attendance status");
   }
 
@@ -576,66 +576,56 @@ export const markAttendance = asyncHandler(async (req, res) => {
 
   // Step 4: Find event entry
   const eventEntry = user.selectedEvents.find(
-    (e) => e.eventId.toString() === eventId
+    (e) => e.eventId.toString() === clickedEventId
   );
 
   if (!eventEntry) {
     throw new ApiError(400, "Event not selected by user");
   }
 
-  const prev = eventEntry.status;
+  const userUpdate = await User.updateOne(
+    {
+      jerseyNumber,
+      "selectedEvents.eventId": clickedEventId,
+      "selectedEvents.status": prevStatus,
+      isEventsLocked: true,
+    },
+    {
+      $set: { "selectedEvents.$.status": newStatus },
+    }
+  );
 
-  if (prev === status) {
-    return res.status(200).json(new ApiResponse(null, "No change"));
+  if (!userUpdate.modifiedCount) {
+    throw new ApiError(409, "Attendance state has already changed");
   }
 
-  if (!allowed.includes(prev)) {
-    throw new ApiError(400, "Corrupted attendance state");
-  }
-
-  // Step 5: Atomic event counter update
   const eventUpdate = await Event.updateOne(
     {
-      _id: eventId,
-      [`studentsCount.${prev}`]: { $gt: 0 },
+      _id: clickedEventId,
+      [`studentsCount.${prevStatus}`]: { $gt: 0 },
     },
     {
       $inc: {
-        [`studentsCount.${prev}`]: -1,
-        [`studentsCount.${status}`]: 1,
+        [`studentsCount.${prevStatus}`]: -1,
+        [`studentsCount.${newStatus}`]: 1,
       },
     }
   );
 
   if (!eventUpdate.modifiedCount) {
-    throw new ApiError(409, "Event counter conflict");
-  }
-
-  // Step 6: Atomic user attendance update
-  const userUpdate = await User.updateOne(
-    {
-      jerseyNumber,
-      "selectedEvents.eventId": eventId,
-      "selectedEvents.status": prev,
-    },
-    {
-      $set: { "selectedEvents.$.status": status },
-    }
-  );
-
-  // If user update failed → rollback event counters
-  if (!userUpdate.modifiedCount) {
-    await Event.updateOne(
-      { _id: eventId },
+    // rollback user update
+    await User.updateOne(
       {
-        $inc: {
-          [`studentsCount.${prev}`]: 1,
-          [`studentsCount.${status}`]: -1,
-        },
+        jerseyNumber,
+        "selectedEvents.eventId": clickedEventId,
+        "selectedEvents.status": newStatus,
+      },
+      {
+        $set: { "selectedEvents.$.status": prevStatus },
       }
     );
 
-    throw new ApiError(409, "Attendance race conflict");
+    throw new ApiError(409, "Event counter conflict");
   }
 
   return res

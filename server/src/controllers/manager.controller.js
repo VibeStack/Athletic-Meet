@@ -710,12 +710,13 @@ export const markAllDetailsCompleteAsPartial = asyncHandler(
   }
 );
 
+// just for testing in postman 
 export const showEventsStatus = asyncHandler(async (req, res) => {
-  const events = await Event.find({}).select("_id studentsCount").lean();
+  const events = await Event.find({}).select("_id name category studentsCount").lean();
   let i = 1;
   const formattedData = events.map(
     (event) =>
-      `${i++}. _id: ${event._id}, { present: ${event.studentsCount.present}, absent: ${event.studentsCount.absent}, notMarked: ${event.studentsCount.notMarked} }`
+      `${i++}. name: ${event.name},category: ${event.category}, { present: ${event.studentsCount.present}, absent: ${event.studentsCount.absent}, notMarked: ${event.studentsCount.notMarked} }`
   );
 
   return res

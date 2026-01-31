@@ -78,8 +78,7 @@ export default function UserDetailEvents({
 }) {
   const { user } = useOutletContext(); // user is me ok and studentUserData is student whose details i am viewing ok
   const API_URL = import.meta.env.VITE_API_URL;
-  const { userEventsList, setUserEventsList, fetchUserDetails } =
-    useUserDetail();
+  const { userEventsList, setUserEventsList } = useUserDetail();
 
   const viewerId = user.id;
   const viewerRole = user.role;
@@ -89,7 +88,7 @@ export default function UserDetailEvents({
   const isSelf = viewerId === targetId;
 
   const [updating, setUpdating] = useState(false);
-  const [markingAttendance, setMarkingAttendance] = useState(null); // { eventId, status }
+  const [markingAttendance, setMarkingAttendance] = useState(null); // { clickedEventId, prevStatus, newStatus }
 
   const isViewerHigherRole = () => {
     const roleRank = { Manager: 3, Admin: 2, Student: 1 };
@@ -163,38 +162,65 @@ export default function UserDetailEvents({
   };
 
   const markAttendance = async (eventId, status) => {
-    if (markingAttendance) return; // Prevent double-clicks
-    setMarkingAttendance({ eventId, status });
+    const clickedEventId = eventId;
+    const newStatus = status;
+
+    const prevStatus = studentUserEventsList.find(
+      (ev) => ev.eventId === eventId,
+    )?.attendanceStatus;
+
+    if (markingAttendance) return; // prevent double click
+
+    // same-state short circuit (UX + saves API call)
+    if (prevStatus === newStatus) {
+      alert("Attendance is already in this state.");
+      return;
+    }
+
+    setMarkingAttendance({ clickedEventId, prevStatus, newStatus });
 
     try {
       await axios.post(
         `${API_URL}/admin/user/event/attendance`,
-        { jerseyNumber: studentUserData.jerseyNumber, eventId, status },
+        {
+          jerseyNumber: studentUserData.jerseyNumber,
+          clickedEventId,
+          prevStatus,
+          newStatus,
+        },
         { withCredentials: true },
       );
 
+      // update self context (if needed)
       if (isSelf) {
-        setUserEventsList(
-          userEventsList.map((ev) => {
-            if (ev.eventId === eventId) {
-              ev.userEventAttendance = status;
-            }
-            return ev;
-          }),
+        setUserEventsList((prev) =>
+          prev.map((ev) =>
+            ev.eventId === eventId
+              ? { ...ev, userEventAttendance: newStatus }
+              : ev,
+          ),
         );
       }
-      setStudentUserEventsList(
-        studentUserEventsList.map((ev) => {
-          if (ev.eventId === eventId) {
-            ev.attendanceStatus = status;
-          }
-          return ev;
-        }),
+
+      // update viewed student list
+      setStudentUserEventsList((prev) =>
+        prev.map((ev) =>
+          ev.eventId === eventId ? { ...ev, attendanceStatus: newStatus } : ev,
+        ),
       );
     } catch (err) {
-      if (err?.response?.data?.message === "User events are not locked") {
+      const msg = err?.response?.data?.message;
+
+      if (msg === "User events not locked") {
         alert("Please lock user events before marking attendance.");
+      } else if (msg === "Attendance state has already changed") {
+        alert("Attendance was updated by someone else. Please refresh.");
+      } else if (msg === "Event counter conflict") {
+        alert("Attendance update conflict. Please try again.");
+      } else {
+        alert("Failed to mark attendance. Please try again.");
       }
+
       console.error("Failed to mark attendance", err);
     } finally {
       setMarkingAttendance(null);
@@ -321,8 +347,8 @@ export default function UserDetailEvents({
                                 : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200"
                           } ${markingAttendance !== null ? "opacity-70 cursor-not-allowed" : ""}`}
                         >
-                          {markingAttendance?.eventId === eventId &&
-                          markingAttendance?.status === "present" ? (
+                          {markingAttendance?.clickedEventId === eventId &&
+                          markingAttendance?.newStatus === "present" ? (
                             <span className="animate-spin h-4 w-4 border-2 border-current/30 rounded-full border-t-current" />
                           ) : (
                             <>
@@ -342,8 +368,8 @@ export default function UserDetailEvents({
                                 : "bg-red-50 text-red-700 hover:bg-red-100 border border-red-200"
                           } ${markingAttendance !== null ? "opacity-70 cursor-not-allowed" : ""}`}
                         >
-                          {markingAttendance?.eventId === eventId &&
-                          markingAttendance?.status === "absent" ? (
+                          {markingAttendance?.clickedEventId === eventId &&
+                          markingAttendance?.newStatus === "absent" ? (
                             <span className="animate-spin h-4 w-4 border-2 border-current/30 rounded-full border-t-current" />
                           ) : (
                             <>
@@ -364,8 +390,8 @@ export default function UserDetailEvents({
                                 : "bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200"
                           } ${markingAttendance !== null ? "opacity-70 cursor-not-allowed" : ""}`}
                         >
-                          {markingAttendance?.eventId === eventId &&
-                          markingAttendance?.status === "notMarked" ? (
+                          {markingAttendance?.clickedEventId === eventId &&
+                          markingAttendance?.newStatus === "notMarked" ? (
                             <span className="animate-spin h-4 w-4 border-2 border-current/30 rounded-full border-t-current" />
                           ) : (
                             <>
