@@ -3,7 +3,6 @@ import { User } from "../models/User.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import { Event } from "../models/Events.model.js";
-import { Session } from "../models/Session.model.js";
 import { SystemConfig } from "../models/SystemConfig.model.js";
 import mongoose from "mongoose";
 

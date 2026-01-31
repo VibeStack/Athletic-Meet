@@ -93,14 +93,29 @@ const ShieldIcon = ({ className }) => (
   </svg>
 );
 
-const ShieldAdminIcon = ({ className }) => (
+const CertificateControlIcon = ({ className }) => (
   <svg
-    className={className || "w-5 h-5"}
     viewBox="0 0 24 24"
+    className={`${
+      className || "w-5 h-5"
+    } transition-all duration-300 group-hover:scale-110 group-hover:rotate-1`}
     fill="currentColor"
   >
-    <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm7 10c0 4.08-3.05 7.44-7 7.93V12H5V6.3l7-3.11V19.93c3.95-.49 7-3.85 7-7.93V6.3l-2-.89V11z" />
-    <path d="M11 7h2v4h-2zm0 6h2v2h-2z" />
+    {/* Robust Lock Shackle - Scaled up for prominence */}
+    <path
+      d="M18 9V5.5a6 6 0 00-12 0V9H4v13a2 2 0 002 2h12a2 2 0 002-2V9h-2zM8 5.5a4 4 0 018 0V9H8V5.5z"
+      opacity="0.3"
+    />
+    {/* Larger Shield-shaped Body with bigger cutout Star */}
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M4 9v6c0 5 4 8 8 9 4-1 8-4 8-9V9H4z M12 11.2l1.2 2.4 2.6.4-1.9 1.9.4 2.6-2.3-1.2-2.3 1.2.4-2.6-1.9-1.9 2.6-.4 1.2-2.4z M12 20.2 a0.8 0.8 0 1 1 0 -1.6 a0.8 0.8 0 0 1 0 1.6 z"
+    />
+
+    {/* Texture details */}
+    <rect x="7" y="11" width="2" height="0.6" rx="0.3" opacity="0.4" />
+    <rect x="15" y="11" width="2" height="0.6" rx="0.3" opacity="0.4" />
   </svg>
 );
 
@@ -141,7 +156,7 @@ const menuSections = [
         roles: ["Manager"],
         gradient: "from-teal-500 to-cyan-600",
         shadowColor: "shadow-teal-500/30",
-        icon: ShieldAdminIcon,
+        icon: ShieldIcon,
       },
     ],
   },
@@ -215,7 +230,7 @@ const menuSections = [
         roles: ["Manager"],
         gradient: "from-fuchsia-500 to-purple-700",
         shadowColor: "shadow-fuchsia-500/30",
-        icon: ShieldIcon,
+        icon: CertificateControlIcon,
       },
     ],
   },

@@ -381,6 +381,66 @@ export default function QRScannerPage() {
     );
   }
 
+  const handleMarkAttendanceByArray = async () => {
+    try {
+      setSubmitting(true);
+
+      const jerseysArray = jerseyNumbers
+        .split(",")
+        .map((n) => Number(n.trim()))
+        .filter((n) => !isNaN(n));
+
+      if (jerseysArray.length === 0) {
+        toast.error("Please enter valid jersey numbers");
+        return;
+      }
+
+      const { data } = await axios.post(
+        `${API_URL}/admin/user/event/jerseysArray`,
+        {
+          jerseysArray,
+          selectedEventId: selectedEvent,
+        },
+        { withCredentials: true },
+      );
+
+      /* ✅ SUCCESS HANDLING (structured) */
+      const { marked = [], alreadyMarked = [] } = data.data || {};
+
+      if (marked.length > 0 && alreadyMarked.length > 0) {
+        toast.success(
+          `✅ ${marked.length} marked present, ℹ️ ${alreadyMarked.length} already marked`,
+        );
+      } else if (marked.length > 0) {
+        toast.success(`✅ ${marked.length} attendance marked successfully`);
+      } else if (alreadyMarked.length > 0) {
+        toast.info(`ℹ️ ${alreadyMarked.length} already marked present`);
+      }
+
+      // Refresh stats
+      await fetchEvents();
+
+      // Clear input
+      setJerseyNumbers("");
+    } catch (error) {
+      const status = error?.response?.status;
+      const message = error?.response?.data?.message || "Something went wrong";
+
+      /* ❌ BACKEND-DRIVEN ERROR HANDLING */
+      if (status === 400 && message.includes("not eligible")) {
+        toast.error(`🚫 ${message}`);
+      } else if (status === 404 && message.includes("Event not found")) {
+        toast.error("❌ Event not found. Please refresh.");
+      } else if (status === 409 && message.includes("counter")) {
+        toast.warning("⚠️ System busy. Please retry.");
+      } else {
+        toast.error(`❌ ${message}`);
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <>
       <ToastContainer position="bottom-right" autoClose={2500} />
@@ -1093,63 +1153,7 @@ export default function QRScannerPage() {
                   {/* Button Section - Right on desktop, Top on mobile */}
                   <div className="sm:w-48 flex flex-col justify-start">
                     <button
-                      onClick={async () => {
-                        try {
-                          setSubmitting(true);
-
-                          const arrayOfStudentsJerseyNumberForMarkingAttendance =
-                            jerseyNumbers
-                              .split(",")
-                              .map((n) => Number(n.trim()))
-                              .filter((n) => !isNaN(n));
-
-                          if (
-                            arrayOfStudentsJerseyNumberForMarkingAttendance.length ===
-                            0
-                          ) {
-                            toast.error("Please enter valid jersey numbers");
-                            return;
-                          }
-
-                          await axios.post(
-                            `${API_URL}/admin/user/event/jerseysArray`,
-                            {
-                              jerseysArray:
-                                arrayOfStudentsJerseyNumberForMarkingAttendance,
-                              selectedEventId: selectedEvent,
-                            },
-                            { withCredentials: true },
-                          );
-
-                          toast.success(
-                            `${arrayOfStudentsJerseyNumberForMarkingAttendance.length} Student's Attendance Marked Successfully`,
-                          );
-
-                          // Refresh event stats
-                          await fetchEvents();
-
-                          // Clear input after success
-                          setJerseyNumbers("");
-                        } catch (error) {
-                          const message =
-                            error?.response?.data?.message ||
-                            "Something went wrong";
-
-                          if (message.includes("not found")) {
-                            toast.error(
-                              "❌ Some jersey numbers were not found. Please verify.",
-                            );
-                          } else if (
-                            message.includes("do not meet conditions")
-                          ) {
-                            toast.warning(`⚠️ ${message}`);
-                          } else {
-                            toast.error(`❌ ${message}`);
-                          }
-                        } finally {
-                          setSubmitting(false);
-                        }
-                      }}
+                      onClick={handleMarkAttendanceByArray}
                       disabled={
                         !jerseyNumbers.trim() ||
                         submitting ||

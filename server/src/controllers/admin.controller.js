@@ -9,6 +9,15 @@ import { Event } from "../models/Events.model.js";
 import mongoose from "mongoose";
 import { userGenderIsToEventCategory } from "./user.controller.js";
 
+export const eventCategoryToGender = function (category) {
+  if (!category) return null;
+
+  if (category.includes("Girl")) return "Female";
+  if (category.includes("Boy")) return "Male";
+
+  return category;
+};
+
 const roleAccessPoints = (role) => {
   if (role === "Manager") return 3;
   if (role === "Admin") return 2;
@@ -728,87 +737,122 @@ export const markAttendanceByGivingJerseyArray = asyncHandler(
     session.startTransaction();
 
     try {
-      // 1️⃣ Load event once
+      // 1️⃣ Load event
       const event = await Event.findById(eventId)
         .select("category studentsCount")
         .session(session);
 
       if (!event) throw new ApiError(404, "Event not found");
 
-      // 2️⃣ Resolve event gender rule
-      const category = event.category?.toLowerCase();
-      const eventGender = category?.includes("girl")
-        ? "Female"
-        : category?.includes("boy")
-          ? "Male"
-          : event.category;
+      const eventGender = eventCategoryToGender(event.category);
 
-      // 3️⃣ Atomically update eligible users
-      const userUpdate = await User.updateMany(
-        {
-          jerseyNumber: { $in: uniqueJerseys },
-          gender: eventGender,
-          isEventsLocked: true,
-          selectedEvents: {
-            $elemMatch: {
-              eventId,
-              status: "notMarked",
-              position: 0,
-            },
-          },
-        },
-        {
-          $set: { "selectedEvents.$[ev].status": "present" },
-        },
-        {
-          session,
-          arrayFilters: [
-            {
-              "ev.eventId": eventId,
-              "ev.status": "notMarked",
-              "ev.position": 0,
-            },
-          ],
+      // 2️⃣ Load users
+      const users = await User.find({
+        jerseyNumber: { $in: uniqueJerseys },
+      })
+        .select("jerseyNumber gender isEventsLocked selectedEvents")
+        .session(session);
+
+      const byJersey = new Map(users.map((u) => [u.jerseyNumber, u]));
+
+      const invalidGender = [];
+      const alreadyMarked = [];
+      const toMark = [];
+
+      // 3️⃣ Per-jersey validation
+      for (const jersey of uniqueJerseys) {
+        const user = byJersey.get(jersey);
+
+        if (!user) continue;
+
+        if (user.gender !== eventGender) {
+          invalidGender.push(jersey);
+          continue;
         }
-      );
 
-      // 4️⃣ Ensure all jerseys updated
-      if (userUpdate.modifiedCount !== uniqueJerseys.length) {
+        if (!user.isEventsLocked) continue;
+
+        const ev = user.selectedEvents.find(
+          (e) => e.eventId.toString() === eventId.toString() && e.position === 0
+        );
+
+        if (!ev) continue;
+
+        if (ev.status === "present") {
+          alreadyMarked.push(jersey);
+        } else if (ev.status === "notMarked") {
+          toMark.push(jersey);
+        }
+      }
+
+      // ❌ Case 1: gender mismatch → fail fully
+      if (invalidGender.length > 0) {
         throw new ApiError(
           400,
-          "Some jerseys invalid, wrong gender, unlocked, not enrolled, or already marked"
+          `Jersey ${invalidGender.join(", ")} not eligible for this event`
         );
       }
 
-      // 5️⃣ Atomic event counter update
-      const eventUpdate = await Event.updateOne(
-        {
-          _id: eventId,
-          "studentsCount.notMarked": { $gte: uniqueJerseys.length },
-        },
-        {
-          $inc: {
-            "studentsCount.present": uniqueJerseys.length,
-            "studentsCount.notMarked": -uniqueJerseys.length,
+      // 4️⃣ Update only eligible + notMarked users
+      if (toMark.length > 0) {
+        await User.updateMany(
+          {
+            jerseyNumber: { $in: toMark },
+            isEventsLocked: true,
+            selectedEvents: {
+              $elemMatch: {
+                eventId,
+                status: "notMarked",
+                position: 0,
+              },
+            },
           },
-        },
-        { session }
-      );
+          {
+            $set: { "selectedEvents.$[ev].status": "present" },
+          },
+          {
+            session,
+            arrayFilters: [
+              {
+                "ev.eventId": eventId,
+                "ev.status": "notMarked",
+                "ev.position": 0,
+              },
+            ],
+          }
+        );
 
-      if (!eventUpdate.modifiedCount) {
-        throw new ApiError(409, "Event counter conflict — retry");
+        // 5️⃣ Event counter update
+        const eventUpdate = await Event.updateOne(
+          {
+            _id: eventId,
+            "studentsCount.notMarked": { $gte: toMark.length },
+          },
+          {
+            $inc: {
+              "studentsCount.present": toMark.length,
+              "studentsCount.notMarked": -toMark.length,
+            },
+          },
+          { session }
+        );
+
+        if (!eventUpdate.modifiedCount) {
+          throw new ApiError(409, "Event counter conflict");
+        }
       }
 
       await session.commitTransaction();
 
-      return res
-        .status(200)
-        .json(
-          new ApiResponse(
-            { markedCount: uniqueJerseys.length },
-            `Attendance marked for ${uniqueJerseys.length} athletes`
-          )
-        );
+      return res.status(200).json(
+        new ApiResponse(
+          {
+            marked: toMark,
+            alreadyMarked,
+          },
+          `${toMark.length} attendance marked, ${alreadyMarked.length} already marked`
+        )
+      );
     } catch (err) {
       await session.abortTransaction();
       throw err;
@@ -866,46 +910,51 @@ export const deleteUser = asyncHandler(async (req, res) => {
   const head = req.user;
 
   const session = await mongoose.startSession();
-  session.startTransaction();
 
   try {
+    session.startTransaction();
+
+    // Step 1: Fetch user inside transaction
     const user = await User.findById(userId).session(session);
     if (!user) {
       throw new ApiError(404, "User not found");
     }
 
+    // Step 2: Authorization
     if (!canDeleteUser(head.role, user.role)) {
       throw new ApiError(403, "You are not allowed to delete this user");
     }
 
-    // Decrement event counts for user's enrolled events (if locked)
-    if (user.isEventsLocked && user.selectedEvents.length > 0) {
-      for (const selectedEvent of user.selectedEvents) {
-        const status = selectedEvent.status || "notMarked";
-        const decrementField = `studentsCount.${status}`;
+    // Step 3: Decrement event counters (if events were locked)
+    if (user.isEventsLocked && Array.isArray(user.selectedEvents)) {
+      for (const ev of user.selectedEvents) {
+        const status = ev.status || "notMarked";
 
         await Event.updateOne(
-          { _id: selectedEvent.eventId },
-          { $inc: { [decrementField]: -1 } },
+          {
+            _id: ev.eventId,
+            [`studentsCount.${status}`]: { $gt: 0 },
+          },
+          {
+            $inc: { [`studentsCount.${status}`]: -1 },
+          },
           { session }
         );
       }
     }
 
+    // Step 4: Delete user
     await User.deleteOne({ _id: user._id }).session(session);
 
+    // Step 5: Cleanup sessions
     await Session.deleteMany({ userId: user._id }).session(session);
 
+    // Step 6: Free jersey number (if exists)
     if (user.jerseyNumber !== null && user.jerseyNumber !== undefined) {
-      await SystemConfig.findByIdAndUpdate(
-        "GLOBAL",
+      await SystemConfig.updateOne(
+        { _id: "GLOBAL" },
         {
-          $push: {
-            freeJerseyNumbers: {
-              $each: [user.jerseyNumber],
-              $sort: 1,
-            },
-          },
+          $addToSet: { freeJerseyNumbers: user.jerseyNumber },
         },
         { session }
       );
