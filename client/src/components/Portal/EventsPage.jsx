@@ -189,10 +189,11 @@ export default function EventsPage() {
 
       if (
         response.success &&
-        response.message === "Events Locked Successfully"
+        response.message === "Events locked successfully"
       ) {
         setUserEventsList(response.data);
         setPendingSelections([]);
+        
         alert(`✅ Successfully locked ${response.data.length} event(s)!`);
       }
     } catch (err) {

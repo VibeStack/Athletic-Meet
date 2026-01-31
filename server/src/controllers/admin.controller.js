@@ -157,16 +157,18 @@ export const getUserDetails = asyncHandler(async (req, res) => {
 export const unlockMyEvents = asyncHandler(async (req, res) => {
   const user = req.user;
 
+  // Step 0: Basic guards
   if (!user.isEventsLocked) {
     throw new ApiError(409, "Events are already unlocked");
   }
-  if (!user.selectedEvents || user.selectedEvents.length === 0) {
+
+  if (!Array.isArray(user.selectedEvents) || user.selectedEvents.length === 0) {
     throw new ApiError(400, "No events to unlock");
   }
 
+  // Step 1: Ensure no attendance has been marked
   const hasMarkedEvent = user.selectedEvents.some(
-    (event) =>
-      event.userEventAttendance && event.userEventAttendance !== "notMarked"
+    (e) => e.userEventAttendance && e.userEventAttendance !== "notMarked"
   );
 
   if (hasMarkedEvent) {
@@ -176,60 +178,51 @@ export const unlockMyEvents = asyncHandler(async (req, res) => {
     );
   }
 
-  const mongoSession = await mongoose.startSession();
-  mongoSession.startTransaction();
+  const eventObjectIds = user.selectedEvents.map(
+    (e) => new mongoose.Types.ObjectId(e.eventId)
+  );
 
-  try {
-    const eventObjectIds = user.selectedEvents.map(
-      (e) => new mongoose.Types.ObjectId(e.eventId)
-    );
-
-    // Decrement only notMarked count (since all are notMarked)
-    const eventUpdateResult = await Event.updateMany(
-      {
-        _id: { $in: eventObjectIds },
-        "studentsCount.notMarked": { $gt: 0 },
-        isActive: true,
-        category: userGenderIsToEventCategory(user.gender),
-      },
-      { $inc: { "studentsCount.notMarked": -1 } },
-      { session: mongoSession }
-    );
-
-    if (eventUpdateResult.modifiedCount !== eventObjectIds.length) {
-      throw new ApiError(
-        400,
-        "Unlock failed. One or more events are invalid, inactive, or count is inconsistent."
-      );
+  // Step 2: Atomically decrement event counters
+  const eventUpdate = await Event.updateMany(
+    {
+      _id: { $in: eventObjectIds },
+      isActive: true,
+      category: userGenderIsToEventCategory(user.gender),
+      "studentsCount.notMarked": { $gt: 0 },
+    },
+    {
+      $inc: { "studentsCount.notMarked": -1 },
     }
+  );
 
-    // Atomic unlock
-    const updateResult = await User.updateOne(
-      { _id: user._id, isEventsLocked: true },
-      {
-        $set: {
-          isEventsLocked: false,
-          selectedEvents: [],
-        },
-      },
-      { session: mongoSession }
-    );
-
-    if (updateResult.modifiedCount === 0) {
-      throw new ApiError(409, "Unlock failed — events already unlocked.");
-    }
-
-    await mongoSession.commitTransaction();
-    mongoSession.endSession();
-
-    return res
-      .status(200)
-      .json(new ApiResponse(null, "Events unlocked successfully"));
-  } catch (error) {
-    await mongoSession.abortTransaction();
-    mongoSession.endSession();
-    throw error;
+  if (eventUpdate.modifiedCount !== eventObjectIds.length) {
+    throw new ApiError(409, "Unlock failed due to event counter conflict");
   }
+
+  // Step 3: Atomically unlock user
+  const userUpdate = await User.updateOne(
+    { _id: user._id, isEventsLocked: true },
+    {
+      $set: {
+        isEventsLocked: false,
+        selectedEvents: [],
+      },
+    }
+  );
+
+  if (!userUpdate.modifiedCount) {
+    // rollback counters (rare, but safe)
+    await Event.updateMany(
+      { _id: { $in: eventObjectIds } },
+      { $inc: { "studentsCount.notMarked": 1 } }
+    );
+
+    throw new ApiError(409, "Unlock failed — state already changed");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(null, "Events unlocked successfully"));
 });
 
 export const changeUserDetails = asyncHandler(async (req, res) => {

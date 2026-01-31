@@ -213,82 +213,83 @@ export const lockEvents = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Maximum 3 events can be selected");
   }
 
-  const mongoSession = await mongoose.startSession();
-  mongoSession.startTransaction();
+  const eventObjectIds = userSelectedEventsIdArray.map(
+    (id) => new mongoose.Types.ObjectId(id)
+  );
 
-  try {
-    const eventObjectIds = userSelectedEventsIdArray.map(
-      (id) => new mongoose.Types.ObjectId(id)
+  // Step 1: Validate events (read-only, safe under concurrency)
+  const validEvents = await Event.find({
+    _id: { $in: eventObjectIds },
+    category: userGenderIsToEventCategory(user.gender),
+    isActive: true,
+  });
+
+  if (validEvents.length !== eventObjectIds.length) {
+    throw new ApiError(
+      400,
+      "One or more events are invalid (Gender mismatch or inactive)"
     );
+  }
 
-    const validEvents = await Event.find({
-      _id: { $in: eventObjectIds },
-      category: userGenderIsToEventCategory(user.gender),
-      isActive: true,
-    }).session(mongoSession);
+  const userEventsToBeLocked = eventObjectIds.map((eventId) => ({
+    eventId,
+    position: 0,
+    status: "notMarked",
+  }));
 
-    if (validEvents.length !== userSelectedEventsIdArray.length) {
-      throw new ApiError(
-        400,
-        "One or more events are invalid (Gender Mismatch or Inactive)"
-      );
+  // Step 2: Atomically lock user (ONLY if not already locked)
+  const userUpdate = await User.updateOne(
+    { _id: user._id, isEventsLocked: false },
+    {
+      $set: {
+        selectedEvents: userEventsToBeLocked,
+        isEventsLocked: true,
+      },
     }
+  );
 
-    const userEventsToBeLocked = eventObjectIds.map((eventId) => ({
-      eventId,
-      position: 0,
-      status: "notMarked",
-    }));
+  if (!userUpdate.modifiedCount) {
+    throw new ApiError(409, "Events already locked. Contact admin to unlock.");
+  }
 
-    const updatedResult = await User.updateOne(
-      { _id: user._id, isEventsLocked: false },
+  // Step 3: Increment event counters
+  const eventUpdate = await Event.updateMany(
+    { _id: { $in: eventObjectIds } },
+    {
+      $inc: {
+        "studentsCount.notMarked": 1,
+      },
+    }
+  );
+
+  // Safety rollback (extremely rare, but needed)
+  if (eventUpdate.modifiedCount !== eventObjectIds.length) {
+    await User.updateOne(
+      { _id: user._id, isEventsLocked: true },
       {
         $set: {
-          selectedEvents: userEventsToBeLocked,
-          isEventsLocked: true,
+          selectedEvents: [],
+          isEventsLocked: false,
         },
-      },
-      { session: mongoSession }
+      }
     );
 
-    if (updatedResult.modifiedCount === 0) {
-      throw new ApiError(
-        409,
-        "Events already locked. Contact admin to unlock."
-      );
-    }
-
-    await Event.updateMany(
-      { _id: { $in: eventObjectIds } },
-      {
-        $inc: {
-          "studentsCount.notMarked": 1,
-        },
-      },
-      { session: mongoSession }
-    );
-
-    const returningEventsData = validEvents.map((e) => ({
-      eventId: e._id,
-      eventName: e.name,
-      eventDay: e.day,
-      eventType: e.type,
-      isEventActive: e.isActive,
-      userEventAttendance: "notMarked",
-      position: 0,
-    }));
-
-    await mongoSession.commitTransaction();
-    mongoSession.endSession();
-
-    return res
-      .status(200)
-      .json(new ApiResponse(returningEventsData, "Events Locked Successfully"));
-  } catch (error) {
-    await mongoSession.abortTransaction();
-    mongoSession.endSession();
-    throw error;
+    throw new ApiError(409, "Event counter update conflict");
   }
+
+  const returningEventsData = validEvents.map((e) => ({
+    eventId: e._id,
+    eventName: e.name,
+    eventDay: e.day,
+    eventType: e.type,
+    isEventActive: e.isActive,
+    userEventAttendance: "notMarked",
+    position: 0,
+  }));
+
+  return res
+    .status(200)
+    .json(new ApiResponse(returningEventsData, "Events locked successfully"));
 });
 
 export const getCertificates = asyncHandler(async (req, res) => {
