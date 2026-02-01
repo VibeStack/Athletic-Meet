@@ -7,6 +7,11 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react(), tailwindcss()],
+    resolve: {
+      alias: {
+        "xlsx-js-style": "xlsx-js-style/dist/xlsx.bundle.js",
+      },
+    },
 
     build: {
       chunkSizeWarningLimit: 1000,
@@ -24,6 +29,9 @@ export default defineConfig(({ mode }) => {
           secure: false,
         },
       },
+    },
+    optimizeDeps: {
+      include: ["xlsx-js-style"],
     },
   };
 });

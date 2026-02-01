@@ -1,6 +1,166 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import * as XLSX from "xlsx-js-style";
 import { useTheme } from "../../../context/ThemeContext";
+
+/* -------------------- Excel Export Helpers  -------------------- */
+
+// Get normalized event type (Track/Field/Team)
+const getEventType = (event) => event?.type || "Track";
+
+// Gender groups for sheet separation
+const getGenderGroups = () => [
+  { label: "B", gender: "male" },
+  { label: "G", gender: "female" },
+];
+
+// Find student's registration for a specific event
+const getEventEntry = (student, eventId) =>
+  (student.selectedEvents || []).find(
+    (se) => (se.eventId || se._id) === eventId,
+  );
+
+// Branch shortforms for better Excel/UI fit
+const BRANCH_SHORTFORMS = {
+  "Computer Science & Engineering": "CSE",
+  "Information Technology": "IT",
+  "Electrical Engineering": "EE",
+  "Mechanical Engineering": "ME",
+  "Civil Engineering": "CE",
+  "Electronics & Communication Engineering": "ECE",
+  "Robotics & AI": "RAI",
+  "Electronics Engineering": "ELE",
+  "Production Engineering": "PE",
+  "Geo Technical Engineering": "GTE",
+  "Structural Engineering": "SE",
+  "Environmental Science & Engineering": "ESE",
+  "Computer Applications": "CA",
+  "Interior Design": "ID",
+  Finance: "FIN",
+  Marketing: "MKT",
+  "Human Resource": "HR",
+  Entrepreneurship: "ENT",
+};
+
+const getDetailedBranch = (student) => {
+  const course = student.course || "";
+  const branch = student.branch || "";
+  const shortBranch = BRANCH_SHORTFORMS[branch] || branch;
+
+  if (course === "B.Tech") return `B.Tech ${shortBranch}`;
+  if (course === "M.Tech") return `M.Tech ${shortBranch}`;
+  if (course === "B.Arch") return "B_ARCH";
+  if (course === "B.Voc.") return "BVOC";
+  if (course === "B.Com") return "BCOM";
+  if (course === "MBA") return "MBA";
+  if (course === "MCA") return "MCA";
+  if (course === "BBA") return "BBA";
+  if (course === "BCA") return "BCA";
+
+  return shortBranch || course || "";
+};
+
+// Build base row columns (common for all event types)
+const buildBaseRow = (student, sr) => ({
+  "S.no": sr,
+  "Jersey No": student.jerseyNumber || "",
+  Name: student.fullname || student.username || "",
+  Branch: getDetailedBranch(student),
+  URN: student.urn || "",
+});
+
+// Build extra columns based on event type (all blank for manual filling)
+const buildExtraColumns = (eventType) => {
+  switch (eventType) {
+    case "Field":
+      return {
+        Attendance: "",
+        "Attempt 1": "",
+        "Attempt 2": "",
+      };
+    case "Team":
+      return {
+        Attendance: "",
+      };
+    default: // Track
+      return {
+        Attendance: "",
+      };
+  }
+};
+
+// Build complete Excel row for a student
+const buildExcelRow = ({ student, sr, eventType }) => ({
+  ...buildBaseRow(student, sr),
+  ...buildExtraColumns(eventType),
+});
+
+// Generate sanitized sheet name (Excel 31 char limit)
+const buildSheetName = (eventName, genderLabel) =>
+  `${eventName} (${genderLabel})`.slice(0, 31);
+
+// Apply formatting (dynamic widths and merges) to worksheet
+const formatWorksheet = (worksheet, rows) => {
+  if (!rows || rows.length === 0) return;
+
+  const headers = Object.keys(rows[0]);
+  const wscols = headers.map((header) => {
+    // Start with header name length
+    let max = header.toString().length;
+
+    // Check each row for max content length
+    rows.forEach((row) => {
+      const val = row[header] ? row[header].toString() : "";
+      if (val.length > max) max = val.length;
+    });
+
+    // Padding & specific logic
+    let width = max + 2;
+    if (header === "Name") width = Math.max(15, max + 2); // Tighter padding for names
+    if (header === "S.no") width = Math.max(6, width);
+
+    return { wch: width };
+  });
+
+  worksheet["!cols"] = wscols;
+
+  // Merge headers across all columns (A1:LastCol and A2:LastCol)
+  const lastColIdx = headers.length - 1;
+  worksheet["!merges"] = [
+    { s: { r: 0, c: 0 }, e: { r: 0, c: lastColIdx } }, // Range A1 to LastColumn1
+    { s: { r: 1, c: 0 }, e: { r: 1, c: lastColIdx } }, // Range A2 to LastColumn2
+  ];
+
+  // Apply centered styling to the first two header rows
+  const safeAssignStyle = (cellRef, sz, bold = true) => {
+    if (worksheet[cellRef]) {
+      worksheet[cellRef].s = {
+        alignment: { horizontal: "center", vertical: "center" },
+        font: { bold: bold, sz: sz },
+      };
+    }
+  };
+
+  safeAssignStyle("A1", 14);
+  safeAssignStyle("A2", 12);
+
+  // Style Row 4 (Table Headers)
+  headers.forEach((_, idx) => {
+    const cellRef = XLSX.utils.encode_cell({ r: 3, c: idx }); // Row 4 is index 3
+    if (worksheet[cellRef]) {
+      worksheet[cellRef].s = {
+        alignment: { horizontal: "center", vertical: "center" },
+        font: { bold: true },
+        border: {
+          top: { style: "thin" },
+          bottom: { style: "thin" },
+          left: { style: "thin" },
+          right: { style: "thin" },
+        },
+      };
+    }
+  });
+};
 
 /* -------------------- SVG Icons -------------------- */
 const ICONS = {
@@ -99,9 +259,14 @@ export default function ExportDataPage() {
           }),
         ]);
 
-        // Access .events and .users based on ApiResponse structure
-        setEvents(eventsRes.data?.data?.events || eventsRes.data?.data || []);
-        setAllStudents(usersRes.data?.data?.users || usersRes.data?.data || []);
+        // Extract events and users from the response
+        const eventsData =
+          eventsRes.data?.data?.events || eventsRes.data?.data || [];
+        const usersData =
+          usersRes.data?.data?.users || usersRes.data?.data || [];
+
+        setEvents(eventsData);
+        setAllStudents(usersData);
       } catch (err) {
         console.error("Failed to fetch initial data", err);
       } finally {
@@ -111,54 +276,107 @@ export default function ExportDataPage() {
     fetchData();
   }, [API_URL]);
 
-  // Local filtering based on selected event
+  // Clean & Simple Filter for UI Preview
   const filteredStudents = selectedEvent
-    ? allStudents.filter((student) => {
-        const studentEvents = student.selectedEvents || [];
-        return studentEvents.some(
-          (se) => se.eventId === selectedEvent || se === selectedEvent,
-        );
-      })
+    ? allStudents.filter((student) =>
+        student.selectedEvents?.some((se) => se.eventId === selectedEvent),
+      )
     : allStudents;
 
   // Get current event details
   const currentEvent = events.find((e) => (e.id || e._id) === selectedEvent);
-  const isFieldEvent = currentEvent?.type === "Field";
+  const currentEventType = currentEvent?.type || "Track";
+  const isFieldEvent = currentEventType === "Field";
+  const isTeamEvent = currentEventType === "Team";
 
   const resetFilters = () => {
     setSelectedEvent("");
   };
 
-  const handleExport = async () => {
-    // If no event selected, we might want to export all users
-    const exportEventId = selectedEvent || "all";
-
+  const handleExport = () => {
     setExporting(true);
-    try {
-      const response = await axios.get(
-        `${API_URL}/admin/export/event?eventId=${exportEventId}`,
-        {
-          withCredentials: true,
-          responseType: "blob",
-        },
-      );
 
-      // Create download link
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement("a");
-      link.href = url;
-      const eventName = selectedEvent ? currentEvent?.name : "All_Students";
-      link.setAttribute(
-        "download",
-        `${eventName.replace(/\s+/g, "_")}_${new Date().toISOString().split("T")[0]}.xlsx`,
-      );
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
+    try {
+      const workbook = XLSX.utils.book_new();
+
+      // 1. Create Master List Sheet - Only if no event is filtered
+      if (!selectedEvent) {
+        const masterRows = allStudents.map((student, idx) => ({
+          ...buildBaseRow(student, idx + 1),
+          Attendance: "",
+        }));
+
+        if (masterRows.length > 0) {
+          const masterWs = XLSX.utils.aoa_to_sheet([
+            ["Annual Athletic Meet 2026"],
+            ["All Users"],
+            [],
+          ]);
+          XLSX.utils.sheet_add_json(masterWs, masterRows, { origin: "A4" });
+          formatWorksheet(masterWs, masterRows);
+          XLSX.utils.book_append_sheet(workbook, masterWs, "Master List");
+        }
+      }
+
+      // 2. Loop through events (filter if one is selected)
+      const eventsToExport = selectedEvent
+        ? events.filter((e) => (e.id || e._id) === selectedEvent)
+        : events;
+
+      eventsToExport.forEach((event) => {
+        const eventId = event._id || event.id;
+        const eventName = event.name || "Event";
+        const eventType = getEventType(event);
+
+        getGenderGroups().forEach(({ label, gender }) => {
+          const genderLabelFull = gender === "male" ? "Male" : "Female";
+          let sr = 1;
+          const rows = [];
+
+          // Simplest check: is student in this event?
+          allStudents.forEach((student) => {
+            if (student.gender?.toLowerCase() !== gender) return;
+
+            const isRegistered = student.selectedEvents?.some(
+              (se) => (se.eventId || se._id) === eventId,
+            );
+            if (!isRegistered) return;
+
+            rows.push(
+              buildExcelRow({
+                student,
+                sr: sr++,
+                eventType,
+              }),
+            );
+          });
+
+          if (!rows.length) return;
+
+          const worksheet = XLSX.utils.aoa_to_sheet([
+            ["Annual Athletic Meet 2026"],
+            [`Event Name : ${eventName} (${genderLabelFull})`],
+            [],
+          ]);
+          XLSX.utils.sheet_add_json(worksheet, rows, { origin: "A4" });
+          formatWorksheet(worksheet, rows);
+          XLSX.utils.book_append_sheet(
+            workbook,
+            worksheet,
+            buildSheetName(eventName, label),
+          );
+        });
+      });
+
+      // 3. One Workbook Download
+      const fileName = selectedEvent
+        ? `${currentEvent?.name || "Event"}_${new Date().toISOString().split("T")[0]}.xlsx`
+        : `Athletic_Meet_${new Date().toISOString().split("T")[0]}.xlsx`;
+
+      XLSX.writeFile(workbook, fileName);
     } catch (err) {
-      console.error("Export failed", err);
-      alert("Failed to export data. Please try again.");
+      console.error("Excel export failed", err);
+      alert("Failed to export Excel file");
     } finally {
       setExporting(false);
     }
@@ -376,17 +594,20 @@ export default function ExportDataPage() {
                 className={`text-xs space-y-1 ${darkMode ? "text-emerald-300/70" : "text-emerald-700/80"}`}
               >
                 <p>
-                  <strong>Selection:</strong>{" "}
-                  {selectedEvent
-                    ? currentEvent?.name || "Selected Event"
-                    : "All Registered Students"}
+                  <strong>Output:</strong> One Excel file with{" "}
+                  {selectedEvent ? "selected event" : "multiple sheets"}
                 </p>
                 <p
                   className={`text-[10px] mt-2 ${darkMode ? "text-emerald-400/50" : "text-emerald-600/50"}`}
                 >
-                  Columns: Sr.No, Jersey No., Name, Branch, URN
-                  {selectedEvent && ", Attendance"}
-                  {isFieldEvent && ", Attempt 1, Attempt 2"}
+                  {selectedEvent
+                    ? `Exporting: ${formatEventName(currentEvent)}`
+                    : "Sheets: 100m (B), 100m (G), Long Jump (B)..."}
+                </p>
+                <p
+                  className={`text-[10px] ${darkMode ? "text-emerald-400/50" : "text-emerald-600/50"}`}
+                >
+                  Track/Team: Attendance | Field: Attendance + 2 Attempts
                 </p>
               </div>
             </div>
@@ -394,12 +615,12 @@ export default function ExportDataPage() {
             {/* Export Button */}
             <button
               onClick={handleExport}
-              disabled={exporting}
+              disabled={exporting || loading}
               className={`flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm text-white transition-all shadow-lg min-w-[200px] ${
                 darkMode
                   ? "bg-linear-to-r from-emerald-500 to-teal-600 hover:brightness-110 shadow-emerald-500/25"
                   : "bg-linear-to-r from-emerald-500 to-teal-600 hover:brightness-110 shadow-emerald-500/30"
-              } ${exporting ? "opacity-70 cursor-not-allowed" : ""}`}
+              } ${exporting || loading ? "opacity-70 cursor-not-allowed" : ""}`}
             >
               {exporting ? (
                 <>
@@ -410,7 +631,9 @@ export default function ExportDataPage() {
                 <>
                   {ICONS.download}
                   <span>
-                    {selectedEvent ? "Export Event" : "Export All Students"}
+                    {selectedEvent
+                      ? `Export ${formatEventName(currentEvent)}`
+                      : "Export All Events"}
                   </span>
                 </>
               )}
@@ -476,7 +699,7 @@ export default function ExportDataPage() {
                   }`}
                 >
                   <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">
-                    Sr. No.
+                    S.no
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">
                     Jersey No.
@@ -490,17 +713,15 @@ export default function ExportDataPage() {
                   <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">
                     URN
                   </th>
-                  {selectedEvent && (
-                    <th className="px-4 py-3 text-center text-xs font-bold uppercase tracking-wider">
-                      Attendance
-                    </th>
-                  )}
+                  <th className="px-4 py-3 text-center text-xs font-bold uppercase tracking-wider w-24">
+                    Attendance
+                  </th>
                   {isFieldEvent && (
                     <>
-                      <th className="px-4 py-3 text-center text-xs font-bold uppercase tracking-wider">
+                      <th className="px-4 py-3 text-center text-xs font-bold uppercase tracking-wider w-24">
                         Attempt 1
                       </th>
-                      <th className="px-4 py-3 text-center text-xs font-bold uppercase tracking-wider">
+                      <th className="px-4 py-3 text-center text-xs font-bold uppercase tracking-wider w-24">
                         Attempt 2
                       </th>
                     </>
@@ -521,21 +742,6 @@ export default function ExportDataPage() {
                           se === selectedEvent,
                       ) || {}
                     : null;
-
-                  // From image: status field holds attendance mapping
-                  const rawStatus = eventData
-                    ? typeof eventData === "string"
-                      ? "notMarked"
-                      : eventData.status || "notMarked"
-                    : null;
-
-                  // Human readable status mapping
-                  const statusMap = {
-                    present: "Present",
-                    absent: "Absent",
-                    notMarked: "Not Marked",
-                  };
-                  const attendance = statusMap[rawStatus] || rawStatus;
 
                   return (
                     <tr
@@ -570,7 +776,7 @@ export default function ExportDataPage() {
                           darkMode ? "text-slate-300" : "text-slate-700"
                         }`}
                       >
-                        {student.branch || "—"}
+                        {getDetailedBranch(student) || "—"}
                       </td>
                       <td
                         className={`px-4 py-3 text-sm font-mono ${
@@ -579,49 +785,15 @@ export default function ExportDataPage() {
                       >
                         {student.urn || "—"}
                       </td>
-                      {selectedEvent && (
-                        <td className="px-4 py-3 text-center">
-                          <span
-                            className={`inline-flex items-center justify-center w-20 px-2 py-1 rounded-md text-xs font-bold ${
-                              attendance === "present" ||
-                              attendance === "Present"
-                                ? darkMode
-                                  ? "bg-emerald-500/15 text-emerald-400"
-                                  : "bg-emerald-100 text-emerald-700"
-                                : attendance === "absent" ||
-                                    attendance === "Absent"
-                                  ? darkMode
-                                    ? "bg-red-500/15 text-red-400"
-                                    : "bg-red-100 text-red-700"
-                                  : darkMode
-                                    ? "bg-amber-500/15 text-amber-400"
-                                    : "bg-amber-100 text-amber-700"
-                            }`}
-                          >
-                            {attendance === "present" ||
-                            attendance === "Present"
-                              ? "✓"
-                              : attendance === "absent" ||
-                                  attendance === "Absent"
-                                ? "✗"
-                                : "○"}
-                          </span>
-                        </td>
-                      )}
+                      <td className="px-4 py-3 text-center text-sm font-medium text-slate-400">
+                        —
+                      </td>
                       {isFieldEvent && (
                         <>
-                          <td
-                            className={`px-4 py-3 text-sm text-center font-bold ${
-                              darkMode ? "text-slate-400" : "text-slate-500"
-                            }`}
-                          >
+                          <td className="px-4 py-3 text-center text-sm font-medium text-slate-400">
                             —
                           </td>
-                          <td
-                            className={`px-4 py-3 text-sm text-center font-bold ${
-                              darkMode ? "text-slate-400" : "text-slate-500"
-                            }`}
-                          >
+                          <td className="px-4 py-3 text-center text-sm font-medium text-slate-400">
                             —
                           </td>
                         </>
@@ -689,8 +861,8 @@ export default function ExportDataPage() {
           <p
             className={`text-[10px] sm:text-[11px] mt-0.5 ${darkMode ? "text-slate-500" : "text-slate-500"}`}
           >
-            Excel sheets for **Field events** will automatically include columns
-            for **Attempt 1** and **Attempt 2** for manual marking.
+            <strong>Track/Team:</strong> 1 blank column &nbsp;|&nbsp;{" "}
+            <strong>Field:</strong> 2 blank columns (for attempts)
           </p>
         </div>
       </div>

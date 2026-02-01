@@ -26,7 +26,6 @@ export const courseBranchMap = {
   "B.Arch": [],
 };
 
-
 export const courseCodeMap = {
   "B.Tech": "02",
   "M.Tech": "04",

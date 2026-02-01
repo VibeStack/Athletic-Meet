@@ -2,6 +2,7 @@ import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+
 import { User } from "../models/User.model.js";
 import { SystemConfig } from "../models/SystemConfig.model.js";
 import { ApiError } from "../utils/ApiError.js";
@@ -12,7 +13,7 @@ const __dirname = path.dirname(__filename);
 
 export const generateCertificate = asyncHandler(async (req, res) => {
   const currentUser = req.user;
-  const { eventId, type } = req.params; // type = "winner" | "participation"
+  const { eventId, type } = req.params; // "winner" | "participation"
 
   if (!currentUser) {
     throw new ApiError(401, "Not authenticated");
@@ -26,30 +27,35 @@ export const generateCertificate = asyncHandler(async (req, res) => {
 
   /* ---------- LOAD USER ---------- */
   const user = await User.findById(currentUser._id).lean();
-  if (!user) throw new ApiError(404, "User not found");
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
 
-  /* ---------- VALIDATE EVENT ENROLLMENT (from user.selectedEvents) ---------- */
+  // Normalize optional fields
+  user.course = user.course ?? "";
+  user.branch = user.branch ?? "";
+  user.urn = user.urn ?? "";
+
+  /* ---------- VALIDATE EVENT ---------- */
   const userEvent = user.selectedEvents?.find(
     (e) => e.eventId?.toString() === eventId
   );
-  
+
   if (!userEvent) {
     throw new ApiError(400, "You are not enrolled in this event");
   }
-  
+
   if (userEvent.status !== "present") {
     throw new ApiError(400, "Certificate allowed only for attended events");
   }
 
-  /* ---------- WINNER VALIDATION ---------- */
   if (type === "winner" && (!userEvent.position || userEvent.position === 0)) {
     throw new ApiError(400, "Winner certificate requires a valid position");
   }
 
-  /* ---------- GET EVENT INFO FROM selectedEvents ---------- */
   const eventName = String(userEvent.eventName || "Event");
 
-  /* ---------- CHOOSE TEMPLATE ---------- */
+  /* ---------- LOAD TEMPLATE ---------- */
   const templateFileName =
     type === "winner"
       ? "winnersCertificate.png"
@@ -91,15 +97,14 @@ export const generateCertificate = asyncHandler(async (req, res) => {
   const textColor = rgb(0.1, 0.15, 0.3);
   const centerX = width / 2;
 
-  /* ---------- TEXT DATA ---------- */
+  /* ---------- DATA ---------- */
   const studentName = String(user.fullname || user.username);
   const courseBranch = user.branch
     ? `${user.course} - ${user.branch}`
     : user.course;
 
-  const urn = String(user.urn || "N/A");
+  const urn = String(user.urn || "");
 
-  // Position text for winner certificate
   const positionText =
     type === "winner"
       ? userEvent.position === 1
@@ -107,79 +112,82 @@ export const generateCertificate = asyncHandler(async (req, res) => {
         : userEvent.position === 2
           ? "2nd Position"
           : "3rd Position"
-      : null;
+      : "";
 
-  /* ---------- DRAW NAME ---------- */
+  /* ---------- DRAW NAME (CENTERED) ---------- */
   const nameFontSize = 48;
   const nameWidth = fontBold.widthOfTextAtSize(studentName, nameFontSize);
 
   page.drawText(studentName, {
     x: centerX - nameWidth / 2,
-    y: height - 770,
+    y: height - 180,
     size: nameFontSize,
     font: fontBold,
     color: textColor,
   });
 
-  /* ---------- DRAW COURSE/BRANCH (after "of") ---------- */
-  page.drawText(courseBranch, {
-    x: 105,
-    y: height - 350,
-    size: 14,
-    font: fontRegular,
-    color: textColor,
-  });
-
-  /* ---------- DRAW URN (after "Roll Number") ---------- */
-  page.drawText(urn, {
-    x: width / 2 + 50,
-    y: height - 350,
-    size: 14,
-    font: fontRegular,
-    color: textColor,
-  });
-
-  /* ---------- DRAW TYPE-SPECIFIC TEXT ---------- */
-  if (type === "winner") {
-    // Winner certificate: "won ___ in ___"
-    // Position after "won"
-    page.drawText(positionText, {
+  /* ---------- DRAW COURSE / BRANCH ---------- */
+  if (courseBranch) {
+    page.drawText(courseBranch, {
       x: 105,
-      y: height - 395,
-      size: 14,
-      font: fontBold,
-      color: textColor,
-    });
-
-    // Event name after "in"
-    page.drawText(eventName, {
-      x: 230,
-      y: height - 395,
-      size: 14,
-      font: fontRegular,
-      color: textColor,
-    });
-  } else {
-    // Participation certificate: "participated in ___"
-    // Event name after "participated in"
-    page.drawText(eventName, {
-      x: 195,
-      y: height - 395,
-      size: 14,
+      y: height - 260,
+      size: 18,
       font: fontRegular,
       color: textColor,
     });
   }
 
-  /* ---------- EXPORT PDF ---------- */
+  /* ---------- DRAW URN ---------- */
+  if (urn) {
+    page.drawText(urn, {
+      x: width / 2 + 50,
+      y: height - 260,
+      size: 18,
+      font: fontRegular,
+      color: textColor,
+    });
+  }
+
+  /* ---------- DRAW EVENT / POSITION ---------- */
+  if (type === "winner") {
+    page.drawText(positionText, {
+      x: 105,
+      y: height - 310,
+      size: 18,
+      font: fontBold,
+      color: textColor,
+    });
+
+    page.drawText(eventName, {
+      x: 260,
+      y: height - 310,
+      size: 18,
+      font: fontRegular,
+      color: textColor,
+    });
+  } else {
+    page.drawText(eventName, {
+      x: 195,
+      y: height - 310,
+      size: 18,
+      font: fontRegular,
+      color: textColor,
+    });
+  }
+
+  /* ---------- SEND PDF ---------- */
   const pdfBytes = await pdfDoc.save();
 
-  const safeFileName = `Certificate_${eventName.replace(/\s+/g, "_")}_${studentName.replace(/\s+/g, "_")}_${type}.pdf`;
+  const safeFileName = `Certificate_${eventName.replace(
+    /\s+/g,
+    "_"
+  )}_${studentName.replace(/\s+/g, "_")}_${type}.pdf`;
 
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader(
     "Content-Disposition",
     `attachment; filename="${safeFileName}"`
   );
+
   res.send(Buffer.from(pdfBytes));
 });

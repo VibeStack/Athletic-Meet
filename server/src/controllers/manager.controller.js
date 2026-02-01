@@ -5,6 +5,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { User } from "../models/User.model.js";
 import mongoose from "mongoose";
+import { generateCertificatePDF } from "../utils/certificate.utils.js";
 
 export const getAllEvents = asyncHandler(async (req, res) => {
   const user = req.user;
@@ -257,7 +258,6 @@ export const makeMultipleAsAdmin = asyncHandler(async (req, res) => {
     jerseyNumber: { $in: jerseyNumbers },
   }).select("_id jerseyNumber role isUserDetailsComplete");
 
-
   if (!users.length) {
     throw new ApiError(404, "No users found for given jersey numbers");
   }
@@ -486,7 +486,6 @@ export const deactivateEvents = asyncHandler(async (req, res) => {
 });
 
 export const getCertificateStatus = asyncHandler(async (req, res) => {
-  
   let config = await SystemConfig.findById("GLOBAL");
 
   if (!config) {
@@ -710,9 +709,11 @@ export const markAllDetailsCompleteAsPartial = asyncHandler(
   }
 );
 
-// just for testing in postman 
+// just for testing in postman
 export const showEventsStatus = asyncHandler(async (req, res) => {
-  const events = await Event.find({}).select("_id name category studentsCount").lean();
+  const events = await Event.find({})
+    .select("_id name category studentsCount")
+    .lean();
   let i = 1;
   const formattedData = events.map(
     (event) =>
@@ -722,4 +723,51 @@ export const showEventsStatus = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(new ApiResponse(formattedData, "Events status fetched successfully"));
+});
+
+export const previewCertificate = asyncHandler(async (req, res) => {
+  const user = req.user;
+  const { eventId, type } = req.params;
+
+  if (!user) {
+    throw new ApiError(401, "Not authenticated");
+  }
+
+  if (user.role !== "Manager") {
+    throw new ApiError(403, "Access denied. Manager role required.");
+  }
+
+  /* ---------- GET STUDENT ENROLLMENT ---------- */
+  // Note: For preview, we often want to preview for ANY student or the current manager's view.
+  // The system uses student-specific logic.
+  // If the manager is previewing their own (if they participated) or we just use their profile.
+  // Actually, the user's frontend passes the certificate object.
+  // Let's just use the current user (Manager) for the preview data to show the layout.
+
+  const student = await User.findById(user._id).lean();
+  if (!student) throw new ApiError(404, "User not found");
+
+  /* ---------- FETCH EVENT DETAILS ---------- */
+  const event = await Event.findById(eventId).lean();
+  if (!event) throw new ApiError(404, "Event not found");
+
+  const userEvent = student.selectedEvents?.find(
+    (e) => e.eventId?.toString() === eventId
+  ) || {
+    eventName: event.name,
+    position: type === "winner" ? 1 : 0,
+    status: "present",
+  };
+
+  // Ensure eventName is always the actual one from DB
+  userEvent.eventName = event.name;
+
+  const { pdfBytes } = await generateCertificatePDF({
+    user: student,
+    userEvent,
+    type,
+  });
+
+  res.setHeader("Content-Type", "application/pdf");
+  res.send(Buffer.from(pdfBytes));
 });

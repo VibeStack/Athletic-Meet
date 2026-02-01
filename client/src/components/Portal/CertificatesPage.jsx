@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "../../context/ThemeContext";
+import { useAuth } from "../../context/AuthContext";
 import axios from "axios";
 import LoadingComponent from "./LoadingComponent";
 
@@ -51,14 +52,28 @@ const ICONS = {
       <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z" />
     </svg>
   ),
+  eye: (
+    <svg viewBox="0 0 24 24" className="w-full h-full fill-current">
+      <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" />
+    </svg>
+  ),
+  close: (
+    <svg viewBox="0 0 24 24" className="w-full h-full fill-current">
+      <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" />
+    </svg>
+  ),
 };
 
 export default function CertificatesPage() {
   const { darkMode } = useTheme();
+  const { isManager } = useAuth();
   const [loading, setLoading] = useState(true);
   const [areCertificatesLocked, setAreCertificatesLocked] = useState(true);
   const [certificates, setCertificates] = useState([]);
   const [downloading, setDownloading] = useState(null);
+  const [previewLoading, setPreviewLoading] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [activeCert, setActiveCert] = useState(null);
   const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
@@ -120,6 +135,40 @@ export default function CertificatesPage() {
     } finally {
       setDownloading(null);
     }
+  };
+
+  const handlePreview = async (cert, type, theme = null) => {
+    const previewId = `${cert.eventId}-${type}`;
+    setPreviewLoading(previewId);
+    setActiveCert({ ...cert, type, theme });
+
+    try {
+      const response = await axios.get(
+        `${API_URL}/manager/certificate/preview/${cert.eventId}/${type}`,
+        {
+          withCredentials: true,
+          responseType: "blob", // Important for PDF blob
+        },
+      );
+
+      const url = URL.createObjectURL(response.data);
+      setPreviewUrl(url);
+    } catch (err) {
+      console.error("Failed to generate preview:", err);
+      const message =
+        err?.response?.data?.message || "Failed to generate preview";
+      alert(message);
+    } finally {
+      setPreviewLoading(null);
+    }
+  };
+
+  const closePreview = () => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setPreviewUrl(null);
+    setActiveCert(null);
   };
 
   const getTypeColors = (type) => {
@@ -708,24 +757,47 @@ export default function CertificatesPage() {
                       {cert.eventType}
                     </span>
 
-                    <button
-                      onClick={() => handleDownload(cert, "winner")}
-                      disabled={downloading === `${cert.eventId}-winner`}
-                      className={`mt-5 w-full py-3 rounded-xl text-sm font-black flex items-center justify-center gap-2 transition-all min-h-[48px] shadow-xl ${pColors.buttonBg} ${darkMode ? "text-white" : "text-black"} hover:brightness-110 hover:shadow-2xl disabled:opacity-50`}
-                    >
-                      <span className="w-5 h-5 flex items-center justify-center shrink-0">
-                        {downloading === `${cert.eventId}-winner` ? (
-                          <span
-                            className={`animate-spin h-4 w-4 border-2 rounded-full ${darkMode ? "border-white/30 border-t-white" : "border-black/30 border-t-black"}`}
-                          />
-                        ) : (
-                          ICONS.download
-                        )}
-                      </span>
-                      <span className="whitespace-nowrap">
-                        Download Certificate
-                      </span>
-                    </button>
+                    <div className="mt-5 flex gap-3">
+                      {isManager && (
+                        <button
+                          onClick={() => handlePreview(cert, "winner", pColors)}
+                          disabled={previewLoading === `${cert.eventId}-winner`}
+                          className={`flex-1 py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all min-h-[48px] ${
+                            darkMode
+                              ? "bg-slate-800 text-white hover:bg-slate-700"
+                              : "bg-slate-200 text-slate-800 hover:bg-slate-300"
+                          } disabled:opacity-50`}
+                        >
+                          <span className="w-5 h-5 flex items-center justify-center shrink-0">
+                            {previewLoading === `${cert.eventId}-winner` ? (
+                              <span
+                                className={`animate-spin h-4 w-4 border-2 rounded-full ${darkMode ? "border-white/30 border-t-white" : "border-slate-800/30 border-t-slate-800"}`}
+                              />
+                            ) : (
+                              ICONS.eye
+                            )}
+                          </span>
+                          <span>Preview</span>
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => handleDownload(cert, "winner")}
+                        disabled={downloading === `${cert.eventId}-winner`}
+                        className={`flex-1 py-3 rounded-xl text-sm font-black flex items-center justify-center gap-2 transition-all min-h-[48px] shadow-xl ${pColors.buttonBg} ${darkMode ? "text-white" : "text-black"} hover:brightness-110 hover:shadow-2xl disabled:opacity-50`}
+                      >
+                        <span className="w-5 h-5 flex items-center justify-center shrink-0">
+                          {downloading === `${cert.eventId}-winner` ? (
+                            <span
+                              className={`animate-spin h-4 w-4 border-2 rounded-full ${darkMode ? "border-white/30 border-t-white" : "border-black/30 border-t-black"}`}
+                            />
+                          ) : (
+                            ICONS.download
+                          )}
+                        </span>
+                        <span>Download</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
@@ -821,28 +893,199 @@ export default function CertificatesPage() {
                     {cert.eventDay === "Both" ? "Day 1 & 2" : cert.eventDay}
                   </p>
 
-                  <button
-                    onClick={() => handleDownload(cert, "participation")}
-                    disabled={downloading === `${cert.eventId}-participation`}
-                    className={`w-full py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all min-h-[44px] shadow-lg ${cardColors.buttonBg} ${darkMode ? "text-white" : "text-black"} hover:brightness-110 hover:shadow-xl disabled:opacity-50`}
-                  >
-                    <span className="w-5 h-5 flex items-center justify-center shrink-0">
-                      {downloading === `${cert.eventId}-participation` ? (
-                        <span
-                          className={`animate-spin h-4 w-4 border-2 rounded-full ${darkMode ? "border-white/30 border-t-white" : "border-black/30 border-t-black"}`}
-                        />
-                      ) : (
-                        ICONS.download
-                      )}
-                    </span>
-                    <span className="whitespace-nowrap">Download</span>
-                  </button>
+                  <div className="mt-5 flex gap-3">
+                    {isManager && (
+                      <button
+                        onClick={() =>
+                          handlePreview(cert, "participation", cardColors)
+                        }
+                        disabled={
+                          previewLoading === `${cert.eventId}-participation`
+                        }
+                        className={`flex-1 py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all min-h-[44px] ${
+                          darkMode
+                            ? "bg-slate-800 text-white hover:bg-slate-700"
+                            : "bg-slate-200 text-slate-800 hover:bg-slate-300"
+                        } disabled:opacity-50`}
+                      >
+                        <span className="w-5 h-5 flex items-center justify-center shrink-0">
+                          {previewLoading ===
+                          `${cert.eventId}-participation` ? (
+                            <span
+                              className={`animate-spin h-4 w-4 border-2 rounded-full ${darkMode ? "border-white/30 border-t-white" : "border-slate-800/30 border-t-slate-800"}`}
+                            />
+                          ) : (
+                            ICONS.eye
+                          )}
+                        </span>
+                        <span>Preview</span>
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => handleDownload(cert, "participation")}
+                      disabled={downloading === `${cert.eventId}-participation`}
+                      className={`flex-1 py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all min-h-[44px] shadow-lg ${cardColors.buttonBg} ${darkMode ? "text-white" : "text-black"} hover:brightness-110 hover:shadow-xl disabled:opacity-50`}
+                    >
+                      <span className="w-5 h-5 flex items-center justify-center shrink-0">
+                        {downloading === `${cert.eventId}-participation` ? (
+                          <span
+                            className={`animate-spin h-4 w-4 border-2 rounded-full ${darkMode ? "border-white/30 border-t-white" : "border-black/30 border-t-black"}`}
+                          />
+                        ) : (
+                          ICONS.download
+                        )}
+                      </span>
+                      <span>Download</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             );
           })}
         </div>
       </div>
+
+      {/* Preview Modal */}
+      {previewUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
+            onClick={closePreview}
+          />
+
+          {/* Modal Content */}
+          <div
+            className={`relative w-full max-w-5xl rounded-3xl overflow-hidden shadow-2xl transform transition-all duration-300 scale-100 ${
+              darkMode
+                ? `${activeCert?.theme?.cardBg || "bg-slate-900"} ring-2 ${activeCert?.theme?.cardRing || "ring-white/10"}`
+                : `${activeCert?.theme?.cardBg || "bg-white"} ring-2 ${activeCert?.theme?.cardRing || "ring-slate-200"}`
+            }`}
+          >
+            {/* Modal Header */}
+            <div
+              className={`flex items-center justify-between px-6 py-4 border-b ${
+                darkMode ? "border-white/5" : "border-slate-100"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg ${
+                    activeCert?.theme?.iconBg ||
+                    (darkMode
+                      ? "bg-slate-800 text-emerald-400"
+                      : "bg-slate-100 text-emerald-600")
+                  }`}
+                >
+                  <div className="w-6 h-6 text-white drop-shadow-md">
+                    {activeCert?.type === "winner" ? ICONS.trophy : ICONS.award}
+                  </div>
+                </div>
+                <div>
+                  <h3
+                    className={`font-black text-base sm:text-lg ${
+                      darkMode ? "text-white" : "text-slate-900"
+                    }`}
+                  >
+                    {activeCert?.eventName}
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <p
+                      className={`text-[10px] sm:text-xs font-bold uppercase tracking-wider ${
+                        activeCert?.theme?.textColor || "text-slate-500"
+                      }`}
+                    >
+                      {activeCert?.type === "winner"
+                        ? `${activeCert?.position === 1 ? "1st" : activeCert?.position === 2 ? "2nd" : "3rd"} Place Winner`
+                        : "Participation Certificate"}
+                    </p>
+                    <span className="w-1 h-1 rounded-full bg-slate-500 opacity-50" />
+                    <p className="text-[10px] sm:text-xs font-medium text-slate-500">
+                      Preview
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleDownload(activeCert, activeCert.type)}
+                  disabled={
+                    downloading === `${activeCert?.eventId}-${activeCert?.type}`
+                  }
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black transition-all shadow-lg hover:scale-105 active:scale-95 ${
+                    activeCert?.theme?.buttonBg ||
+                    (darkMode
+                      ? "bg-emerald-500 text-white hover:bg-emerald-600"
+                      : "bg-slate-900 text-white hover:bg-slate-800")
+                  } disabled:opacity-50`}
+                >
+                  <div className="w-4 h-4">
+                    {downloading ===
+                    `${activeCert?.eventId}-${activeCert?.type}` ? (
+                      <span className="animate-spin h-3 w-3 border-2 border-white/30 border-t-white rounded-full block" />
+                    ) : (
+                      ICONS.download
+                    )}
+                  </div>
+                  <span className="hidden sm:inline">Download PDF</span>
+                </button>
+
+                <button
+                  onClick={closePreview}
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+                    darkMode
+                      ? "bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700"
+                      : "bg-slate-100 text-slate-500 hover:text-slate-800 hover:bg-slate-200"
+                  }`}
+                >
+                  <div className="w-5 h-5">{ICONS.close}</div>
+                </button>
+              </div>
+            </div>
+
+            {/* Preview Area */}
+            <div
+              className={`p-4 sm:p-6 lg:p-8 max-h-[80vh] overflow-y-auto relative ${
+                darkMode ? "bg-slate-950/40" : "bg-slate-50"
+              }`}
+            >
+              {/* Premium glow effects matching active theme */}
+              {darkMode && activeCert?.theme?.glowColor && (
+                <>
+                  <div
+                    className="absolute -top-20 -right-20 w-64 h-64 rounded-full blur-[100px] opacity-20 pointer-events-none"
+                    style={{ backgroundColor: activeCert.theme.glowColor }}
+                  />
+                  <div
+                    className="absolute -bottom-20 -left-20 w-64 h-64 rounded-full blur-[100px] opacity-15 pointer-events-none"
+                    style={{ backgroundColor: activeCert.theme.glowColor }}
+                  />
+                </>
+              )}
+
+              <div
+                className={`relative group max-w-4xl mx-auto rounded-xl overflow-hidden shadow-2xl ring-4 ${activeCert?.theme?.cardRing || "ring-black/10"} transition-transform duration-500 hover:scale-[1.005] bg-white`}
+              >
+                {/* Certificate PDF Embed */}
+                <embed
+                  src={`${previewUrl}#toolbar=0&navpanes=0&scrollbar=0`}
+                  type="application/pdf"
+                  className="w-full aspect-[1.414/1] min-h-[400px] sm:min-h-[500px]"
+                />
+
+                {/* Info Overlay */}
+                <div className="absolute inset-x-0 bottom-0 p-4 bg-linear-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                  <p className="text-white text-[10px] text-center font-bold tracking-wide uppercase">
+                    High-Fidelity PDF Preview
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
