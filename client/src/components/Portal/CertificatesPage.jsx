@@ -957,7 +957,7 @@ export default function CertificatesPage() {
 
           {/* Modal Content */}
           <div
-            className={`relative w-full max-w-5xl rounded-3xl overflow-hidden shadow-2xl transform transition-all duration-300 scale-100 ${
+            className={`relative w-full max-w-5xl rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl transform transition-all duration-300 scale-100 ${
               darkMode
                 ? `${activeCert?.theme?.cardBg || "bg-slate-900"} ring-2 ${activeCert?.theme?.cardRing || "ring-white/10"}`
                 : `${activeCert?.theme?.cardBg || "bg-white"} ring-2 ${activeCert?.theme?.cardRing || "ring-slate-200"}`
@@ -965,43 +965,43 @@ export default function CertificatesPage() {
           >
             {/* Modal Header */}
             <div
-              className={`flex items-center justify-between px-6 py-4 border-b ${
+              className={`flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 border-b ${
                 darkMode ? "border-white/5" : "border-slate-100"
               }`}
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
                 <div
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg ${
+                  className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shadow-lg ${
                     activeCert?.theme?.iconBg ||
                     (darkMode
                       ? "bg-slate-800 text-emerald-400"
                       : "bg-slate-100 text-emerald-600")
                   }`}
                 >
-                  <div className="w-6 h-6 text-white drop-shadow-md">
+                  <div className="w-5 h-5 sm:w-6 sm:h-6 text-white drop-shadow-md">
                     {activeCert?.type === "winner" ? ICONS.trophy : ICONS.award}
                   </div>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <h3
-                    className={`font-black text-base sm:text-lg ${
+                    className={`font-black text-sm sm:text-lg truncate ${
                       darkMode ? "text-white" : "text-slate-900"
                     }`}
                   >
                     {activeCert?.eventName}
                   </h3>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 sm:gap-2">
                     <p
-                      className={`text-[10px] sm:text-xs font-bold uppercase tracking-wider ${
+                      className={`text-[9px] sm:text-xs font-bold uppercase tracking-wider ${
                         activeCert?.theme?.textColor || "text-slate-500"
                       }`}
                     >
                       {activeCert?.type === "winner"
-                        ? `${activeCert?.position === 1 ? "1st" : activeCert?.position === 2 ? "2nd" : "3rd"} Place Winner`
-                        : "Participation Certificate"}
+                        ? `${activeCert?.position === 1 ? "1st" : activeCert?.position === 2 ? "2nd" : "3rd"} Place`
+                        : "Participation"}
                     </p>
-                    <span className="w-1 h-1 rounded-full bg-slate-500 opacity-50" />
-                    <p className="text-[10px] sm:text-xs font-medium text-slate-500">
+                    <span className="hidden xs:block w-1 h-1 rounded-full bg-slate-500 opacity-50" />
+                    <p className="hidden sm:block text-[10px] sm:text-xs font-medium text-slate-500">
                       Preview
                     </p>
                   </div>
@@ -1014,40 +1014,40 @@ export default function CertificatesPage() {
                   disabled={
                     downloading === `${activeCert?.eventId}-${activeCert?.type}`
                   }
-                  className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black transition-all shadow-lg hover:scale-105 active:scale-95 ${
+                  className={`flex items-center gap-2 p-2.5 sm:px-5 sm:py-2.5 rounded-xl text-xs font-black transition-all shadow-lg hover:scale-105 active:scale-95 ${
                     activeCert?.theme?.buttonBg ||
                     (darkMode
                       ? "bg-emerald-500 text-white hover:bg-emerald-600"
                       : "bg-slate-900 text-white hover:bg-slate-800")
                   } disabled:opacity-50`}
                 >
-                  <div className="w-4 h-4">
+                  <div className="w-5 h-5 sm:w-4 sm:h-4">
                     {downloading ===
                     `${activeCert?.eventId}-${activeCert?.type}` ? (
-                      <span className="animate-spin h-3 w-3 border-2 border-white/30 border-t-white rounded-full block" />
+                      <span className="animate-spin h-3.5 w-3.5 border-2 border-white/30 border-t-white rounded-full block" />
                     ) : (
                       ICONS.download
                     )}
                   </div>
-                  <span className="hidden sm:inline">Download PDF</span>
+                  <span className="hidden md:inline">Download PDF</span>
                 </button>
 
                 <button
                   onClick={closePreview}
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+                  className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-all ${
                     darkMode
                       ? "bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700"
                       : "bg-slate-100 text-slate-500 hover:text-slate-800 hover:bg-slate-200"
                   }`}
                 >
-                  <div className="w-5 h-5">{ICONS.close}</div>
+                  <div className="w-4.5 h-4.5 sm:w-5 sm:h-5">{ICONS.close}</div>
                 </button>
               </div>
             </div>
 
             {/* Preview Area */}
             <div
-              className={`p-4 sm:p-6 lg:p-8 max-h-[80vh] overflow-y-auto relative ${
+              className={`p-1.5 sm:p-6 lg:p-8 max-h-[75vh] sm:max-h-[80vh] overflow-y-auto relative ${
                 darkMode ? "bg-slate-950/40" : "bg-slate-50"
               }`}
             >
@@ -1066,13 +1066,13 @@ export default function CertificatesPage() {
               )}
 
               <div
-                className={`relative group max-w-4xl mx-auto rounded-xl overflow-hidden shadow-2xl ring-4 ${activeCert?.theme?.cardRing || "ring-black/10"} transition-transform duration-500 hover:scale-[1.005] bg-white`}
+                className={`relative group max-w-4xl mx-auto rounded-xl overflow-hidden shadow-2xl ring-2 sm:ring-4 ${activeCert?.theme?.cardRing || "ring-black/10"} transition-transform duration-500 hover:scale-[1.005] bg-white`}
               >
                 {/* Certificate PDF Embed */}
                 <embed
                   src={`${previewUrl}#toolbar=0&navpanes=0&scrollbar=0`}
                   type="application/pdf"
-                  className="w-full aspect-[1.414/1] min-h-[400px] sm:min-h-[500px]"
+                  className="w-full aspect-[1.414/1] min-h-[220px] sm:min-h-[500px]"
                 />
 
                 {/* Info Overlay */}
