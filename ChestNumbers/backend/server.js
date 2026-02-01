@@ -7,13 +7,16 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
+import os from "os";
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 8000;
 
-const CACHE_DIR = path.join(__dirname, "qrcache");
+// Use OS temp directory for caching in serverless environments
+const CACHE_DIR = path.join(os.tmpdir(), "qrcache");
 if (!fs.existsSync(CACHE_DIR)) {
   fs.mkdirSync(CACHE_DIR, { recursive: true });
 }
@@ -209,6 +212,10 @@ app.post("/api/generate-pdf", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`ChestNumbers Backend running on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== "production") {
+  app.listen(PORT, () => {
+    console.log(`ChestNumbers Backend running on port ${PORT}`);
+  });
+}
+
+export default app;
