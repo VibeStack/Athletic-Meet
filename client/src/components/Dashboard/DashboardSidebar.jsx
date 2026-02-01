@@ -99,7 +99,7 @@ export default function DashboardSidebar() {
             className="h-9 w-9 rounded-xl"
           />
           <div>
-            <p className="font-semibold text-slate-100">SprintSync</p>
+            <p className="font-semibold text-slate-100">Athletix</p>
             <p className="text-xs text-slate-400">Admin Console</p>
           </div>
         </div>

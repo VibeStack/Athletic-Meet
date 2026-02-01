@@ -642,7 +642,7 @@ export const markAttendanceByQr = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Missing required QR fields");
   }
 
-  if (recognitionId !== "GNDEC SprintSync 2026") {
+  if (recognitionId !== "GNDEC Athletix 2026") {
     throw new ApiError(404, "Invalid QR Code");
   }
 

@@ -123,7 +123,7 @@ const GalleryPage = () => {
                   className="w-12 h-12 rounded-2xl"
                 />
                 <span className="font-black text-xl bg-linear-to-r from-cyan-500 via-blue-500 to-purple-500 bg-clip-text text-transparent">
-                  SprintSync
+                  Athletix
                 </span>
               </div>
             </div>
@@ -299,7 +299,7 @@ const GalleryPage = () => {
         <p
           className={`text-xs ${darkMode ? "text-gray-500" : "text-gray-400"}`}
         >
-          © 2026 SprintSync. All rights reserved.
+          © 2026 Athletix. All rights reserved.
         </p>
       </footer>
     </div>

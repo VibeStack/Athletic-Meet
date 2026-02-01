@@ -41,7 +41,7 @@ const Footer = ({ darkMode, scrollToSection }) => {
                       className="w-10 h-10 rounded-lg"
                     />
                     <span className="font-black text-lg bg-linear-to-r from-cyan-500 to-blue-500 bg-clip-text text-transparent">
-                      SprintSync
+                      Athletix
                     </span>
                   </div>
                   <p
@@ -218,7 +218,7 @@ const Footer = ({ darkMode, scrollToSection }) => {
                 darkMode ? "text-gray-400" : "text-gray-600"
               }`}
             >
-              © 2026 SprintSync — Built for real college athletic events.
+              © 2026 Athletix — Built for real college athletic events.
             </p>
             <p
               className={`text-xs mt-1 ${

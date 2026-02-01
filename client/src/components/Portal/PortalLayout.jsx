@@ -143,7 +143,7 @@ export default function PortalLayout() {
                         darkMode ? "text-white" : "text-slate-900"
                       }`}
                     >
-                      SprintSync
+                      Athletix
                     </h1>
                     <p
                       className={`text-xs ${

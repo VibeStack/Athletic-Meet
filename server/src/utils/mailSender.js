@@ -32,9 +32,9 @@ transporter.verify((err) => {
 export const mailSender = async (email, otp) => {
   try {
     const info = await transporter.sendMail({
-      from: `"SprintSync 2026" <${process.env.EMAIL_USER}>`,
+      from: `"Athletix 2026" <${process.env.EMAIL_USER}>`,
       to: email,
-      subject: "SprintSync 2026 - Verify Your Email",
+      subject: "Athletix 2026 - Verify Your Email",
       html: `
         <!doctype html>
         <html>
@@ -73,7 +73,7 @@ export const mailSender = async (email, otp) => {
                     <!-- Header -->
                     <tr>
                       <td align="center" style="padding-bottom: 20px">
-                        <h1 style="margin: 0; color: #1e40af">🏆 SprintSync 2026</h1>
+                        <h1 style="margin: 0; color: #1e40af">🏆 Athletix 2026</h1>
                         <p style="margin: 6px 0 0; color: #64748b; font-size: 14px">
                           Secure Email Verification
                         </p>
@@ -99,7 +99,7 @@ export const mailSender = async (email, otp) => {
 
                         <p>
                           To continue setting up your
-                          <strong>SprintSync 2026</strong> account, please use the
+                          <strong>Athletix 2026</strong> account, please use the
                           verification code below:
                         </p>
                       </td>
@@ -141,14 +141,14 @@ export const mailSender = async (email, otp) => {
                       <td style="padding-top: 30px; font-size: 13px; color: #6b7280">
                         <p style="margin: 0">
                           Thanks,<br />
-                          <strong>Team SprintSync 2026</strong>
+                          <strong>Team Athletix 2026</strong>
                         </p>
                       </td>
                     </tr>
                   </table>
 
                   <p style="margin-top: 20px; font-size: 12px; color: #9ca3af">
-                    © 2026 SprintSync. All rights reserved.
+                    © 2026 Athletix. All rights reserved.
                   </p>
                 </td>
               </tr>

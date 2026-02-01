@@ -571,4 +571,4 @@ export const Book = ({ className }) => (
 
 export { UserIcon, MailIcon, LockIcon, CheckIcon } from "./FormIcons";
 
-export { SprintSyncLogo, SprintSyncIcon } from "./SprintSyncLogo";
+export { AthletixLogo, AthletixIcon } from "./AthletixLogo";

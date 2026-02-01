@@ -196,7 +196,7 @@ const Navbar = ({
                 />
               </div>
               <span className="font-black text-xl md:text-2xl bg-linear-to-r from-cyan-500 via-blue-500 to-purple-500 bg-clip-text text-transparent">
-                SprintSync
+                Athletix
               </span>
             </div>
 

@@ -399,7 +399,7 @@ export default function HamburgerMenu({ menuOpen, setMenuOpen, user }) {
                 backgroundClip: "text",
               }}
             >
-              SprintSync
+              Athletix
             </h2>
 
             {/* Role badge */}

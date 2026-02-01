@@ -6,7 +6,7 @@ const Team = ({ darkMode }) => {
   const developer = {
     name: "Arshdeep Anand",
     role: "Full-Stack Developer",
-    tagline: "Solo Creator of SprintSync 2026",
+    tagline: "Solo Creator of Athletix 2026",
     image: "/images/MyProfessionalPic.png",
     github: "https://github.com/vibestack",
     linkedin: "https://www.linkedin.com/in/arshdeep-anand-600865288/",
@@ -186,7 +186,7 @@ const Team = ({ darkMode }) => {
                 darkMode ? "text-gray-300" : "text-gray-600"
               }`}
             >
-              For 2026, SprintSync is redesigned, rebuilt, and enhanced by a
+              For 2026, Athletix is redesigned, rebuilt, and enhanced by a
               single full-stack developer with a focus on{" "}
               <span className="font-semibold text-purple-600">performance</span>{" "}
               and{" "}

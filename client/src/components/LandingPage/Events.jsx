@@ -538,7 +538,7 @@ const Events = ({ darkMode }) => {
                 darkMode ? "text-gray-400" : "text-gray-600"
               }`}
             >
-              The best competitions of SprintSync 2026 — curated for champions
+              The best competitions of Athletix 2026 — curated for champions
             </p>
           </div>
 

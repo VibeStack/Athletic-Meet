@@ -63,7 +63,7 @@ export default function DashboardMainContent() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl md:text-3xl font-semibold">
-            SprintSync Dashboard
+            Athletix Dashboard
           </h1>
           <p className="text-slate-400 text-sm">
             Analytics overview for the annual athletics meet (admin-only)
@@ -111,7 +111,7 @@ export default function DashboardMainContent() {
       <UpcomingEventsCard events={upcomingData} />
 
       <p className="text-xs text-slate-500 text-center py-6">
-        © {new Date().getFullYear()} SprintSync • Minimal Elegant Sports Admin
+        © {new Date().getFullYear()} Athletix • Minimal Elegant Sports Admin
       </p>
     </main>
   );
