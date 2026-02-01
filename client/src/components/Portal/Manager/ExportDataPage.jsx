@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import * as XLSX from "xlsx-js-style";
+import * as XLSX from "xlsx";
 import { useTheme } from "../../../context/ThemeContext";
 
 /* -------------------- Excel Export Helpers  -------------------- */
@@ -131,35 +131,9 @@ const formatWorksheet = (worksheet, rows) => {
     { s: { r: 1, c: 0 }, e: { r: 1, c: lastColIdx } }, // Range A2 to LastColumn2
   ];
 
-  // Apply centered styling to the first two header rows
-  const safeAssignStyle = (cellRef, sz, bold = true) => {
-    if (worksheet[cellRef]) {
-      worksheet[cellRef].s = {
-        alignment: { horizontal: "center", vertical: "center" },
-        font: { bold: bold, sz: sz },
-      };
-    }
-  };
-
-  safeAssignStyle("A1", 14);
-  safeAssignStyle("A2", 12);
-
-  // Style Row 4 (Table Headers)
-  headers.forEach((_, idx) => {
-    const cellRef = XLSX.utils.encode_cell({ r: 3, c: idx }); // Row 4 is index 3
-    if (worksheet[cellRef]) {
-      worksheet[cellRef].s = {
-        alignment: { horizontal: "center", vertical: "center" },
-        font: { bold: true },
-        border: {
-          top: { style: "thin" },
-          bottom: { style: "thin" },
-          left: { style: "thin" },
-          right: { style: "thin" },
-        },
-      };
-    }
-  });
+  // Cell styling (.s property) is not supported in the standard xlsx library,
+  // so we skip the center-alignment and borders for a cleaner implementation.
+  // Column widths (!cols) and merges (!merges) are still applied above.
 };
 
 /* -------------------- SVG Icons -------------------- */

@@ -37,7 +37,7 @@ const FAQ = ({ darkMode, scrollToSection }) => {
     <section
       id="faq"
       className={`py-16 sm:py-20 md:py-24 ${
-        darkMode ? "bg-gray-800" : "bg-gradient-to-b from-teal-50/50 to-white"
+        darkMode ? "bg-gray-800" : "bg-linear-to-b from-teal-50/50 to-white"
       }`}
     >
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -72,8 +72,8 @@ const FAQ = ({ darkMode, scrollToSection }) => {
                     ? "ring-2 ring-teal-500 shadow-lg"
                     : "ring-2 ring-teal-500 shadow-lg"
                   : darkMode
-                  ? "border border-gray-700"
-                  : "border border-gray-100 shadow-sm"
+                    ? "border border-gray-700"
+                    : "border border-gray-100 shadow-sm"
               } ${
                 faq.featured && openFaq === idx
                   ? "border-l-4 border-l-teal-500"
@@ -90,7 +90,7 @@ const FAQ = ({ darkMode, scrollToSection }) => {
                     : ""
                 }`}
               >
-                <span className="text-xl flex-shrink-0">{faq.icon}</span>
+                <span className="text-xl shrink-0">{faq.icon}</span>
 
                 <span
                   className={`font-bold text-base sm:text-lg flex-1 ${
@@ -107,7 +107,7 @@ const FAQ = ({ darkMode, scrollToSection }) => {
                 )}
 
                 <ChevronDown
-                  className={`w-5 h-5 text-teal-500 flex-shrink-0 transition-transform duration-300 ${
+                  className={`w-5 h-5 text-teal-500 shrink-0 transition-transform duration-300 ${
                     openFaq === idx ? "rotate-180" : ""
                   }`}
                 />
@@ -145,11 +145,19 @@ const FAQ = ({ darkMode, scrollToSection }) => {
             Still have questions?
           </p>
           <p
-            className={`text-sm mb-4 ${
+            className={`text-sm mb-2 ${
               darkMode ? "text-gray-400" : "text-gray-500"
             }`}
           >
             Contact our support team or check event details
+          </p>
+          <p
+            className={`text-sm mb-4 flex items-center justify-center gap-2 ${
+              darkMode ? "text-gray-300" : "text-gray-600"
+            }`}
+          >
+            <span className="text-lg">📞</span>
+            <span className="font-medium">85449-53527</span>
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button
