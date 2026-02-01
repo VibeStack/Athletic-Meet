@@ -68,19 +68,32 @@ const Hero = ({ scrollToSection }) => {
           have deep inside them—a desire, a dream, a vision."
         </p>
 
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
-          <button
-            className="group relative px-8 py-4 bg-linear-to-r from-cyan-500 to-blue-600 text-white rounded-full font-bold text-base sm:text-lg overflow-hidden transform hover:scale-105 transition-all duration-300 shadow-2xl hover:shadow-cyan-500/25 w-full sm:w-auto"
-            onClick={() => navigate("/register")}
-          >
-            <span className="relative z-10">Register Now</span>
-            <div className="absolute inset-0 bg-linear-to-r from-blue-600 to-purple-600 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300"></div>
-            {/* Glow effect */}
-            <div className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-[0_0_30px_rgba(6,182,212,0.5)]"></div>
-          </button>
+        <div className="flex flex-col gap-4 items-center mb-16">
+          {/* Buttons wrapper with shared width */}
+          <div className="flex sm:flex-row gap-4 w-full max-w-md">
+            <button
+              className="group relative w-full px-8 py-4 bg-linear-to-r from-cyan-500 to-blue-600 text-white rounded-full font-bold text-base sm:text-lg overflow-hidden transform hover:scale-105 transition-all duration-300 shadow-2xl hover:shadow-cyan-500/25"
+              onClick={() => navigate("/register")}
+            >
+              <span className="relative z-10">Register</span>
+              <div className="absolute inset-0 bg-linear-to-r from-blue-600 to-purple-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300" />
+              <div className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-[0_0_30px_rgba(6,182,212,0.5)]" />
+            </button>
+
+            <button
+              className="group relative w-full px-8 py-4 bg-linear-to-r from-cyan-500 to-blue-600 text-white rounded-full font-bold text-base sm:text-lg overflow-hidden transform hover:scale-105 transition-all duration-300 shadow-2xl hover:shadow-cyan-500/25"
+              onClick={() => navigate("/login")}
+            >
+              <span className="relative z-10">Login</span>
+              <div className="absolute inset-0 bg-linear-to-r from-blue-600 to-purple-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300" />
+              <div className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-[0_0_30px_rgba(6,182,212,0.5)]" />
+            </button>
+          </div>
+
+          {/* Explore Events — same width */}
           <button
             onClick={() => scrollToSection("events")}
-            className="relative px-8 py-4 bg-white/10 backdrop-blur-md text-white border-2 border-white/30 rounded-full font-bold text-base sm:text-lg hover:bg-white/20 hover:border-white/50 transition-all duration-300 w-full sm:w-auto"
+            className="w-full max-w-md px-8 py-4 bg-white/10 backdrop-blur-md text-white border-2 border-white/30 rounded-full font-bold text-base sm:text-lg hover:bg-white/20 hover:border-white/50 transition-all duration-300"
           >
             Explore Events
           </button>
