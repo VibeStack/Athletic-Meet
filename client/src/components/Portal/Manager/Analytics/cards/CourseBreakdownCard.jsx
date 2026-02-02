@@ -35,7 +35,7 @@ export default function CourseBreakdownCard({ data, darkMode }) {
   if (chartData.length === 0) {
     return (
       <div
-        className={`rounded-2xl p-6 ${
+        className={`rounded-2xl p-4 sm:p-6 ${
           darkMode
             ? "bg-slate-900/80 border border-slate-800/50"
             : "bg-white border border-slate-200/50 shadow-lg"
@@ -57,7 +57,7 @@ export default function CourseBreakdownCard({ data, darkMode }) {
 
   return (
     <div
-      className={`rounded-2xl p-6 ${
+      className={`rounded-2xl p-4 sm:p-6 ${
         darkMode
           ? "bg-slate-900/80 border border-slate-800/50"
           : "bg-white border border-slate-200/50 shadow-lg"
@@ -71,16 +71,21 @@ export default function CourseBreakdownCard({ data, darkMode }) {
         Participants by Course
       </h3>
       <p
-        className={`text-sm mb-4 ${
+        className={`text-sm mb-6 ${
           darkMode ? "text-slate-400" : "text-slate-500"
         }`}
       >
         {total.toLocaleString()} registered users
       </p>
 
-      <div className="h-72">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData} barCategoryGap="15%">
+      {/* Increased height and adjusted for better label spacing */}
+      <div className="h-80">
+        <ResponsiveContainer width="100%" height="120%">
+          <BarChart
+            data={chartData}
+            barCategoryGap="15%"
+            margin={{ top: 10, right: 10, left: 0, bottom: 20 }}
+          >
             <CartesianGrid
               strokeDasharray="3 3"
               stroke={darkMode ? "#334155" : "#e2e8f0"}
@@ -88,16 +93,18 @@ export default function CourseBreakdownCard({ data, darkMode }) {
             />
             <XAxis
               dataKey="name"
-              tick={{ fill: darkMode ? "#94a3b8" : "#64748b", fontSize: 11 }}
+              tick={{ fill: darkMode ? "#94a3b8" : "#64748b", fontSize: 10 }}
               axisLine={{ stroke: darkMode ? "#475569" : "#cbd5e1" }}
-              angle={-45}
+              angle={-55}
               textAnchor="end"
-              height={80}
+              height={100}
               interval={0}
+              dy={5}
             />
             <YAxis
               tick={{ fill: darkMode ? "#94a3b8" : "#64748b", fontSize: 12 }}
               axisLine={{ stroke: darkMode ? "#475569" : "#cbd5e1" }}
+              width={45}
             />
             <Tooltip
               contentStyle={{

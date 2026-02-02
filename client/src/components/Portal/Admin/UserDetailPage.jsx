@@ -338,13 +338,15 @@ export default function UserDetailPage() {
                   <button
                     onClick={deleteUser}
                     className={`flex-1 py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 ${
-                      studentUserData.role === "Manager"
-                        ? "bg-linear-to-r from-red-500 to-red-600 shadow-red-500/25"
-                        : studentUserData.gender === "Male"
-                          ? "bg-linear-to-r from-sky-500 to-blue-600 shadow-sky-500/25"
-                          : studentUserData.gender === "Female"
-                            ? "bg-linear-to-r from-pink-500 to-pink-600 shadow-pink-500/25"
-                            : "bg-linear-to-r from-emerald-500 to-emerald-600 shadow-emerald-500/25"
+                      studentUserData.isUserDetailsComplete === "partial"
+                        ? "bg-linear-to-r from-slate-500 to-slate-600 shadow-slate-500/25"
+                        : studentUserData.role === "Manager"
+                          ? "bg-linear-to-r from-red-500 to-red-600 shadow-red-500/25"
+                          : studentUserData.gender === "Male"
+                            ? "bg-linear-to-r from-sky-500 to-blue-600 shadow-sky-500/25"
+                            : studentUserData.gender === "Female"
+                              ? "bg-linear-to-r from-pink-500 to-pink-600 shadow-pink-500/25"
+                              : "bg-linear-to-r from-emerald-500 to-emerald-600 shadow-emerald-500/25"
                     }`}
                   >
                     Delete

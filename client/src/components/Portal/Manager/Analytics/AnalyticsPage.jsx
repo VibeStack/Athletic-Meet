@@ -9,6 +9,7 @@ import AttendanceChartCard from "./cards/AttendanceChartCard";
 import WinnersCard from "./cards/WinnersCard";
 import CourseBreakdownCard from "./cards/CourseBreakdownCard";
 import YearBreakdownCard from "./cards/YearBreakdownCard";
+import LoadingComponent from "../../LoadingComponent";
 
 // Icons
 const UsersIcon = ({ className }) => (
@@ -88,25 +89,11 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div
-        className={`min-h-screen flex items-center justify-center ${
-          darkMode ? "bg-slate-950" : "bg-slate-50"
-        }`}
-      >
-        <div className="flex flex-col items-center gap-4">
-          <div className="relative">
-            <div className="w-16 h-16 border-4 border-cyan-500/30 rounded-full" />
-            <div className="absolute top-0 left-0 w-16 h-16 border-4 border-transparent border-t-cyan-500 rounded-full animate-spin" />
-          </div>
-          <p
-            className={`text-sm ${
-              darkMode ? "text-slate-400" : "text-slate-500"
-            }`}
-          >
-            Loading analytics...
-          </p>
-        </div>
-      </div>
+      <LoadingComponent
+        title="Loading Analytics"
+        message="Fetching statistics and insights..."
+        darkMode={darkMode}
+      />
     );
   }
 
@@ -156,22 +143,22 @@ export default function AnalyticsPage() {
 
   return (
     <div
-      className={`min-h-screen p-6 md:p-8 ${
+      className={`min-h-screen p-4 sm:p-6 md:p-8 ${
         darkMode ? "bg-slate-950" : "bg-slate-50"
       }`}
     >
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
         <div>
           <h1
-            className={`text-2xl md:text-3xl font-bold ${
+            className={`text-xl sm:text-2xl md:text-3xl font-bold ${
               darkMode ? "text-white" : "text-slate-900"
             }`}
           >
             Analytics Dashboard
           </h1>
           <p
-            className={`text-sm mt-1 ${
+            className={`text-xs sm:text-sm mt-1 ${
               darkMode ? "text-slate-400" : "text-slate-500"
             }`}
           >
@@ -230,15 +217,16 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Charts Row 1 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
         <GenderChartCard data={data?.users?.byGender} darkMode={darkMode} />
         <EventTypeChartCard data={data?.events?.byType} darkMode={darkMode} />
       </div>
 
       {/* Charts Row 2 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
         <AttendanceChartCard
           data={data?.users?.attendanceBreakdown}
+          eventWiseAttendance={data?.events?.eventWiseAttendance}
           darkMode={darkMode}
         />
         <WinnersCard
@@ -248,16 +236,16 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Charts Row 3 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
         <CourseBreakdownCard data={data?.users?.byCourse} darkMode={darkMode} />
         <YearBreakdownCard data={data?.users?.byYear} darkMode={darkMode} />
       </div>
 
       {/* Additional Stats */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
         {/* User Roles */}
         <div
-          className={`rounded-2xl p-6 ${
+          className={`rounded-2xl p-4 sm:p-6 ${
             darkMode
               ? "bg-slate-900/80 border border-slate-800/50"
               : "bg-white border border-slate-200/50 shadow-lg"
@@ -277,10 +265,10 @@ export default function AnalyticsPage() {
                   <div
                     className={`w-3 h-3 rounded-full ${
                       role._id === "Manager"
-                        ? "bg-amber-500"
+                        ? "bg-red-500"
                         : role._id === "Admin"
-                          ? "bg-violet-500"
-                          : "bg-cyan-500"
+                          ? "bg-emerald-500"
+                          : "bg-amber-400"
                     }`}
                   />
                   <span
@@ -303,7 +291,7 @@ export default function AnalyticsPage() {
 
         {/* Events by Day */}
         <div
-          className={`rounded-2xl p-6 ${
+          className={`rounded-2xl p-4 sm:p-6 ${
             darkMode
               ? "bg-slate-900/80 border border-slate-800/50"
               : "bg-white border border-slate-200/50 shadow-lg"
@@ -341,7 +329,7 @@ export default function AnalyticsPage() {
 
         {/* Events by Category */}
         <div
-          className={`rounded-2xl p-6 ${
+          className={`rounded-2xl p-4 sm:p-6 ${
             darkMode
               ? "bg-slate-900/80 border border-slate-800/50"
               : "bg-white border border-slate-200/50 shadow-lg"

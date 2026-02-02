@@ -857,6 +857,19 @@ export const getAnalytics = asyncHandler(async (req, res) => {
               },
             },
           ],
+          eventWiseAttendance: [
+            {
+              $project: {
+                _id: 1,
+                name: 1,
+                category: 1,
+                present: "$studentsCount.present",
+                absent: "$studentsCount.absent",
+                notMarked: "$studentsCount.notMarked",
+              },
+            },
+            { $sort: { name: 1 } },
+          ],
         },
       },
     ]),

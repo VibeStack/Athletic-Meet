@@ -400,21 +400,11 @@ export default function UserDetailHeader({
               </button>
             )}
 
-            {canShowDelete && (
-              <button
-                onClick={() => setShowDeletePopup(true)}
-                className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 ${lockButtonTheme}`}
-              >
-                {ICONS.trash}
-                <span>Delete</span>
-              </button>
-            )}
-
             {canShowVerifyEmail && (
               <button
                 onClick={verifyUserEmail}
                 disabled={verifyingEmail}
-                className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 bg-linear-to-r from-amber-500 to-orange-600 shadow-amber-500/25 ${verifyingEmail ? "opacity-70 cursor-not-allowed" : ""}`}
+                className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 bg-linear-to-r from-emerald-500 to-emerald-600 shadow-emerald-500/25 ${verifyingEmail ? "opacity-70 cursor-not-allowed" : ""}`}
               >
                 {verifyingEmail ? (
                   <span className="animate-spin h-4 w-4 border-2 border-white/30 rounded-full border-t-white" />
@@ -427,6 +417,20 @@ export default function UserDetailHeader({
                 <span className="sm:hidden">
                   {verifyingEmail ? "..." : "Verify"}
                 </span>
+              </button>
+            )}
+
+            {canShowDelete && (
+              <button
+                onClick={() => setShowDeletePopup(true)}
+                className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 ${
+                  localDetailsComplete === "partial"
+                    ? "bg-linear-to-r from-slate-500 to-slate-600 shadow-slate-500/25"
+                    : lockButtonTheme
+                }`}
+              >
+                {ICONS.trash}
+                <span>Delete</span>
               </button>
             )}
           </div>
