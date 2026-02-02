@@ -14,6 +14,14 @@ const getGenderGroups = () => [
   { label: "G", gender: "female" },
 ];
 
+// Detect gender from event name (B) or (G)
+const getEventGenderFromName = (eventName = "") => {
+  const name = eventName.toLowerCase();
+  if (name.includes("(b)")) return "male";
+  if (name.includes("(g)")) return "female";
+  return null; // mixed/open event
+};
+
 // Find student's registration for a specific event
 const getEventEntry = (student, eventId) =>
   (student.selectedEvents || []).find(
@@ -232,6 +240,7 @@ export default function ExportDataPage() {
             withCredentials: true,
           }),
         ]);
+        console.log(usersRes.data.data.users);
 
         // Extract events and users from the response
         const eventsData =
@@ -302,15 +311,19 @@ export default function ExportDataPage() {
         const eventName = event.name || "Event";
         const eventType = getEventType(event);
 
-        getGenderGroups().forEach(({ label, gender }) => {
+        // Detect gender from event name - if (B) or (G) is in name, only create one sheet
+        const eventGender = getEventGenderFromName(eventName);
+        const genderGroups = eventGender
+          ? [{ label: eventGender === "male" ? "B" : "G", gender: eventGender }]
+          : getGenderGroups();
+
+        genderGroups.forEach(({ label, gender }) => {
           const genderLabelFull = gender === "male" ? "Male" : "Female";
           let sr = 1;
           const rows = [];
 
           // Simplest check: is student in this event?
           allStudents.forEach((student) => {
-            if (student.gender?.toLowerCase() !== gender) return;
-
             const isRegistered = student.selectedEvents?.some(
               (se) => (se.eventId || se._id) === eventId,
             );
@@ -342,7 +355,14 @@ export default function ExportDataPage() {
         });
       });
 
-      // 3. One Workbook Download
+      // 3. Safety check - prevent empty workbook error
+      if (workbook.SheetNames.length === 0) {
+        alert("No students found for export");
+        setExporting(false);
+        return;
+      }
+
+      // 4. One Workbook Download
       const fileName = selectedEvent
         ? `${currentEvent?.name || "Event"}_${new Date().toISOString().split("T")[0]}.xlsx`
         : `Athletic_Meet_${new Date().toISOString().split("T")[0]}.xlsx`;
