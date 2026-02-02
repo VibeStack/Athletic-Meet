@@ -158,6 +158,9 @@ export const bulkAddEvents = asyncHandler(async (req, res) => {
             position: 0,
           },
         },
+        $set: {
+          isEventsLocked: true,
+        },
       },
       { session }
     );
