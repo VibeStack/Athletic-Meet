@@ -61,6 +61,7 @@ export const getAllUsers = asyncHandler(async (req, res) => {
       urn: 1,
       gender: 1,
       selectedEvents: 1,
+      isUserDetailsComplete: 1,
     }
   );
 
@@ -79,6 +80,7 @@ export const getAllUsers = asyncHandler(async (req, res) => {
       urn: u.urn || null,
       gender: u.gender || null,
       eventsCount: u.selectedEvents?.length || 0,
+      isUserDetailsComplete: u.isUserDetailsComplete || "false",
     }))
     .filter((user) => {
       if (req.user.role === "Admin" && user.role === "Manager") {
@@ -971,4 +973,45 @@ export const deleteUser = asyncHandler(async (req, res) => {
     session.endSession();
     throw error;
   }
+});
+
+// Manual email verification by Admin/Manager
+// Updates isUserDetailsComplete from "false" to "partial"
+export const verifyUserEmail = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+  const head = req.user;
+
+  // Only Admins and Managers can verify emails
+  if (!["Admin", "Manager"].includes(head.role)) {
+    throw new ApiError(403, "Only Admins and Managers can verify user emails");
+  }
+
+  const user = await User.findById(userId).select("role isUserDetailsComplete");
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  // Check if user's details are already verified or complete
+  if (user.isUserDetailsComplete !== "false") {
+    throw new ApiError(
+      409,
+      `User email is already ${user.isUserDetailsComplete === "partial" ? "verified" : "complete"}`
+    );
+  }
+
+  // Update isUserDetailsComplete to "partial"
+  await User.updateOne(
+    { _id: userId, isUserDetailsComplete: "false" },
+    { $set: { isUserDetailsComplete: "partial" } }
+  );
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        { isUserDetailsComplete: "partial" },
+        "User email verified successfully"
+      )
+    );
 });

@@ -4,20 +4,24 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
+// Cookie options based on environment
+const isProduction = process.env.NODE_ENV === "production";
+const cookieOptions = {
+  httpOnly: true,
+  signed: true,
+  path: "/",
+  sameSite: isProduction ? "none" : "lax",
+  secure: isProduction,
+  ...(isProduction && { partitioned: true }),
+};
+
 export const loginUser = asyncHandler(async (req, res) => {
   const { username, email, password } = req.body;
 
   const existingSid = req.signedCookies?.sid;
   if (existingSid) {
     await Session.findByIdAndDelete(existingSid);
-
-    res.clearCookie("sid", {
-      httpOnly: true,
-      signed: true,
-      sameSite: "none",
-      secure: true,
-      path: "/",
-    });
+    res.clearCookie("sid", cookieOptions);
   }
 
   const user = await User.findOne({ email });
@@ -42,11 +46,7 @@ export const loginUser = asyncHandler(async (req, res) => {
 
   const session = await Session.create({ userId: user._id });
   res.cookie("sid", session.id, {
-    httpOnly: true,
-    signed: true,
-    sameSite: "none",
-    secure: true,
-    path: "/",
+    ...cookieOptions,
     maxAge: 1 * 24 * 60 * 60 * 1000,
   });
 
@@ -62,13 +62,7 @@ export const logoutUser = asyncHandler(async (req, res) => {
   }
 
   await Session.findByIdAndDelete(sid);
-  res.clearCookie("sid", {
-    httpOnly: true,
-    signed: true,
-    sameSite: "none",
-    secure: true,
-    path: "/",
-  });
+  res.clearCookie("sid", cookieOptions);
 
   return res.status(200).json(new ApiResponse(null, "Logged out successfully"));
 });

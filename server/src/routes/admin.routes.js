@@ -11,6 +11,7 @@ import {
   updateUserEvents,
   markAttendanceByQr,
   markAttendanceByGivingJerseyArray,
+  verifyUserEmail,
 } from "../controllers/admin.controller.js";
 
 const router = Router();
@@ -22,7 +23,9 @@ router.route("/events/unlock").post(unlockMyEvents);
 
 router.route("/user/event/attendance").post(markAttendance);
 router.route("/user/event/qrAttendance").post(markAttendanceByQr);
-router.route("/user/event/jerseysArray").post(markAttendanceByGivingJerseyArray);
+router
+  .route("/user/event/jerseysArray")
+  .post(markAttendanceByGivingJerseyArray);
 
 router.route("/users/:userId/events/lock").post(lockUserEvents);
 router.route("/users/:userId/events/unlock").post(unlockUserEvents);
@@ -31,5 +34,6 @@ router.route("/users/:userId/updateEvents").post(updateUserEvents);
 router.route("/user/:userId").delete(deleteUser);
 
 router.route("/user/:userId").patch(changeUserDetails);
+router.route("/user/:userId/verify-email").post(verifyUserEmail);
 
 export default router;

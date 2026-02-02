@@ -29,6 +29,7 @@ import CertificateControlsPage from "./components/Portal/Manager/CertificateCont
 import EventResultsPage from "./components/Portal/Manager/EventResultsPage";
 import BulkAddEventPage from "./components/Portal/Manager/BulkAddEventPage";
 import BulkAdminPage from "./components/Portal/Manager/BulkAdminPage";
+import AnalyticsPage from "./components/Portal/Manager/Analytics/AnalyticsPage";
 
 function App() {
   return (
@@ -134,6 +135,14 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={["Manager"]}>
                   <BulkAdminPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="manager/analytics"
+              element={
+                <ProtectedRoute allowedRoles={["Manager"]}>
+                  <AnalyticsPage />
                 </ProtectedRoute>
               }
             />

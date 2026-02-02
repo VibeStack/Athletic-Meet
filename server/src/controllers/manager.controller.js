@@ -774,3 +774,105 @@ export const previewCertificate = asyncHandler(async (req, res) => {
   res.setHeader("Content-Type", "application/pdf");
   res.send(Buffer.from(pdfBytes));
 });
+
+export const getAnalytics = asyncHandler(async (req, res) => {
+  const user = req.user;
+
+  if (!user) {
+    throw new ApiError(401, "Not authenticated");
+  }
+
+  if (user.role !== "Manager") {
+    throw new ApiError(403, "Access denied. Manager role required.");
+  }
+
+  // Run aggregations in parallel for better performance
+  const [userStats, eventStats, config] = await Promise.all([
+    // 1. User Statistics
+    User.aggregate([
+      {
+        $facet: {
+          total: [{ $count: "count" }],
+          byRole: [
+            { $group: { _id: "$role", count: { $sum: 1 } } },
+            { $sort: { _id: 1 } },
+          ],
+          byGender: [
+            { $match: { gender: { $exists: true, $ne: null } } },
+            { $group: { _id: "$gender", count: { $sum: 1 } } },
+          ],
+          byCourse: [
+            { $match: { course: { $exists: true, $ne: null } } },
+            { $group: { _id: "$course", count: { $sum: 1 } } },
+            { $sort: { count: -1 } },
+          ],
+          byYear: [
+            { $match: { year: { $exists: true, $ne: null } } },
+            { $group: { _id: "$year", count: { $sum: 1 } } },
+            { $sort: { _id: 1 } },
+          ],
+          detailsComplete: [
+            { $group: { _id: "$isUserDetailsComplete", count: { $sum: 1 } } },
+          ],
+          totalEnrollments: [
+            { $unwind: "$selectedEvents" },
+            { $count: "count" },
+          ],
+          attendanceBreakdown: [
+            { $unwind: "$selectedEvents" },
+            { $group: { _id: "$selectedEvents.status", count: { $sum: 1 } } },
+          ],
+          positionBreakdown: [
+            { $unwind: "$selectedEvents" },
+            { $match: { "selectedEvents.position": { $gt: 0 } } },
+            { $group: { _id: "$selectedEvents.position", count: { $sum: 1 } } },
+            { $sort: { _id: 1 } },
+          ],
+        },
+      },
+    ]),
+
+    // 2. Event Statistics
+    Event.aggregate([
+      {
+        $facet: {
+          total: [{ $count: "count" }],
+          byType: [
+            { $group: { _id: "$type", count: { $sum: 1 } } },
+            { $sort: { _id: 1 } },
+          ],
+          byCategory: [{ $group: { _id: "$category", count: { $sum: 1 } } }],
+          byDay: [
+            { $group: { _id: "$day", count: { $sum: 1 } } },
+            { $sort: { _id: 1 } },
+          ],
+          activeStatus: [{ $group: { _id: "$isActive", count: { $sum: 1 } } }],
+          attendanceTotals: [
+            {
+              $group: {
+                _id: null,
+                totalPresent: { $sum: "$studentsCount.present" },
+                totalAbsent: { $sum: "$studentsCount.absent" },
+                totalNotMarked: { $sum: "$studentsCount.notMarked" },
+              },
+            },
+          ],
+        },
+      },
+    ]),
+
+    // 3. Certificate Status
+    SystemConfig.findById("GLOBAL").lean(),
+  ]);
+
+  return res.status(200).json(
+    new ApiResponse(
+      {
+        users: userStats[0],
+        events: eventStats[0],
+        certificatesLocked: config?.areCertificatesLocked ?? true,
+      },
+      "Analytics fetched successfully"
+    )
+  );
+});

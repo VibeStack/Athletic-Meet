@@ -3,41 +3,55 @@ import React, { useState } from "react";
 import { useOutletContext } from "react-router-dom";
 
 /* -------------------- Color Theme Functions -------------------- */
-const getJerseyBadgeTheme = (role, gender) => {
+const getJerseyBadgeTheme = (role, gender, isUserDetailsComplete) => {
   if (role === "Manager")
     return "bg-linear-to-br from-red-500 to-red-700 text-white shadow-lg shadow-red-500/30";
-  if (gender === "Male")
-    return "bg-linear-to-br from-sky-400 to-blue-600 text-white shadow-lg shadow-sky-500/30";
-  if (gender === "Female")
-    return "bg-linear-to-br from-pink-400 to-pink-600 text-white shadow-lg shadow-pink-500/30";
+  if (isUserDetailsComplete === "true") {
+    if (gender === "Male")
+      return "bg-linear-to-br from-sky-400 to-blue-600 text-white shadow-lg shadow-sky-500/30";
+    if (gender === "Female")
+      return "bg-linear-to-br from-pink-400 to-pink-600 text-white shadow-lg shadow-pink-500/30";
+  }
+  if (isUserDetailsComplete === "partial")
+    return "bg-linear-to-br from-slate-400 to-slate-600 text-white shadow-lg shadow-slate-500/30";
   return "bg-linear-to-br from-emerald-400 to-emerald-600 text-white shadow-lg shadow-emerald-500/30";
 };
 
-const getLockButtonTheme = (role, gender) => {
+const getLockButtonTheme = (role, gender, isUserDetailsComplete) => {
   if (role === "Manager")
     return "bg-linear-to-r from-red-500 to-red-600 shadow-red-500/25";
-  if (gender === "Male")
-    return "bg-linear-to-r from-sky-500 to-blue-600 shadow-sky-500/25";
-  if (gender === "Female")
-    return "bg-linear-to-r from-pink-500 to-pink-600 shadow-pink-500/25";
+  if (isUserDetailsComplete === "true") {
+    if (gender === "Male")
+      return "bg-linear-to-r from-sky-500 to-blue-600 shadow-sky-500/25";
+    if (gender === "Female")
+      return "bg-linear-to-r from-pink-500 to-pink-600 shadow-pink-500/25";
+  }
+  if (isUserDetailsComplete === "partial")
+    return "bg-linear-to-r from-slate-500 to-slate-600 shadow-slate-500/25";
   return "bg-linear-to-r from-emerald-500 to-emerald-600 shadow-emerald-500/25";
 };
 
-const getRoleTheme = (role, gender, darkMode) => {
+const getRoleTheme = (role, gender, isUserDetailsComplete, darkMode) => {
   if (role === "Manager") {
     return darkMode
       ? "bg-red-500/15 text-red-400 ring-red-500/30"
       : "bg-red-100 text-red-700 ring-red-400/30";
   }
   if (role === "Admin") {
-    if (gender === "Male")
+    if (isUserDetailsComplete === "true") {
+      if (gender === "Male")
+        return darkMode
+          ? "bg-sky-500/15 text-sky-400 ring-sky-500/30"
+          : "bg-sky-100 text-sky-700 ring-sky-400/30";
+      if (gender === "Female")
+        return darkMode
+          ? "bg-pink-500/15 text-pink-400 ring-pink-500/30"
+          : "bg-pink-100 text-pink-700 ring-pink-400/30";
+    }
+    if (isUserDetailsComplete === "partial")
       return darkMode
-        ? "bg-sky-500/15 text-sky-400 ring-sky-500/30"
-        : "bg-sky-100 text-sky-700 ring-sky-400/30";
-    if (gender === "Female")
-      return darkMode
-        ? "bg-pink-500/15 text-pink-400 ring-pink-500/30"
-        : "bg-pink-100 text-pink-700 ring-pink-400/30";
+        ? "bg-slate-500/15 text-slate-400 ring-slate-500/30"
+        : "bg-slate-100 text-slate-700 ring-slate-300";
     return darkMode
       ? "bg-emerald-500/15 text-emerald-400 ring-emerald-500/30"
       : "bg-emerald-100 text-emerald-700 ring-emerald-400/30";
@@ -101,6 +115,11 @@ const ICONS = {
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6" />
     </svg>
   ),
+  verifyEmail: (
+    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
+      <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
+    </svg>
+  ),
 };
 
 export default function UserDetailHeader({
@@ -119,6 +138,10 @@ export default function UserDetailHeader({
   );
   const [lockingEvents, setLockingEvents] = useState(false);
   const [togglingAdmin, setTogglingAdmin] = useState(false);
+  const [verifyingEmail, setVerifyingEmail] = useState(false);
+  const [localDetailsComplete, setLocalDetailsComplete] = useState(
+    studentUserData.isUserDetailsComplete || "false",
+  );
   // When isUserHavingAdminAccess changes, we need to compute the displayed role:
   // - Manager always stays Manager
   // - Others show Admin if isUserHavingAdminAccess is true, otherwise Student
@@ -129,11 +152,21 @@ export default function UserDetailHeader({
         ? "Admin"
         : "Student";
 
-  const roleTheme = getRoleTheme(targetRole, studentUserData.gender, darkMode);
-  const jerseyTheme = getJerseyBadgeTheme(targetRole, studentUserData.gender);
+  const roleTheme = getRoleTheme(
+    targetRole,
+    studentUserData.gender,
+    localDetailsComplete,
+    darkMode,
+  );
+  const jerseyTheme = getJerseyBadgeTheme(
+    targetRole,
+    studentUserData.gender,
+    localDetailsComplete,
+  );
   const lockButtonTheme = getLockButtonTheme(
     targetRole,
     studentUserData.gender,
+    localDetailsComplete,
   );
 
   // ========== VISIBILITY LOGIC ==========
@@ -141,7 +174,8 @@ export default function UserDetailHeader({
   const viewerRole = user.role;
   const targetId = studentUserData.id;
 
-  const isDetailsComplete = studentUserData.isUserDetailsComplete === "true";
+  const isDetailsComplete = localDetailsComplete === "true";
+  const isEmailUnverified = localDetailsComplete === "false";
   const isSelf = viewerId === targetId;
 
   // Helper to check if viewer has higher role
@@ -154,6 +188,16 @@ export default function UserDetailHeader({
   let canShowLockUnlock = false;
   let canShowDelete = false;
   let canShowMakeRemoveAdmin = false;
+  let canShowVerifyEmail = false;
+
+  // Verify Email button: Only for Admin/Manager viewing users with isUserDetailsComplete === "false"
+  if (
+    isEmailUnverified &&
+    !isSelf &&
+    ["Admin", "Manager"].includes(viewerRole)
+  ) {
+    canShowVerifyEmail = true;
+  }
 
   if (!isDetailsComplete) {
     // Incomplete details: Only delete is visible (for higher roles)
@@ -179,6 +223,28 @@ export default function UserDetailHeader({
     }
   }
   // Students can't see any admin buttons
+
+  const verifyUserEmail = async () => {
+    if (verifyingEmail) return;
+    setVerifyingEmail(true);
+    try {
+      await axios.post(
+        `${API_URL}/admin/user/${studentUserData.id}/verify-email`,
+        null,
+        { withCredentials: true },
+      );
+      setLocalDetailsComplete("partial");
+      // Update cache with new isUserDetailsComplete status
+      updateUserInCache(studentUserData.id, {
+        isUserDetailsComplete: "partial",
+      });
+    } catch (error) {
+      console.error(error.response?.data?.message || "Failed to verify email");
+      alert(`❌ ${error.response?.data?.message || "Failed to verify email"}`);
+    } finally {
+      setVerifyingEmail(false);
+    }
+  };
 
   const makeAsAdmin = async () => {
     if (togglingAdmin) return;
@@ -341,6 +407,26 @@ export default function UserDetailHeader({
               >
                 {ICONS.trash}
                 <span>Delete</span>
+              </button>
+            )}
+
+            {canShowVerifyEmail && (
+              <button
+                onClick={verifyUserEmail}
+                disabled={verifyingEmail}
+                className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 bg-linear-to-r from-amber-500 to-orange-600 shadow-amber-500/25 ${verifyingEmail ? "opacity-70 cursor-not-allowed" : ""}`}
+              >
+                {verifyingEmail ? (
+                  <span className="animate-spin h-4 w-4 border-2 border-white/30 rounded-full border-t-white" />
+                ) : (
+                  ICONS.verifyEmail
+                )}
+                <span className="hidden sm:inline">
+                  {verifyingEmail ? "Verifying..." : "Verify Email"}
+                </span>
+                <span className="sm:hidden">
+                  {verifyingEmail ? "..." : "Verify"}
+                </span>
               </button>
             )}
           </div>

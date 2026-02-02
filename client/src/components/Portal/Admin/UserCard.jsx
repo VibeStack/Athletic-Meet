@@ -1,24 +1,33 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
-// Role badge theme
-const getRoleTheme = (role, gender, darkMode) => {
+// Role badge theme - considers isUserDetailsComplete
+const getRoleTheme = (role, gender, isUserDetailsComplete, darkMode) => {
   if (role === "Manager") {
     return darkMode
       ? "bg-red-500/15 text-red-400 ring-red-500/30"
       : "bg-red-50 text-red-700 ring-red-200";
   }
   if (role === "Admin") {
-    if (gender === "Male") {
-      return darkMode
-        ? "bg-sky-500/15 text-sky-400 ring-sky-500/30"
-        : "bg-sky-50 text-sky-700 ring-sky-200";
+    // For Admin, use gender-based colors only if details are complete
+    if (isUserDetailsComplete === "true") {
+      if (gender === "Male") {
+        return darkMode
+          ? "bg-sky-500/15 text-sky-400 ring-sky-500/30"
+          : "bg-sky-50 text-sky-700 ring-sky-200";
+      }
+      if (gender === "Female") {
+        return darkMode
+          ? "bg-pink-500/15 text-pink-400 ring-pink-500/30"
+          : "bg-pink-50 text-pink-700 ring-pink-200";
+      }
     }
-    if (gender === "Female") {
+    if (isUserDetailsComplete === "partial") {
       return darkMode
-        ? "bg-pink-500/15 text-pink-400 ring-pink-500/30"
-        : "bg-pink-50 text-pink-700 ring-pink-200";
+        ? "bg-slate-500/15 text-slate-400 ring-slate-500/30"
+        : "bg-slate-100 text-slate-700 ring-slate-200";
     }
+    // false (unverified)
     return darkMode
       ? "bg-emerald-500/15 text-emerald-400 ring-emerald-500/30"
       : "bg-emerald-50 text-emerald-700 ring-emerald-200";
@@ -28,46 +37,64 @@ const getRoleTheme = (role, gender, darkMode) => {
     : "bg-slate-800 text-slate-100 ring-slate-700";
 };
 
-// Event count color based on role and gender
-const getEventColor = (role, gender, darkMode) => {
+// Event count color based on role, gender, and isUserDetailsComplete
+const getEventColor = (role, gender, isUserDetailsComplete, darkMode) => {
   if (role === "Manager") {
     return darkMode ? "text-red-400" : "text-red-600";
   }
-  if (gender === "Female") return darkMode ? "text-pink-400" : "text-pink-600";
-  if (gender === "Male") return darkMode ? "text-sky-400" : "text-sky-600";
+  if (isUserDetailsComplete === "true") {
+    if (gender === "Female")
+      return darkMode ? "text-pink-400" : "text-pink-600";
+    if (gender === "Male") return darkMode ? "text-sky-400" : "text-sky-600";
+  }
+  if (isUserDetailsComplete === "partial") {
+    return darkMode ? "text-slate-400" : "text-slate-600";
+  }
   return darkMode ? "text-emerald-400" : "text-emerald-600";
 };
 
-// Jersey badge colors based on role and gender
-const getJerseyBadgeTheme = (role, gender) => {
+// Jersey badge colors based on role, gender, and isUserDetailsComplete
+const getJerseyBadgeTheme = (role, gender, isUserDetailsComplete) => {
   if (role === "Manager") {
     return "bg-linear-to-br from-red-400 to-red-600 text-white shadow-lg shadow-red-500/30";
   }
-  if (gender === "Male") {
-    return "bg-linear-to-br from-sky-400 to-blue-600 text-white shadow-lg shadow-sky-500/30";
+  if (isUserDetailsComplete === "true") {
+    if (gender === "Male") {
+      return "bg-linear-to-br from-sky-400 to-blue-600 text-white shadow-lg shadow-sky-500/30";
+    }
+    if (gender === "Female") {
+      return "bg-linear-to-br from-pink-400 to-pink-600 text-white shadow-lg shadow-pink-500/30";
+    }
   }
-  if (gender === "Female") {
-    return "bg-linear-to-br from-pink-400 to-pink-600 text-white shadow-lg shadow-pink-500/30";
+  if (isUserDetailsComplete === "partial") {
+    return "bg-linear-to-br from-slate-400 to-slate-600 text-white shadow-lg shadow-slate-500/30";
   }
   return "bg-linear-to-br from-emerald-400 to-emerald-600 text-white shadow-lg shadow-emerald-500/30";
 };
 
-// Card border colors based on role and gender
-const getCardBorderTheme = (role, gender, darkMode) => {
+// Card border colors based on role, gender, and isUserDetailsComplete
+const getCardBorderTheme = (role, gender, isUserDetailsComplete, darkMode) => {
   if (role === "Manager") {
     return darkMode
       ? "border-red-500/50 hover:border-red-400"
       : "border-red-400 hover:border-red-500";
   }
-  if (gender === "Male") {
-    return darkMode
-      ? "border-sky-500/50 hover:border-sky-400"
-      : "border-sky-400 hover:border-sky-500";
+  if (isUserDetailsComplete === "true") {
+    if (gender === "Male") {
+      return darkMode
+        ? "border-sky-500/50 hover:border-sky-400"
+        : "border-sky-400 hover:border-sky-500";
+    }
+    if (gender === "Female") {
+      return darkMode
+        ? "border-pink-500/50 hover:border-pink-400"
+        : "border-pink-400 hover:border-pink-500";
+    }
   }
-  if (gender === "Female") {
+  if (isUserDetailsComplete === "partial") {
     return darkMode
-      ? "border-pink-500/50 hover:border-pink-400"
-      : "border-pink-400 hover:border-pink-500";
+      ? "border-slate-500/50 hover:border-slate-400"
+      : "border-slate-400 hover:border-slate-500";
   }
   return darkMode
     ? "border-emerald-500/50 hover:border-emerald-400"
@@ -76,9 +103,15 @@ const getCardBorderTheme = (role, gender, darkMode) => {
 
 function UserCard({ user, darkMode, style }) {
   const navigate = useNavigate();
-  const roleTheme = getRoleTheme(user.role, user.gender, darkMode);
-  const jerseyTheme = getJerseyBadgeTheme(user.role, user.gender);
-  const borderTheme = getCardBorderTheme(user.role, user.gender, darkMode);
+  const isComplete = user.isUserDetailsComplete || "false";
+  const roleTheme = getRoleTheme(user.role, user.gender, isComplete, darkMode);
+  const jerseyTheme = getJerseyBadgeTheme(user.role, user.gender, isComplete);
+  const borderTheme = getCardBorderTheme(
+    user.role,
+    user.gender,
+    isComplete,
+    darkMode,
+  );
 
   return (
     <div style={style} className="p-2">
@@ -258,6 +291,7 @@ function UserCard({ user, darkMode, style }) {
               className={`text-2xl font-black ${getEventColor(
                 user.role,
                 user.gender,
+                user.isUserDetailsComplete || "false",
                 darkMode,
               )}`}
             >

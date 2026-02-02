@@ -167,6 +167,7 @@ export default function Step2EmailOtp({ nextStep }) {
       // ❌ User missing
       if (errMsg === "User not found.") {
         setMessage("❌ User not found. Please restart registration.");
+        nextStep(-1)
         return;
       }
 

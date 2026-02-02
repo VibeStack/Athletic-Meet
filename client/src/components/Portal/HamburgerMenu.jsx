@@ -129,6 +129,16 @@ const AddEventIcon = ({ className }) => (
   </svg>
 );
 
+const AnalyticsIcon = ({ className }) => (
+  <svg
+    className={className || "w-5 h-5"}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+  >
+    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z" />
+  </svg>
+);
+
 // ========== SECTION-BASED MENU STRUCTURE ==========
 const menuSections = [
   {
@@ -217,20 +227,33 @@ const menuSections = [
         icon: CertificateIcon,
       },
       {
-        label: "Export Data",
-        path: "/portal/manager/export",
-        roles: ["Manager"],
-        gradient: "from-rose-400 to-pink-600",
-        shadowColor: "shadow-rose-500/30",
-        icon: ExportIcon,
-      },
-      {
         label: "Certificate Controls",
         path: "/portal/manager/certificate-controls",
         roles: ["Manager"],
         gradient: "from-fuchsia-500 to-purple-700",
         shadowColor: "shadow-fuchsia-500/30",
         icon: CertificateControlIcon,
+      },
+    ],
+  },
+  {
+    title: "Reports",
+    items: [
+      {
+        label: "Analytics",
+        path: "/portal/manager/analytics",
+        roles: ["Manager"],
+        gradient: "from-cyan-500 to-teal-600",
+        shadowColor: "shadow-cyan-500/30",
+        icon: AnalyticsIcon,
+      },
+      {
+        label: "Export Data",
+        path: "/portal/manager/export",
+        roles: ["Manager"],
+        gradient: "from-rose-400 to-pink-600",
+        shadowColor: "shadow-rose-500/30",
+        icon: ExportIcon,
       },
     ],
   },
