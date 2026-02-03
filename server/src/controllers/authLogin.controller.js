@@ -50,9 +50,27 @@ export const loginUser = asyncHandler(async (req, res) => {
     maxAge: 1 * 24 * 60 * 60 * 1000,
   });
 
+  const userResponse = {
+    id: user._id,
+    username: user.username,
+    email: user.email,
+    role: user.role,
+    fullname: user.fullname,
+    gender: user.gender,
+    course: user.course,
+    branch: user.branch,
+    crn: user.crn,
+    urn: user.urn,
+    phone: user.phone,
+    year: user.year,
+    jerseyNumber: user.jerseyNumber,
+    selectedEvents: user.selectedEvents,
+    createdAt: user.createdAt,
+  };
+
   return res
     .status(200)
-    .json(new ApiResponse({ userId: user.id }, "Login successful!"));
+    .json(new ApiResponse(userResponse, "Login successful!"));
 });
 
 export const logoutUser = asyncHandler(async (req, res) => {
