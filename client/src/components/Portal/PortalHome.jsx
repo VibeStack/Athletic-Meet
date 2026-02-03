@@ -200,7 +200,7 @@ export default function PortalHome() {
         {/* EVENTS — PRIMARY */}
         <div
           onClick={() => navigate("/portal/events")}
-          className={`lg:col-span-2 cursor-pointer rounded-3xl p-6 sm:p-8 relative overflow-hidden transition-all duration-300 hover:scale-[1.01] ${
+          className={`lg:col-span-2 cursor-pointer rounded-3xl p-6 sm:px-8 sm:py-6 relative overflow-hidden transition-all duration-300 hover:scale-[1.01] ${
             darkMode
               ? "bg-linear-to-br from-slate-900 via-slate-900 to-slate-950 ring-1 ring-white/10 shadow-[0_25px_70px_rgba(0,0,0,0.65)]"
               : "bg-white ring-1 ring-slate-200 shadow-xl"
@@ -215,7 +215,7 @@ export default function PortalHome() {
           )}
 
           {/* Header */}
-          <div className="relative flex items-center justify-between mb-2">
+          <div className="relative flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div
                 className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg ${
@@ -258,7 +258,7 @@ export default function PortalHome() {
           </div>
 
           {userEventsList.length > 0 ? (
-            <div className="relative">
+            <div className="relative mt-6">
               <div className="flex gap-4 overflow-x-auto overflow-y-hidden pb-4 scrollbar-slim">
                 {userEventsList.map(
                   (
