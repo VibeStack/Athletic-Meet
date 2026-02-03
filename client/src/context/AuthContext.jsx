@@ -1,9 +1,4 @@
-import {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-} from "react";
+import { createContext, useContext, useState, useCallback } from "react";
 import axios from "axios";
 
 const AuthContext = createContext(null);
@@ -43,6 +38,33 @@ export function AuthProvider({ children }) {
     }
   }, [API_URL, authChecked, user]);
 
+  const login = useCallback(
+    async (credentials) => {
+      try {
+        setLoading(true);
+        const { data: response } = await axios.post(
+          `${API_URL}/auth/login`,
+          credentials,
+          {
+            withCredentials: true,
+          },
+        );
+
+        if (response.success && response.data) {
+          setUser(response.data);
+          setAuthChecked(true);
+        }
+        return response;
+      } catch (error) {
+        console.error("Login failed:", error);
+        throw error;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [API_URL],
+  );
+
   const logout = useCallback(async () => {
     try {
       await axios.post(
@@ -50,7 +72,7 @@ export function AuthProvider({ children }) {
         {},
         {
           withCredentials: true,
-        }
+        },
       );
     } catch (error) {
       console.error("Logout failed:", error);
@@ -70,6 +92,7 @@ export function AuthProvider({ children }) {
     loading,
     authChecked,
     checkAuth,
+    login,
     logout,
     refreshUser,
     isAuthenticated: !!user,

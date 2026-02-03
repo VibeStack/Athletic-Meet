@@ -1,11 +1,12 @@
 import React from "react";
 import { useFormContext } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import InputField from "./InputField";
-import axios from "axios";
 
 export default function Step1Credentials({ nextStep }) {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const {
     register,
     handleSubmit,
@@ -13,17 +14,9 @@ export default function Step1Credentials({ nextStep }) {
     formState: { errors, isSubmitting },
   } = useFormContext();
 
-  const API_URL = import.meta.env.VITE_API_URL;
-
   const onSubmit = async (data) => {
     try {
-      const { data: response } = await axios.post(
-        `${API_URL}/auth/login`,
-        data,
-        {
-          withCredentials: true,
-        }
-      );
+      const response = await login(data);
 
       if (response.success && response.message === "Login successful!") {
         alert("✅ Login successful!");
@@ -33,7 +26,7 @@ export default function Step1Credentials({ nextStep }) {
           navigate("/portal");
         }, 2000);
       } else {
-        alert(response.data.message || "Login failed. Please try again.");
+        alert(response.data?.message || "Login failed. Please try again.");
       }
     } catch (error) {
       if (error.response) {
