@@ -59,34 +59,37 @@ export default function Step1AccountForm({ nextStep, setStep }) {
         return;
       }
 
-      // ❌ Username conflict
-      if (msg === "Username already taken.") {
-        setError("username", {
-          type: "manual",
-          message: "Username already taken. Choose another.",
-        });
-        alert("❌ Username already taken.");
-        return;
-      }
-
-      // ❌ Email conflict
-      if (msg === "Email already linked to another username.") {
-        setError("email", {
-          type: "manual",
-          message: "This email is already linked to another username.",
-        });
-        alert("❌ Email already linked to another account.");
-        return;
-      }
-
       alert("⚠️ Unexpected response. Please try again.");
     } catch (error) {
       console.error("OTP Sender Error:", error.response?.data);
 
       const errMsg = error.response?.data?.message;
 
-      if (errMsg) {
-        alert(`❌ ${errMsg}`);
+      // ❌ Username conflict
+      if (errMsg === "Username already taken.") {
+        setError("username", {
+          type: "manual",
+          message: "Username already taken. Choose another.",
+        });
+        return;
+      }
+
+      // ❌ Email conflict
+      if (errMsg === "Email already linked to another username.") {
+        setError("email", {
+          type: "manual",
+          message: "This email is already linked to another username.",
+        });
+        return;
+      }
+
+      if (errMsg === "Invalid Credentials.") {
+        ["username", "email", "password"].forEach((field) => {
+          setError(field, {
+            type: "manual",
+            message: "Invalid Credentials.",
+          });
+        });
       } else {
         alert("🌐 Network error. Please try again.");
       }

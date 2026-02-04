@@ -20,7 +20,7 @@ export const registerOtpSender = asyncHandler(async (req, res) => {
   // 1️⃣ Fetch user once (lean = faster, lower memory)
   const user = await User.findOne({
     $or: [{ email: normalizedEmail }, { username: normalizedUsername }],
-  }).lean();
+  });
 
   // 2️⃣ Conflict checks
   if (user) {
@@ -38,15 +38,18 @@ export const registerOtpSender = asyncHandler(async (req, res) => {
     }
   }
 
-  // 3️⃣ If fully registered → stop
-  if (user?.isUserDetailsComplete === "true") {
-    return res
-      .status(200)
-      .json(new ApiResponse(null, "Account already exists. Please log in."));
+  if (
+    user?.isUserDetailsComplete === "false" &&
+    !(await user.comparePassword(password))
+  ) {
+    throw new ApiError(400, "Invalid Credentials.");
   }
 
-  // 4️⃣ If email already verified → stop
+  // 3️⃣ If email already verified → stop
   if (user?.isUserDetailsComplete === "partial") {
+    if (!user.comparePassword(password)) {
+      throw new ApiError(400, "Invalid Credentials.");
+    }
     return res
       .status(200)
       .json(
@@ -55,6 +58,13 @@ export const registerOtpSender = asyncHandler(async (req, res) => {
           "Email already verified. Please complete your profile."
         )
       );
+  }
+
+  // 4️⃣ If fully registered → stop
+  if (user?.isUserDetailsComplete === "true") {
+    return res
+      .status(200)
+      .json(new ApiResponse(null, "Account already exists. Please log in."));
   }
 
   const now = Date.now();
