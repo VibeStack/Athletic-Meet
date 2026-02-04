@@ -7,6 +7,8 @@ import {
   Legend,
   Tooltip,
 } from "recharts";
+import { sortEvents } from "../../../../../utils/eventSort";
+import { ChevronIcon } from "../../../../../icons/Portal/Manager/Analytics/AttendanceIcons";
 
 const STATUS_COLORS = {
   present: "#10b981",
@@ -19,23 +21,6 @@ const STATUS_LABELS = {
   absent: "Absent",
   notMarked: "Not Marked",
 };
-
-// Chevron icon for select
-const ChevronIcon = () => (
-  <svg
-    className="w-4 h-4 text-slate-400 pointer-events-none"
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M19 9l-7 7-7-7"
-    />
-  </svg>
-);
 
 export default function AttendanceChartCard({
   data,
@@ -135,7 +120,7 @@ export default function AttendanceChartCard({
               } focus:outline-none focus:ring-2 focus:ring-cyan-500/20 shadow-sm`}
             >
               <option value="">All Events</option>
-              {eventWiseAttendance.map((event) => (
+              {sortEvents(eventWiseAttendance).map((event) => (
                 <option key={event._id} value={event._id}>
                   {event.name} ({event.category})
                 </option>
@@ -157,7 +142,12 @@ export default function AttendanceChartCard({
       ) : (
         <>
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer
+              width="100%"
+              height="100%"
+              minWidth={0}
+              minHeight={0}
+            >
               <PieChart>
                 <Pie
                   data={chartData}

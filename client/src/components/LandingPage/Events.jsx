@@ -4,10 +4,10 @@ import {
   Zap,
   Users,
   ArrowRight,
-  X,
+  XIcon as X,
   Timer,
   Target,
-} from "../../icons/index.jsx";
+} from "../../icons/LandingPage/EventsIcons";
 
 // Icon components for filter buttons
 const FilterIcons = {
@@ -22,45 +22,41 @@ const allEventsData = {
   day1: {
     date: "Thursday, 19th February 2026",
     events: [
-      { name: "1500m Final", gender: "Boys & Girls", type: "Track" },
-      { name: "100m Heats", gender: "Boys & Girls", type: "Track" },
+      { name: "1500m", gender: "Boys & Girls", type: "Track" },
+      { name: "100m", gender: "Boys & Girls", type: "Track" },
       { name: "Javelin Throw", gender: "Boys & Girls", type: "Field" },
-      { name: "High Jump Final", gender: "Boys & Girls", type: "Field" },
-      { name: "100m Hurdles Final", gender: "Girls", type: "Track" },
-      { name: "110m Hurdles Final", gender: "Boys", type: "Track" },
-      { name: "Shot Put Final", gender: "Boys & Girls", type: "Field" },
-      { name: "Triple Jump Final", gender: "Boys & Girls", type: "Field" },
-      { name: "400m Final", gender: "Girls", type: "Track" },
-      { name: "400m Heats", gender: "Boys", type: "Track" },
-      { name: "100m Semi-Final", gender: "Boys & Girls", type: "Track" },
-      { name: "5000m Final", gender: "Boys", type: "Track" },
-      { name: "4x100m Inter-Dept Relay", gender: "Girls & Boys", type: "Team" },
-      { name: "100m Class IV Employee Race", gender: "Open", type: "Track" },
-      { name: "Tug of War Semis", gender: "Boys & Girls", type: "Team" },
+      { name: "High Jump", gender: "Boys & Girls", type: "Field" },
+      { name: "100m Hurdles", gender: "Girls", type: "Track" },
+      { name: "110m Hurdles", gender: "Boys", type: "Track" },
+      { name: "Shot Put", gender: "Boys & Girls", type: "Field" },
+      { name: "Triple Jump", gender: "Boys & Girls", type: "Field" },
+      { name: "400m", gender: "Boys & Girls", type: "Track" },
+      { name: "5000m", gender: "Boys", type: "Track" },
+      {
+        name: "4x100m Inter Dept. Relay",
+        gender: "Boys & Girls",
+        type: "Team",
+      },
+      { name: "Tug of War", gender: "Boys & Girls", type: "Team" },
     ],
   },
   day2: {
     date: "Friday, 20th February 2026",
     events: [
-      { name: "10,000m Final", gender: "Boys", type: "Track" },
-      { name: "3000m Final", gender: "Girls", type: "Track" },
-      { name: "100m Final", gender: "Boys & Girls", type: "Track" },
-      { name: "400m Hurdles Final", gender: "Boys & Girls", type: "Track" },
-      { name: "Discus Throw Final", gender: "Boys & Girls", type: "Field" },
-      { name: "Long Jump Final", gender: "Boys & Girls", type: "Field" },
-      { name: "200m Heat", gender: "Boys & Girls", type: "Track" },
-      { name: "800m Final", gender: "Boys & Girls", type: "Track" },
-      { name: "4x400m Inter-Dept Relay", gender: "Girls", type: "Team" },
+      { name: "10000m", gender: "Boys", type: "Track" },
+      { name: "3000m", gender: "Girls", type: "Track" },
+      { name: "400m Hurdles", gender: "Boys & Girls", type: "Track" },
+      { name: "Discus Throw", gender: "Boys & Girls", type: "Field" },
+      { name: "Long Jump", gender: "Boys & Girls", type: "Field" },
+      { name: "200m", gender: "Boys & Girls", type: "Track" },
+      { name: "800m", gender: "Boys & Girls", type: "Track" },
       {
-        name: "4x100m Inter-Dept Relay (Faculty)",
-        gender: "Faculty",
+        name: "4x400m Inter Dept. Relay",
+        gender: "Boys & Girls",
         type: "Team",
       },
-      { name: "Hammer Throw Final", gender: "Boys", type: "Field" },
-      { name: "400m Final", gender: "Boys", type: "Track" },
-      { name: "200m Final", gender: "Boys & Girls", type: "Track" },
-      { name: "Tug of War Final", gender: "Boys & Girls", type: "Team" },
-      { name: "4x400m Inter-Year Relay", gender: "Boys", type: "Team" },
+      { name: "Hammer Throw", gender: "Boys", type: "Field" },
+      { name: "Tug of War", gender: "Boys & Girls", type: "Team" },
     ],
   },
 };
@@ -609,7 +605,7 @@ const Events = ({ darkMode }) => {
                 darkMode ? "text-gray-400" : "text-gray-600"
               }`}
             >
-              Want to explore all <span className="font-bold">30+ events</span>?
+              Want to explore all <span className="font-bold">35+ events</span>?
             </p>
             <p
               className={`text-sm mb-6 ${

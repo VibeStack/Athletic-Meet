@@ -43,6 +43,8 @@ export default function PortalHome() {
       jerseyNumber: user.jerseyNumber,
     };
 
+    console.log({ qrPayload });
+
     generateQr(qrPayload, {
       darkMode,
       width: 180,
@@ -59,12 +61,11 @@ export default function PortalHome() {
   ) : (
     <>
       <section
-        className={`relative overflow-hidden rounded-3xl transition-all duration-500
-          ${
-            darkMode
-              ? "bg-linear-to-br from-slate-950 via-slate-900 to-slate-950 border border-white/10 shadow-[0_30px_100px_rgba(0,0,0,0.7)]"
-              : "bg-linear-to-br from-slate-100 via-white to-slate-200 border border-slate-200 shadow-[0_30px_100px_rgba(15,23,42,0.12)]"
-          }`}
+        className={`relative overflow-hidden rounded-3xl transition-all duration-500 ${
+          darkMode
+            ? "bg-linear-to-br from-slate-950 via-slate-900 to-slate-950 border border-white/10 shadow-[0_30px_100px_rgba(0,0,0,0.7)]"
+            : "bg-linear-to-br from-slate-100 via-white to-slate-200 border border-slate-200 shadow-[0_30px_100px_rgba(15,23,42,0.12)]"
+        }`}
       >
         <div className="absolute inset-0 pointer-events-none">
           <div
@@ -157,23 +158,19 @@ export default function PortalHome() {
 
           {qrCodeDataUrl && (
             <div
-              className={`relative rounded-2xl p-6 flex flex-col items-center
-      ${
-        darkMode
-          ? "bg-slate-950 border border-white/10 shadow-[0_0_40px_rgba(56,189,248,0.25)]"
-          : "bg-white border border-slate-300 shadow-xl"
-      }
-    `}
+              className={`relative rounded-2xl p-6 flex flex-col items-center ${
+                darkMode
+                  ? "bg-slate-950 border border-white/10 shadow-[0_0_40px_rgba(56,189,248,0.25)]"
+                  : "bg-white border border-slate-300 shadow-xl"
+              }`}
             >
               {/* INNER QR SURFACE */}
               <div
-                className={`rounded-xl p-4 transition-all
-        ${
-          darkMode
-            ? "bg-[#04132D] shadow-[0_10px_30px_rgba(56,189,248,0.25)]"
-            : "bg-white shadow-md"
-        }
-      `}
+                className={`rounded-xl p-4 transition-all ${
+                  darkMode
+                    ? "bg-[#04132D] shadow-[0_10px_30px_rgba(56,189,248,0.25)]"
+                    : "bg-white shadow-md"
+                }`}
               >
                 <img
                   src={qrCodeDataUrl}
@@ -184,9 +181,9 @@ export default function PortalHome() {
 
               {/* LABEL */}
               <p
-                className={`mt-4 text-sm font-semibold tracking-wide
-        ${darkMode ? "text-sky-400" : "text-slate-800"}
-      `}
+                className={`mt-4 text-sm font-semibold tracking-wide ${
+                  darkMode ? "text-sky-400" : "text-slate-800"
+                }`}
               >
                 Scan for Attendance
               </p>
@@ -311,11 +308,11 @@ export default function PortalHome() {
           ) : (
             <div
               className={`mt-4 rounded-2xl border-2 border-dashed py-5 h-[90px] text-center
-      ${
-        darkMode
-          ? "border-slate-700 text-slate-500"
-          : "border-slate-300 text-slate-400"
-      }`}
+              ${
+                darkMode
+                  ? "border-slate-700 text-slate-500"
+                  : "border-slate-300 text-slate-400"
+              }`}
             >
               <p className="font-medium">No events selected yet</p>
               <p className="text-sm mt-1">Click to browse events</p>
@@ -374,11 +371,11 @@ export default function PortalHome() {
           <div
             onClick={() => navigate("/portal/certificates")}
             className={`cursor-pointer rounded-3xl p-6 relative overflow-hidden transition-all hover:scale-[1.02]
-        ${
-          darkMode
-            ? "bg-linear-to-br from-amber-900/50 to-slate-900 ring-1 ring-amber-500/30"
-            : "bg-white ring-1 ring-slate-200"
-        }`}
+              ${
+                darkMode
+                  ? "bg-linear-to-br from-amber-900/50 to-slate-900 ring-1 ring-amber-500/30"
+                  : "bg-white ring-1 ring-slate-200"
+              }`}
           >
             {darkMode && (
               <div className="absolute -top-12 -right-12 w-40 h-40 bg-amber-500/20 blur-2xl rounded-full" />
@@ -387,17 +384,18 @@ export default function PortalHome() {
             <div className="relative flex items-center gap-4">
               <div
                 className={`w-14 h-14 rounded-2xl flex items-center justify-center
-            ${
-              darkMode
-                ? "bg-linear-to-br from-amber-500 to-orange-500 text-white"
-                : "bg-black text-white"
-            }`}
+                  ${
+                    darkMode
+                      ? "bg-linear-to-br from-amber-500 to-orange-500 text-white"
+                      : "bg-black text-white"
+                  }`}
               >
                 {/* Trophy SVG */}
                 <svg viewBox="0 0 24 24" className="w-7 h-7 fill-current">
                   <path d="M19 5h-2V3H7v2H5a2 2 0 00-2 2v1c0 2.5 1.9 4.6 4.4 4.9A5 5 0 0011 15.9V19H7v2h10v-2h-4v-3.1a5 5 0 003.6-3C19.1 12.6 21 10.5 21 8V7a2 2 0 00-2-2z" />
                 </svg>
               </div>
+
               <div>
                 <p
                   className={`text-xs uppercase tracking-wide font-bold ${
@@ -418,6 +416,14 @@ export default function PortalHome() {
                   }
                 </p>
               </div>
+
+              <span
+                className={`absolute right-1 top-1/32 -translate-y-1/2 text-xs font-semibold ${
+                  darkMode ? "text-slate-400" : "text-slate-500"
+                }`}
+              >
+                View all →
+              </span>
             </div>
           </div>
         </div>

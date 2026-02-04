@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import RegisterPage from "./components/Register/RegisterPage";
 import LandingPage from "./components/LandingPage/LandingPage";
-import DashboardPage from "./components/Dashboard/DashboardPage";
 import LoginPage from "./components/Login/loginPage";
 import GalleryPage from "./components/LandingPage/GalleryPage";
 import ScrollToTop from "./components/LandingPage/ScrollToTop";
@@ -39,7 +38,6 @@ function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<LandingPage />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/gallery" element={<GalleryPage />} />

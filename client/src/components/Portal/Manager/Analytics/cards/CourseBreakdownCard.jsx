@@ -80,7 +80,12 @@ export default function CourseBreakdownCard({ data, darkMode }) {
 
       {/* Increased height and adjusted for better label spacing */}
       <div className="h-80">
-        <ResponsiveContainer width="100%" height="120%">
+        <ResponsiveContainer
+          width="100%"
+          height="100%"
+          minWidth={0}
+          minHeight={0}
+        >
           <BarChart
             data={chartData}
             barCategoryGap="15%"

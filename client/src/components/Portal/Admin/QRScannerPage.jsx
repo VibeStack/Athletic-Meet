@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import axios from "axios";
 import { useTheme } from "../../../context/ThemeContext";
+import { sortEvents } from "../../../utils/eventSort";
 import LoadingComponent from "../LoadingComponent";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -147,7 +148,7 @@ export default function QRScannerPage() {
       const { data } = await axios.get(`${API_URL}/user/events`, {
         withCredentials: true,
       });
-      setAllEvents(data.data || []);
+      setAllEvents(sortEvents(data.data || []));
     } catch (err) {
       console.error("Failed to fetch events:", err);
     } finally {

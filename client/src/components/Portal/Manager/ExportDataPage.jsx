@@ -2,215 +2,53 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import * as XLSX from "xlsx";
 import { useTheme } from "../../../context/ThemeContext";
+import { sortEvents } from "../../../utils/eventSort.js";
+import LoadingComponent from "../LoadingComponent";
+import {
+  DownloadIcon,
+  ExcelIcon,
+  FilterIcon,
+  EventIcon,
+  UsersIcon,
+  AttendanceIcon,
+  TrophyIcon,
+  BranchIcon,
+  GenderIcon,
+  YearIcon,
+  CourseIcon,
+  ResetIcon,
+  ChevronDownIcon,
+} from "../../../icons/Portal/Manager/ExportDataIcons";
 
-/* -------------------- Excel Export Helpers  -------------------- */
-
-// Get normalized event type (Track/Field/Team)
-const getEventType = (event) => event?.type || "Track";
-
-// Gender groups for sheet separation
-const getGenderGroups = () => [
-  { label: "B", gender: "male" },
-  { label: "G", gender: "female" },
-];
-
-// Detect gender from event name (B) or (G)
-const getEventGenderFromName = (eventName = "") => {
-  const name = eventName.toLowerCase();
-  if (name.includes("(b)")) return "male";
-  if (name.includes("(g)")) return "female";
-  return null; // mixed/open event
-};
-
-// Find student's registration for a specific event
-const getEventEntry = (student, eventId) =>
-  (student.selectedEvents || []).find(
-    (se) => (se.eventId || se._id) === eventId,
-  );
-
-// Branch shortforms for better Excel/UI fit
-const BRANCH_SHORTFORMS = {
-  "Computer Science & Engineering": "CSE",
-  "Information Technology": "IT",
-  "Electrical Engineering": "EE",
-  "Mechanical Engineering": "ME",
-  "Civil Engineering": "CE",
-  "Electronics & Communication Engineering": "ECE",
-  "Robotics & AI": "RAI",
-  "Electronics Engineering": "ELE",
-  "Production Engineering": "PE",
-  "Geo Technical Engineering": "GTE",
-  "Structural Engineering": "SE",
-  "Environmental Science & Engineering": "ESE",
-  "Computer Applications": "CA",
-  "Interior Design": "ID",
-  Finance: "FIN",
-  Marketing: "MKT",
-  "Human Resource": "HR",
-  Entrepreneurship: "ENT",
-};
-
-const getDetailedBranch = (student) => {
-  const course = student.course || "";
-  const branch = student.branch || "";
-  const shortBranch = BRANCH_SHORTFORMS[branch] || branch;
-
-  if (course === "B.Tech") return `B.Tech ${shortBranch}`;
-  if (course === "M.Tech") return `M.Tech ${shortBranch}`;
-  if (course === "B.Arch") return "B_ARCH";
-  if (course === "B.Voc.") return "BVOC";
-  if (course === "B.Com") return "BCOM";
-  if (course === "MBA") return "MBA";
-  if (course === "MCA") return "MCA";
-  if (course === "BBA") return "BBA";
-  if (course === "BCA") return "BCA";
-
-  return shortBranch || course || "";
-};
-
-// Build base row columns (common for all event types)
-const buildBaseRow = (student, sr) => ({
-  "S.no": sr,
-  "Jersey No": student.jerseyNumber || "",
-  Name: student.fullname || student.username || "",
-  Branch: getDetailedBranch(student),
-  URN: student.urn || "",
-});
-
-// Build extra columns based on event type (all blank for manual filling)
-const buildExtraColumns = (eventType) => {
-  switch (eventType) {
-    case "Field":
-      return {
-        Attendance: "",
-        "Attempt 1": "",
-        "Attempt 2": "",
-      };
-    case "Team":
-      return {
-        Attendance: "",
-      };
-    default: // Track
-      return {
-        Attendance: "",
-      };
-  }
-};
-
-// Build complete Excel row for a student
-const buildExcelRow = ({ student, sr, eventType }) => ({
-  ...buildBaseRow(student, sr),
-  ...buildExtraColumns(eventType),
-});
-
-// Generate sanitized sheet name (Excel 31 char limit)
-const buildSheetName = (eventName, genderLabel) =>
-  `${eventName} (${genderLabel})`.slice(0, 31);
-
-// Apply formatting (dynamic widths and merges) to worksheet
-const formatWorksheet = (worksheet, rows) => {
-  if (!rows || rows.length === 0) return;
-
-  const headers = Object.keys(rows[0]);
-  const wscols = headers.map((header) => {
-    // Start with header name length
-    let max = header.toString().length;
-
-    // Check each row for max content length
-    rows.forEach((row) => {
-      const val = row[header] ? row[header].toString() : "";
-      if (val.length > max) max = val.length;
-    });
-
-    // Padding & specific logic
-    let width = max + 2;
-    if (header === "Name") width = Math.max(15, max + 2); // Tighter padding for names
-    if (header === "S.no") width = Math.max(6, width);
-
-    return { wch: width };
-  });
-
-  worksheet["!cols"] = wscols;
-
-  // Merge headers across all columns (A1:LastCol and A2:LastCol)
-  const lastColIdx = headers.length - 1;
-  worksheet["!merges"] = [
-    { s: { r: 0, c: 0 }, e: { r: 0, c: lastColIdx } }, // Range A1 to LastColumn1
-    { s: { r: 1, c: 0 }, e: { r: 1, c: lastColIdx } }, // Range A2 to LastColumn2
-  ];
-
-  // Cell styling (.s property) is not supported in the standard xlsx library,
-  // so we skip the center-alignment and borders for a cleaner implementation.
-  // Column widths (!cols) and merges (!merges) are still applied above.
-};
+import {
+  getEventType,
+  getGenderGroups,
+  getEventGenderFromName,
+  getDetailedBranch,
+  getEventEntry,
+  buildSheetName,
+  formatWorksheet,
+  buildBaseRow,
+  buildExtraColumns,
+  buildExcelRow,
+  formatEventName,
+} from "../../../utils/portalUtils.js";
 
 /* -------------------- SVG Icons -------------------- */
 const ICONS = {
-  download: (
-    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
-      <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
-    </svg>
-  ),
-  excel: (
-    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
-      <path d="M21.17 3.25Q21.5 3.25 21.76 3.5 22 3.74 22 4.08V19.92Q22 20.26 21.76 20.5 21.5 20.75 21.17 20.75H7.83Q7.5 20.75 7.24 20.5 7 20.26 7 19.92V17H2.83Q2.5 17 2.24 16.76 2 16.5 2 16.17V7.83Q2 7.5 2.24 7.24 2.5 7 2.83 7H7V4.08Q7 3.74 7.24 3.5 7.5 3.25 7.83 3.25M7 13.06L8.18 15.28H9.97L8 12.06L9.93 8.89H8.22L7.13 10.9L7.09 10.96L7.06 11.03Q6.8 10.5 6.5 9.96 6.25 9.43 5.97 8.89H4.16L6.05 12.08L4 15.28H5.78M13.88 19.5V17H8.25V19.5M13.88 15.75V12.63H12V15.75M13.88 11.38V8.25H12V11.38M13.88 7V4.5H8.25V7M20.75 19.5V17H15.13V19.5M20.75 15.75V12.63H15.13V15.75M20.75 11.38V8.25H15.13V11.38M20.75 7V4.5H15.13V7Z" />
-    </svg>
-  ),
-  filter: (
-    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
-      <path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z" />
-    </svg>
-  ),
-  event: (
-    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
-      <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zM9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm-8 4H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z" />
-    </svg>
-  ),
-  users: (
-    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
-      <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
-    </svg>
-  ),
-  attendance: (
-    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
-      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-    </svg>
-  ),
-  trophy: (
-    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
-      <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2z" />
-    </svg>
-  ),
-  branch: (
-    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
-      <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z" />
-    </svg>
-  ),
-  gender: (
-    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
-      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
-    </svg>
-  ),
-  year: (
-    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
-      <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z" />
-    </svg>
-  ),
-  course: (
-    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
-      <path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9h-4v4h-2v-4H9V9h4V5h2v4h4v2z" />
-    </svg>
-  ),
-  reset: (
-    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
-      <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" />
-    </svg>
-  ),
-  chevronDown: (
-    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
-      <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z" />
-    </svg>
-  ),
+  download: <DownloadIcon className="w-5 h-5 fill-current" />,
+  excel: <ExcelIcon className="w-5 h-5 fill-current" />,
+  filter: <FilterIcon className="w-5 h-5 fill-current" />,
+  event: <EventIcon className="w-5 h-5 fill-current" />,
+  users: <UsersIcon className="w-5 h-5 fill-current" />,
+  attendance: <AttendanceIcon className="w-5 h-5 fill-current" />,
+  trophy: <TrophyIcon className="w-5 h-5 fill-current" />,
+  branch: <BranchIcon className="w-5 h-5 fill-current" />,
+  gender: <GenderIcon className="w-5 h-5 fill-current" />,
+  year: <YearIcon className="w-5 h-5 fill-current" />,
+  course: <CourseIcon className="w-5 h-5 fill-current" />,
+  reset: <ResetIcon className="w-4 h-4 fill-current" />,
+  chevronDown: <ChevronDownIcon className="w-4 h-4 fill-current" />,
 };
 
 /* -------------------- Static Data Constants -------------------- */
@@ -228,6 +66,7 @@ export default function ExportDataPage() {
   const [allStudents, setAllStudents] = useState([]);
   const [exporting, setExporting] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Fetch initial data on mount
   useEffect(() => {
@@ -240,7 +79,6 @@ export default function ExportDataPage() {
             withCredentials: true,
           }),
         ]);
-        console.log(usersRes.data.data.users);
 
         // Extract events and users from the response
         const eventsData =
@@ -248,10 +86,12 @@ export default function ExportDataPage() {
         const usersData =
           usersRes.data?.data?.users || usersRes.data?.data || [];
 
-        setEvents(eventsData);
+        setEvents(sortEvents(eventsData));
         setAllStudents(usersData);
+        setError(null);
       } catch (err) {
         console.error("Failed to fetch initial data", err);
+        setError("Failed to sync database. Please refresh or try again.");
       } finally {
         setLoading(false);
       }
@@ -376,26 +216,82 @@ export default function ExportDataPage() {
     }
   };
 
-  // Helper to format event name with suffix
-  const formatEventName = (event) => {
-    if (!event || typeof event === "string") return event;
-    const name = event.name || "";
-    const genderStr = (event.category || event.gender || "").toLowerCase();
-    let suffix = "";
-    if (
-      genderStr.includes("girl") ||
-      genderStr.includes("female") ||
-      genderStr.includes("(g)")
-    ) {
-      suffix = " (G)";
-    } else if (
-      genderStr.includes("boy") ||
-      genderStr.includes("male") ||
-      genderStr.includes("(b)")
-    ) {
-      suffix = " (B)";
+  // Export All Winners - separate workbook with only winners (position 1, 2, 3)
+  const handleExportWinners = () => {
+    setExporting(true);
+
+    try {
+      const workbook = XLSX.utils.book_new();
+
+      // Loop through all events to create worksheets
+      events.forEach((event) => {
+        const eventId = event._id || event.id;
+        const eventName = event.name || "Event";
+        const category = event.category || "";
+
+        // Build sheet name: "EventName (Category)" e.g. "100m (Boys)"
+        const sheetName = `${eventName} (${category})`.slice(0, 31);
+
+        // Find all users who won in this event (position 1, 2, or 3)
+        const winners = [];
+        allStudents.forEach((student) => {
+          const eventEntry = student.selectedEvents?.find(
+            (se) => (se.eventId || se._id) === eventId && se.position > 0,
+          );
+
+          if (eventEntry) {
+            winners.push({
+              student,
+              position: eventEntry.position,
+            });
+          }
+        });
+
+        // Sort by position (1st, 2nd, 3rd)
+        winners.sort((a, b) => a.position - b.position);
+
+        // Build rows for this event
+        const rows = winners.map((w, idx) => ({
+          "S.No": idx + 1,
+          "Jersey No": w.student.jerseyNumber || "",
+          "Full Name": w.student.fullname || w.student.username || "",
+          URN: w.student.urn || "",
+          Position: w.position === 1 ? "1st" : w.position === 2 ? "2nd" : "3rd",
+        }));
+
+        // Create worksheet with header
+        const worksheet = XLSX.utils.aoa_to_sheet([
+          ["Annual Athletic Meet 2026"],
+          [`Event: ${eventName} (${category})`],
+          [],
+        ]);
+        XLSX.utils.sheet_add_json(worksheet, rows, { origin: "A4" });
+
+        // Apply formatting
+        if (rows.length > 0) {
+          formatWorksheet(worksheet, rows);
+        }
+
+        // Add worksheet to workbook
+        XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+      });
+
+      // Safety check - prevent empty workbook error
+      if (workbook.SheetNames.length === 0) {
+        alert("No events found for export");
+        setExporting(false);
+        return;
+      }
+
+      // Download workbook
+      const fileName = `Athletic_Meet_Winners_${new Date().toISOString().split("T")[0]}.xlsx`;
+      XLSX.writeFile(workbook, fileName);
+    } catch (err) {
+      console.error("Excel export failed", err);
+      alert("Failed to export Excel file");
+    } finally {
+      setExporting(false);
     }
-    return name + suffix;
   };
 
   // Custom Select Component
@@ -451,6 +347,35 @@ export default function ExportDataPage() {
     </div>
   );
 
+  // Show loading OR if we're technically "done" but have no data yet (prevents flicker/empty state)
+  if (loading || (allStudents.length === 0 && !error)) {
+    return (
+      <LoadingComponent
+        message={
+          allStudents.length === 0 && !loading
+            ? "Waiting for student data..."
+            : "Syncing student database..."
+        }
+      />
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-emerald-500 text-white rounded-lg"
+          >
+            Retry Sync
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-5">
       {/* Header */}
@@ -499,62 +424,63 @@ export default function ExportDataPage() {
         </div>
       </div>
 
-      {/* Select Section */}
-      <div
-        className={`rounded-2xl overflow-hidden ${
-          darkMode
-            ? "bg-slate-900/80 ring-1 ring-white/8"
-            : "bg-white ring-1 ring-slate-200 shadow-lg"
-        }`}
-      >
-        {/* Section Header */}
+      {/* Selection & Preview Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {/* Select Section */}
         <div
-          className={`px-5 py-4 flex items-center justify-between border-b ${
-            darkMode ? "border-white/5" : "border-slate-100"
+          className={`rounded-2xl flex flex-col ${
+            darkMode
+              ? "bg-slate-900/80 ring-1 ring-white/8"
+              : "bg-white ring-1 ring-slate-200 shadow-lg"
           }`}
         >
-          <div className="flex items-center gap-3">
-            <div
-              className={`w-9 h-9 rounded-lg flex items-center justify-center ${
-                darkMode
-                  ? "bg-slate-800 text-slate-400"
-                  : "bg-slate-100 text-slate-600"
-              }`}
-            >
-              {ICONS.filter}
-            </div>
-            <div>
-              <h2
-                className={`font-bold text-sm ${darkMode ? "text-white" : "text-slate-800"}`}
+          {/* Section Header */}
+          <div
+            className={`px-5 py-4 flex items-center justify-between border-b ${
+              darkMode ? "border-white/5" : "border-slate-100"
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className={`w-9 h-9 rounded-lg flex items-center justify-center ${
+                  darkMode
+                    ? "bg-slate-800 text-slate-400"
+                    : "bg-slate-100 text-slate-600"
+                }`}
               >
-                Select Event
-              </h2>
-              <p
-                className={`text-xs ${darkMode ? "text-slate-500" : "text-slate-500"}`}
-              >
-                Choose an event to preview and export
-              </p>
+                {ICONS.filter}
+              </div>
+              <div>
+                <h2
+                  className={`font-bold text-sm ${darkMode ? "text-white" : "text-slate-800"}`}
+                >
+                  Select Event
+                </h2>
+                <p
+                  className={`text-xs ${darkMode ? "text-slate-500" : "text-slate-500"}`}
+                >
+                  Choose to preview and export
+                </p>
+              </div>
             </div>
+
+            {selectedEvent && (
+              <button
+                onClick={resetFilters}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  darkMode
+                    ? "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                {ICONS.reset}
+                Reset
+              </button>
+            )}
           </div>
 
-          {selectedEvent && (
-            <button
-              onClick={resetFilters}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                darkMode
-                  ? "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-              }`}
-            >
-              {ICONS.reset}
-              Reset
-            </button>
-          )}
-        </div>
-
-        {/* Option Grid */}
-        <div className="p-5">
-          <div className="grid grid-cols-1 gap-4">
+          {/* Option Grid */}
+          <div className="p-5 flex-1 flex flex-col justify-center">
             <SelectField
               label="Event (Required)"
               icon={ICONS.event}
@@ -565,18 +491,16 @@ export default function ExportDataPage() {
             />
           </div>
         </div>
-      </div>
 
-      {/* Export Preview & Button */}
-      <div
-        className={`rounded-2xl overflow-hidden ${
-          darkMode
-            ? "bg-linear-to-br from-emerald-950/40 to-slate-900 ring-1 ring-emerald-500/20"
-            : "bg-linear-to-br from-emerald-50 to-teal-50/50 ring-1 ring-emerald-200 shadow-lg"
-        }`}
-      >
-        <div className="p-5 sm:p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        {/* Export Preview & Button */}
+        <div
+          className={`rounded-2xl flex flex-col overflow-hidden ${
+            darkMode
+              ? "bg-linear-to-br from-emerald-950/40 to-slate-900 ring-1 ring-emerald-500/20"
+              : "bg-linear-to-br from-emerald-50 to-teal-50/50 ring-1 ring-emerald-200 shadow-lg"
+          }`}
+        >
+          <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between gap-4">
             {/* Preview Info */}
             <div className="flex-1">
               <h3
@@ -606,32 +530,47 @@ export default function ExportDataPage() {
               </div>
             </div>
 
-            {/* Export Button */}
-            <button
-              onClick={handleExport}
-              disabled={exporting || loading}
-              className={`flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm text-white transition-all shadow-lg min-w-[200px] ${
-                darkMode
-                  ? "bg-linear-to-r from-emerald-500 to-teal-600 hover:brightness-110 shadow-emerald-500/25"
-                  : "bg-linear-to-r from-emerald-500 to-teal-600 hover:brightness-110 shadow-emerald-500/30"
-              } ${exporting || loading ? "opacity-70 cursor-not-allowed" : ""}`}
-            >
-              {exporting ? (
-                <>
-                  <span className="animate-spin h-5 w-5 border-2 border-white/30 rounded-full border-t-white" />
-                  <span>Generating...</span>
-                </>
-              ) : (
-                <>
-                  {ICONS.download}
-                  <span>
-                    {selectedEvent
-                      ? `Export ${formatEventName(currentEvent)}`
-                      : "Export All Events"}
-                  </span>
-                </>
-              )}
-            </button>
+            {/* Export Buttons */}
+            <div className="flex justify-center items-center gap-3 w-full">
+              <button
+                onClick={handleExport}
+                disabled={exporting || loading}
+                className={`flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm text-white transition-all shadow-lg w-full ${
+                  darkMode
+                    ? "bg-linear-to-r from-emerald-500 to-teal-600 hover:brightness-110 shadow-emerald-500/25"
+                    : "bg-linear-to-r from-emerald-500 to-teal-600 hover:brightness-110 shadow-emerald-500/30"
+                } ${exporting || loading ? "opacity-70 cursor-not-allowed" : ""}`}
+              >
+                {exporting ? (
+                  <>
+                    <span className="animate-spin h-5 w-5 border-2 border-white/30 rounded-full border-t-white" />
+                    <span>Generating...</span>
+                  </>
+                ) : (
+                  <>
+                    {ICONS.download}
+                    <span>
+                      {selectedEvent
+                        ? `Export ${formatEventName(currentEvent)}`
+                        : "Export All Events"}
+                    </span>
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={handleExportWinners}
+                disabled={exporting || loading}
+                className={`flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm transition-all shadow-lg w-full ${
+                  darkMode
+                    ? "bg-slate-800 text-emerald-400 hover:bg-slate-700 ring-1 ring-emerald-500/20 shadow-emerald-950/20"
+                    : "bg-white text-emerald-600 hover:bg-emerald-50 ring-1 ring-emerald-200 shadow-emerald-100/50"
+                } ${exporting || loading ? "opacity-70 cursor-not-allowed" : ""}`}
+              >
+                {ICONS.team}
+                <span>Export All Winners</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
