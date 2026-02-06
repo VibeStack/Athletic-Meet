@@ -104,7 +104,7 @@ export default function Step3PersonalDetails({ nextStep }) {
 
         if (loginResponse.message === "Login successful!") {
           setMessage("🎉 Login successful! Redirecting...");
-          setTimeout(() => navigate("/portal"), 1500);
+          setTimeout(() => navigate("/portal"), 5000);
         }
 
         return;

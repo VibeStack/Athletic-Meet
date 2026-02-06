@@ -161,10 +161,10 @@ export default function Step1AccountForm({ nextStep, setStep }) {
           register={register}
           rules={{
             required: { value: true, message: "Email is required" },
-            // pattern: {
-            //   value: /^[a-zA-Z0-9._%+-]+@gndec\.ac\.in$/,
-            //   message: "Valid College Mail must end with @gndec.ac.in",
-            // },
+            pattern: {
+              value: /^[a-zA-Z0-9._%+-]+@gndec\.ac\.in$/,
+              message: "Valid College Mail must end with @gndec.ac.in",
+            },
           }}
           errors={errors}
         />
