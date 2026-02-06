@@ -590,8 +590,12 @@ export const markAttendance = asyncHandler(async (req, res) => {
   const userUpdate = await User.updateOne(
     {
       jerseyNumber,
-      "selectedEvents.eventId": clickedEventId,
-      "selectedEvents.status": prevStatus,
+      selectedEvents: {
+        $elemMatch: {
+          eventId: clickedEventId,
+          status: prevStatus,
+        },
+      },
       isEventsLocked: true,
     },
     {
@@ -669,9 +673,13 @@ export const markAttendanceByQr = asyncHandler(async (req, res) => {
   const updatedUser = await User.findOneAndUpdate(
     {
       jerseyNumber,
+      selectedEvents: {
+        $elemMatch: {
+          eventId: eventObjectId,
+          status: "notMarked",
+        },
+      },
       isEventsLocked: true,
-      "selectedEvents.eventId": eventObjectId,
-      "selectedEvents.status": "notMarked",
     },
     {
       $set: { "selectedEvents.$.status": "present" },

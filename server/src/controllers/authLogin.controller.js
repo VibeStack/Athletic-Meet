@@ -31,11 +31,14 @@ export const loginUser = asyncHandler(async (req, res) => {
   }
 
   const isPasswordValid = await user.comparePassword(password);
-  if (!isPasswordValid && user.username !== username.toLowerCase()) {
+  if (!isPasswordValid || user.username !== username.toLowerCase()) {
     throw new ApiError(401, "Invalid credentials");
   }
 
-  const allUserSessions = await Session.find({ userId: user._id }).sort({
+  const allUserSessions = await Session.find({
+    userId: user._id,
+    isUserDetailsComplete: "true",
+  }).sort({
     createdAt: 1,
   });
 
