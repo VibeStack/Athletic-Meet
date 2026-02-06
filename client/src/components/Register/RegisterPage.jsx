@@ -10,7 +10,7 @@ export default function RegisterPage() {
   const methods = useForm({
     mode: "onChange",
   });
-  const [step, setStep] = useState(4);
+  const [step, setStep] = useState(1);
 
   const nextStep = (increment = 1) => setStep((s) => s + increment);
 
