@@ -669,8 +669,12 @@ export const markingResults = asyncHandler(async (req, res) => {
     await User.updateMany(
       {
         jerseyNumber: { $in: uniqueJerseys },
-        "selectedEvents.eventId": selectedEventId,
-        "selectedEvents.status": "present",
+        selectedEvents: {
+          $elemMatch: {
+            eventId: selectedEventId,
+            status: "present",
+          },
+        },
       },
       {
         $set: {
