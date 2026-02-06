@@ -167,7 +167,7 @@ export default function Step2EmailOtp({ nextStep }) {
       // ❌ User missing
       if (errMsg === "User not found.") {
         setMessage("❌ User not found. Please restart registration.");
-        nextStep(-1)
+        nextStep(-1);
         return;
       }
 
@@ -269,6 +269,58 @@ export default function Step2EmailOtp({ nextStep }) {
             {loading ? "Verifying..." : "Verify OTP"}
           </span>
         </button>
+      </div>
+
+      {/* Open College Email Button */}
+      <div className="mt-4 text-center">
+        <p className="text-gray-500 text-xs mb-3">
+          Check your college email for the OTP
+        </p>
+        <a
+          href="https://mail.gndec.ac.in/?_task=login"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group inline-flex items-center gap-2.5 px-6 py-3 rounded-xl
+            bg-linear-to-r from-cyan-50 via-blue-50 to-purple-50
+            border border-blue-200
+            text-transparent bg-clip-text font-bold text-sm
+            hover:from-cyan-100 hover:via-blue-100 hover:to-purple-100
+            hover:border-blue-400 hover:shadow-lg hover:shadow-blue-200/50
+            hover:scale-[1.02]
+            transition-all duration-300 ease-out"
+        >
+          <span className="bg-linear-to-r from-cyan-500 via-blue-500 to-purple-500 bg-clip-text text-transparent">
+            <svg
+              className="w-5 h-5 text-blue-500 group-hover:text-purple-500 transition-colors duration-300"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+              />
+            </svg>
+          </span>
+          <span className="bg-linear-to-r from-cyan-500 via-blue-500 to-purple-500 bg-clip-text text-transparent font-semibold">
+            Open College Email
+          </span>
+          <svg
+            className="w-4 h-4 text-purple-400 group-hover:translate-x-1 transition-transform duration-300"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+            />
+          </svg>
+        </a>
       </div>
     </form>
   );

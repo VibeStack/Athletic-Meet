@@ -133,7 +133,7 @@ export default function Step1AccountForm({ nextStep, setStep }) {
         <InputField
           label="Username"
           id="username"
-          placeholder="Enter Username"
+          placeholder="Enter Your New Username"
           register={register}
           rules={{
             required: {
@@ -146,9 +146,9 @@ export default function Step1AccountForm({ nextStep, setStep }) {
             },
             pattern: {
               value: /^[a-zA-Z0-9_]+$/,
-              message:
-                "Username can contain only letters, numbers, and underscores",
+              message: "Only letters, numbers, and underscores (_). No spaces.",
             },
+            setValueAs: (v) => v.trim(),
           }}
           errors={errors}
         />

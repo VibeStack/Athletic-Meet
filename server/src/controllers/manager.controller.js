@@ -87,37 +87,48 @@ export const bulkAddEvents = asyncHandler(async (req, res) => {
         ? "Male"
         : selectedEventObject.category;
 
-    // Fetch matching users
-    const users = await User.find(
-      {
-        jerseyNumber: { $in: uniqueJerseys },
-        gender: selectedEventObjectValidGender,
-      },
-      { jerseyNumber: 1, selectedEvents: 1 }
+    // Fetch ALL users with given jerseys (regardless of gender)
+    const allUsers = await User.find(
+      { jerseyNumber: { $in: uniqueJerseys } },
+      { jerseyNumber: 1, gender: 1, selectedEvents: 1 }
     ).session(session);
 
-    // No users found
+    // Identify missing jerseys (don't exist at all)
+    const foundJerseys = allUsers.map((u) => u.jerseyNumber);
+    const missingJerseys = uniqueJerseys.filter(
+      (j) => !foundJerseys.includes(j)
+    );
+
+    // Identify gender mismatches
+    const genderMismatchJerseys = allUsers
+      .filter((u) => u.gender !== selectedEventObjectValidGender)
+      .map((u) => u.jerseyNumber);
+
+    // Filter to only matching gender users
+    const users = allUsers.filter(
+      (u) => u.gender === selectedEventObjectValidGender
+    );
+
+    // Build detailed error messages
+    if (missingJerseys.length > 0 || genderMismatchJerseys.length > 0) {
+      let errorMsg = "";
+      if (missingJerseys.length > 0) {
+        errorMsg += `Jersey numbers ${missingJerseys.join(", ")} do not exist. `;
+      }
+      if (genderMismatchJerseys.length > 0) {
+        errorMsg += `Jersey numbers ${genderMismatchJerseys.join(", ")} have gender mismatch (event requires ${selectedEventObjectValidGender}).`;
+      }
+      throw new ApiError(400, errorMsg.trim(), {
+        missingJerseys,
+        genderMismatchJerseys,
+      });
+    }
+
+    // No valid users found (shouldn't reach here, but safety check)
     if (users.length === 0) {
-      throw new ApiError(
-        404,
-        "No matching users found for given jersey numbers"
-      );
+      throw new ApiError(404, "No matching users found for given jersey numbers");
     }
 
-    // Missing or gender mismatch
-    if (users.length !== uniqueJerseys.length) {
-      const foundJerseys = users.map((u) => u.jerseyNumber);
-
-      const missingJerseys = uniqueJerseys.filter(
-        (j) => !foundJerseys.includes(j)
-      );
-
-      throw new ApiError(
-        400,
-        `Some jersey numbers are invalid — either they do not exist or their gender does not match the event (${selectedEventObjectValidGender})`,
-        missingJerseys
-      );
-    }
 
     // Already enrolled
     const usersAlreadyHavingEvent = users.filter((u) =>
@@ -600,37 +611,48 @@ export const markingResults = asyncHandler(async (req, res) => {
         ? "Male"
         : selectedEventObject.category;
 
-    // Fetch matching users
-    const users = await User.find(
-      {
-        jerseyNumber: { $in: uniqueJerseys },
-        gender: selectedEventObjectValidGender,
-      },
-      { jerseyNumber: 1, selectedEvents: 1 }
+    // Fetch ALL users with given jerseys (regardless of gender)
+    const allUsers = await User.find(
+      { jerseyNumber: { $in: uniqueJerseys } },
+      { jerseyNumber: 1, gender: 1, selectedEvents: 1 }
     ).session(session);
 
-    // No users found
+    // Identify missing jerseys (don't exist at all)
+    const foundJerseys = allUsers.map((u) => u.jerseyNumber);
+    const missingJerseys = uniqueJerseys.filter(
+      (j) => !foundJerseys.includes(j)
+    );
+
+    // Identify gender mismatches
+    const genderMismatchJerseys = allUsers
+      .filter((u) => u.gender !== selectedEventObjectValidGender)
+      .map((u) => u.jerseyNumber);
+
+    // Filter to only matching gender users
+    const users = allUsers.filter(
+      (u) => u.gender === selectedEventObjectValidGender
+    );
+
+    // Build detailed error messages
+    if (missingJerseys.length > 0 || genderMismatchJerseys.length > 0) {
+      let errorMsg = "";
+      if (missingJerseys.length > 0) {
+        errorMsg += `Jersey numbers ${missingJerseys.join(", ")} do not exist. `;
+      }
+      if (genderMismatchJerseys.length > 0) {
+        errorMsg += `Jersey numbers ${genderMismatchJerseys.join(", ")} have gender mismatch (event requires ${selectedEventObjectValidGender}).`;
+      }
+      throw new ApiError(400, errorMsg.trim(), {
+        missingJerseys,
+        genderMismatchJerseys,
+      });
+    }
+
+    // No valid users found (shouldn't reach here, but safety check)
     if (users.length === 0) {
-      throw new ApiError(
-        404,
-        "No matching users found for given jersey numbers"
-      );
+      throw new ApiError(404, "No matching users found for given jersey numbers");
     }
 
-    // Missing or gender mismatch
-    if (users.length !== uniqueJerseys.length) {
-      const foundJerseys = users.map((u) => u.jerseyNumber);
-
-      const missingJerseys = uniqueJerseys.filter(
-        (j) => !foundJerseys.includes(j)
-      );
-
-      throw new ApiError(
-        400,
-        `Some jersey numbers are invalid — either they do not exist or their gender does not match the event (${selectedEventObjectValidGender})`,
-        missingJerseys
-      );
-    }
 
     const usersNotEnrolledJerseyNumbers = users
       .filter((u) =>
