@@ -32,9 +32,10 @@ export default function SelectField({
         <select
           id={id}
           disabled={disabled}
+          defaultValue=""
           className={`w-full px-4 py-3 border-2 rounded-xl bg-white
             focus:outline-none focus:ring-0
-            text-gray-700 text-sm md:text-base
+            text-sm md:text-base
             transition-all duration-200
             appearance-none
             ${icon ? "pl-10" : ""}
@@ -42,13 +43,16 @@ export default function SelectField({
               disabled
                 ? "bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200"
                 : errors && errors[id]
-                ? "border-red-500 focus:border-red-500"
-                : "border-gray-200 focus:border-blue-500 hover:border-gray-300"
-            }`}
+                  ? "border-red-500 focus:border-red-500"
+                  : "border-gray-200 focus:border-blue-500 hover:border-gray-300"
+            }
+            text-gray-400
+            has-[option:checked:not([value=''])]:text-gray-700
+          `}
           {...register(id, rules)}
           {...rest}
         >
-          <option value="" hidden>
+          <option value="" disabled hidden>
             Select {label}
           </option>
 
@@ -92,7 +96,7 @@ export default function SelectField({
                 clipRule="evenodd"
               />
             </svg>
-            {errors[id].message}
+            <span>{errors[id].message}</span>
           </p>
         )}
       </div>

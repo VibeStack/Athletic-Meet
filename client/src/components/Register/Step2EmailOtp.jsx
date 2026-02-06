@@ -190,26 +190,33 @@ export default function Step2EmailOtp({ nextStep }) {
       className="bg-white/90 backdrop-blur-sm shadow-2xl rounded-2xl w-full max-w-md p-6 sm:p-8 md:p-10 mx-auto border border-white/50 transition-all duration-500"
     >
       {/* Header */}
-      <div className="text-center mb-6">
-        <div className="relative inline-block">
-          <div className="absolute inset-0 bg-blue-100 rounded-full blur-xl opacity-50"></div>
+      <div className="text-center mb-8">
+        <div className="relative inline-flex items-center justify-center mb-5">
+          <div className="absolute inset-0 bg-cyan-200/60 rounded-full blur-2xl"></div>
           <img
             src="/images/gne_logo.png"
-            alt="College Logo"
-            className="h-16 w-16 sm:h-20 sm:w-20 mx-auto mb-4 relative z-10 drop-shadow-lg"
+            alt="Guru Nanak Dev Engineering College Logo"
+            className="h-16 w-16 sm:h-20 sm:w-20 relative z-10 drop-shadow-xl"
           />
         </div>
-        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 tracking-tight px-2">
-          Guru Nanak Dev Engineering College
+
+        <h2
+          className="font-black text-xl sm:text-2xl md:text-3xl tracking-tight
+               bg-linear-to-r from-cyan-500 via-blue-500 to-purple-500
+               bg-clip-text text-transparent"
+        >
+          Athletic Championship
         </h2>
-        <p className="text-xs sm:text-sm text-gray-500 mt-1">
-          Athletic Meet Registration Portal
+
+        <p className="text-sm sm:text-base text-gray-900 mt-1 font-semibold">
+          Guru Nanak Dev Engineering College
         </p>
       </div>
 
-      <h3 className="text-base sm:text-lg md:text-xl font-extrabold text-center mb-6 bg-linear-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
+      <h3 className="text-base sm:text-lg md:text-xl font-bold text-center mb-6 text-gray-600 tracking-tight">
         Email Verification
       </h3>
+
       <div className="flex justify-center gap-3 mb-8 relative">
         {Array.from({ length: 6 }).map((_, i) => (
           <input
@@ -229,7 +236,7 @@ export default function Step2EmailOtp({ nextStep }) {
 
         {message && (
           <p
-            className={`text-center text-sm absolute -bottom-8 ${
+            className={`text-center text-sm absolute -bottom-10 ${
               message.includes("success") || message.includes("✅")
                 ? "text-green-600"
                 : message.includes("Verifying")
@@ -242,10 +249,20 @@ export default function Step2EmailOtp({ nextStep }) {
         )}
       </div>
 
-      <div className="flex justify-center items-center mt-10">
+      <div className="flex justify-center items-center mt-8">
         <button
           type="submit"
-          className="w-full py-4 px-4 bg-linear-to-r from-blue-500 to-purple-500 text-white font-bold rounded-xl shadow-lg hover:shadow-xl focus:outline-none focus:ring-0 transition-all duration-300 touch-manipulation disabled:opacity-75"
+          className={`w-full mt-6 py-4 px-4
+          bg-linear-to-r from-cyan-500 via-blue-500 to-purple-500
+          text-white font-bold rounded-xl shadow-lg
+          hover:shadow-xl focus:outline-none focus:ring-0
+          transition-all duration-300 flex items-center justify-center gap-2
+          touch-manipulation
+          ${
+            loading
+              ? "opacity-75 cursor-not-allowed"
+              : "hover:from-cyan-600 hover:via-blue-600 hover:to-purple-600"
+          }`}
           disabled={loading}
         >
           <span className="text-sm sm:text-base">

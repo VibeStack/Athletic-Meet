@@ -213,7 +213,7 @@ const Contact = ({ darkMode }) => {
                 <InputField
                   label="Full Name"
                   id="name"
-                  placeholder="John Doe"
+                  placeholder="Enter Your Name"
                   register={register}
                   rules={{ required: "Name is required" }}
                   errors={errors}
@@ -224,7 +224,7 @@ const Contact = ({ darkMode }) => {
                   label="Email Address"
                   id="email"
                   type="email"
-                  placeholder="example@gmail.com"
+                  placeholder="Enter Your Email"
                   register={register}
                   rules={{
                     required: "Email is required",
@@ -238,7 +238,7 @@ const Contact = ({ darkMode }) => {
                   label="Phone Number"
                   id="phone"
                   type="phone"
-                  placeholder="Enter 10-digit phone number"
+                  placeholder="Enter Your Phone Number"
                   register={register}
                   errors={errors}
                   darkMode={darkMode}

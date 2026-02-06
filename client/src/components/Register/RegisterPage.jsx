@@ -9,13 +9,8 @@ import Step4Success from "./Step4Success";
 export default function RegisterPage() {
   const methods = useForm({
     mode: "onChange",
-    defaultValues: {
-      username: "user002",
-      email: "user002@gmail.com",
-      password: "12345678",
-    },
   });
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(4);
 
   const nextStep = (increment = 1) => setStep((s) => s + increment);
 
