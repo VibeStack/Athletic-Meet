@@ -258,7 +258,7 @@ const Contact = ({ darkMode }) => {
                 <button
                   type="submit"
                   disabled={isSending}
-                  className={`mt-10 mb-0 group w-full px-6 py-4 rounded-xl font-semibold text-base overflow-hidden transition-all duration-300 flex items-center justify-center gap-2 ${
+                  className={`mt-10 mb-0 group w-full px-6 py-4 rounded-xl font-semibold text-base text-white overflow-hidden transition-all duration-300 flex items-center justify-center gap-2 ${
                     isSending
                       ? "bg-orange-400 cursor-not-allowed opacity-80"
                       : darkMode
@@ -289,12 +289,12 @@ const Contact = ({ darkMode }) => {
                           d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
                         />
                       </svg>
-                      <span>Sending...</span>
+                      <span className="text-white">Sending...</span>
                     </>
                   ) : (
                     <>
-                      <span>Send Message</span>
-                      <Send className="w-4 h-4 group-hover:translate-x-0.5 transition-transform duration-200" />
+                      <span className="text-white">Send Message</span>
+                      <Send className="w-4 h-4 text-white group-hover:translate-x-0.5 transition-transform duration-200" />
                     </>
                   )}
                 </button>

@@ -22,8 +22,8 @@ export default function InputField({
       ? "text"
       : "password"
     : isPhone
-    ? "tel"
-    : type;
+      ? "tel"
+      : type;
 
   // Phone-specific validation (merged safely)
   const phoneRules = isPhone
@@ -40,8 +40,8 @@ export default function InputField({
     <div className="relative pb-4 mb-2">
       <label
         htmlFor={id}
-        className={`block font-semibold ml-1 text-sm sm:text-base ${
-          darkMode ? "text-white" : "text-gray-700"
+        className={`block font-semibold ml-1 text-sm sm:text-base mb-1.5 ${
+          darkMode ? "text-gray-200" : "text-gray-700"
         }`}
       >
         {label}
@@ -59,18 +59,32 @@ export default function InputField({
           type={inputType}
           placeholder={placeholder}
           inputMode={isPhone ? "numeric" : undefined}
-          maxLength={isPhone ? 10 : undefined}
+          maxLength={isPhone ? 14 : undefined} // Allow space for + and spaces if needed, though pattern is 10 digits
           className={`w-full ${
             icon ? "pl-10" : "pl-4"
-          } ${isPassword ? "pr-10" : "pr-4"} py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+          } ${isPassword ? "pr-10" : "pr-4"} py-2.5 border rounded-lg focus:outline-none focus:ring-2 transition-all duration-200 ${
+            darkMode
+              ? "bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:ring-orange-500/50"
+              : "bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 focus:ring-orange-500/30"
+          } ${
             errors && errors[id]
               ? "border-red-500 focus:ring-red-500"
-              : "border-gray-300 focus:ring-blue-500"
+              : "border-gray-300"
           }`}
           {...register(id, {
             ...phoneRules,
             ...rules,
           })}
+          onFocus={(e) => {
+            if (isPhone && !e.target.value) {
+              e.target.value = "+";
+            }
+          }}
+          onBlur={(e) => {
+            if (isPhone && e.target.value === "+") {
+              e.target.value = "";
+            }
+          }}
         />
 
         {/* Password toggle */}

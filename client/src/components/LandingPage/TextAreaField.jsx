@@ -8,13 +8,15 @@ export default function TextAreaField({
   errors,
   placeholder,
   rows = 5,
-  darkMode
+  darkMode,
 }) {
   return (
     <div className="mb-4 relative">
       <label
         htmlFor={id}
-        className={`block text-gray-700 font-semibold mb-1 ml-1 text-xl ${darkMode ? "text-white" : "text-gray-700"}`}
+        className={`block font-semibold ml-1 text-sm sm:text-base mb-1.5 ${
+          darkMode ? "text-gray-200" : "text-gray-700"
+        }`}
       >
         {label}
       </label>
@@ -23,7 +25,15 @@ export default function TextAreaField({
         id={id}
         rows={rows}
         placeholder={placeholder}
-        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+        className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-all duration-200 resize-none ${
+          darkMode
+            ? "bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:ring-orange-500/50"
+            : "bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 focus:ring-orange-500/30"
+        } ${
+          errors && errors[id]
+            ? "border-red-500 focus:ring-red-500"
+            : "border-gray-300"
+        }`}
         {...register(id, rules)}
       ></textarea>
 
