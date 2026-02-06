@@ -24,7 +24,7 @@ export const loginUser = asyncHandler(async (req, res) => {
     res.clearCookie("sid", cookieOptions);
   }
 
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ email, isUserDetailsComplete: "true" });
 
   if (!user) {
     throw new ApiError(401, "Invalid credentials");
@@ -37,7 +37,6 @@ export const loginUser = asyncHandler(async (req, res) => {
 
   const allUserSessions = await Session.find({
     userId: user._id,
-    isUserDetailsComplete: "true",
   }).sort({
     createdAt: 1,
   });
