@@ -7,13 +7,14 @@ import {
   XIcon as X,
   Timer,
   Target,
+  FieldIcon,
 } from "../../icons/LandingPage/EventsIcons";
 
 // Icon components for filter buttons
 const FilterIcons = {
   all: ({ className }) => <Target className={className} />,
   track: ({ className }) => <Timer className={className} />,
-  field: ({ className }) => <Target className={className} />,
+  field: ({ className }) => <FieldIcon className={className} />,
   team: ({ className }) => <Users className={className} />,
 };
 
@@ -139,7 +140,7 @@ const Events = ({ darkMode }) => {
     },
     {
       id: "4x100-relay",
-      title: "4×100m Relay",
+      title: "4x100m Relay",
       tagline: "Speed passed hand to hand",
       icon: "🏃‍♂️➝🏃‍♂️",
       color: "from-green-500 to-teal-600",

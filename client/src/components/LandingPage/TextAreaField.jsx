@@ -28,7 +28,7 @@ export default function TextAreaField({
       ></textarea>
 
       {errors && errors[id] && (
-        <p className="text-red-600 text-[12px] absolute -bottom-3 pl-1">
+        <p className="absolute text-red-600 text-[12px] mt-1 pl-1">
           {errors[id].message}
         </p>
       )}

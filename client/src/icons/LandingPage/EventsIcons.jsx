@@ -118,3 +118,31 @@ export const Target = ({ className }) => (
     <circle cx="12" cy="12" r="2" />
   </svg>
 );
+
+export const FieldIcon = ({ className }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    {/* Ground */}
+    <path d="M3 20h18" />
+
+    {/* Athlete */}
+    <circle cx="8" cy="7" r="2" />
+    <path d="M8 9v4" />
+    <path d="M8 13l-3 6" />
+    <path d="M8 13l4 4" />
+
+    {/* Throwing arm */}
+    <path d="M9 10l6-2" />
+
+    {/* Discus */}
+    <circle cx="18" cy="7" r="1.5" />
+  </svg>
+);
+

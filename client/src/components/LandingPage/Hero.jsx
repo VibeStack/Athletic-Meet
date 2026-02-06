@@ -162,6 +162,11 @@ const Hero = ({ scrollToSection }) => {
               onClick={handleRegisterClick}
             >
               <span className="relative z-10">Register Now</span>
+              {!isRegistrationOpen && (
+                <span className="absolute top-0 right-1 text-[10px] bg-yellow-400 text-gray-900 px-2 py-0.5 rounded-full font-bold">
+                  Soon
+                </span>
+              )}
               <div className="absolute inset-0 bg-linear-to-r from-blue-600 to-purple-600 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300"></div>
               {/* Glow effect */}
               <div className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-[0_0_30px_rgba(6,182,212,0.5)]"></div>

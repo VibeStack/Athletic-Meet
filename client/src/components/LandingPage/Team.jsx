@@ -6,7 +6,7 @@ const Team = ({ darkMode }) => {
   const developer = {
     name: "Arshdeep Anand",
     role: "Full-Stack Developer",
-    tagline: "Solo Creator of Athletix 2026",
+    tagline: "Solo Developer for Athletix 2026",
     image: "/images/MyProfessionalPic.png",
     github: "https://github.com/vibestack",
     linkedin: "https://www.linkedin.com/in/arshdeep-anand-600865288/",
@@ -23,7 +23,7 @@ const Team = ({ darkMode }) => {
   const stats = [
     { value: "20+", label: "Features" },
     { value: "3+", label: "Months" },
-    { value: "100%", label: "Ownership" },
+    { value: "Solo", label: "Development Effort" }
   ];
 
   const highlights = [

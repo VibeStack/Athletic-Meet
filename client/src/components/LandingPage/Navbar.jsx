@@ -123,7 +123,7 @@ const Navbar = ({
 
   const navItems = [
     "Home",
-    "Register",
+    "Steps to Register",
     "Events",
     "Team",
     "Gallery",
@@ -245,6 +245,11 @@ const Navbar = ({
                 onClick={() => handleAuthClick("/login")}
               >
                 Login
+                {!isRegistrationOpen && (
+                  <span className="absolute -top-1 -right-1 text-[10px] bg-yellow-400 text-gray-900 px-2 py-0.5 rounded-full font-bold">
+                    Soon
+                  </span>
+                )}
               </button>
             </div>
 
@@ -303,10 +308,10 @@ const Navbar = ({
               </button>
             ))}
             <button
-              onClick={() => handleAuthClick("/register")}
+              onClick={() => handleAuthClick("/login")}
               className="relative overflow-hidden group cursor-pointer font-bold text-white rounded-xl bg-linear-to-r from-cyan-500 via-blue-500 to-purple-500 px-4 py-3 w-full sm:px-6 sm:py-3 sm:w-auto transition-transform duration-300 group-hover:scale-110"
             >
-              Register
+              Login
               {!isRegistrationOpen && (
                 <span className="absolute top-1 right-2 text-xs bg-yellow-400 text-gray-900 px-2 py-0.5 rounded-full font-bold">
                   Soon
