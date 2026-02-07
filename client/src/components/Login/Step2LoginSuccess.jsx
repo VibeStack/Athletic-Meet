@@ -1,5 +1,6 @@
 import React from "react";
 import { CheckIcon } from "../../icons";
+import { useNavigate } from "react-router-dom";
 
 export default function LoginSuccess() {
   const navigate = useNavigate();
