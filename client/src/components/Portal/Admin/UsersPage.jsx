@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../../../context/ThemeContext";
 import { useUsers } from "../../../context/UsersContext";
@@ -16,20 +16,29 @@ export default function UsersPage() {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [visibleCount, setVisibleCount] = useState(USERS_PER_PAGE);
+  const timeoutRef = useRef(null);
 
   // Debounce search with 300ms
   useEffect(() => {
-    const handler = setTimeout(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    timeoutRef.current = setTimeout(() => {
       setDebouncedQuery(query);
       setVisibleCount(USERS_PER_PAGE); // Reset visible count on search
     }, 300);
-    return () => clearTimeout(handler);
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
   }, [query]);
 
-  // Fetch users on mount (will use cache if already fetched)
+  // Fetch users on mount - always attempt a fresh fetch, but show cache if available
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+    fetchUsers(true); // Force refresh in background
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Optimized filtering with useMemo
   const filteredUsers = useMemo(() => {
@@ -83,7 +92,8 @@ export default function UsersPage() {
     setVisibleCount((prev) => prev + USERS_PER_PAGE);
   };
 
-  if (isLoading) {
+  // Only show loading screen if we have NO users in cache AND we are currently loading
+  if (isLoading && allUsers.length === 0) {
     return (
       <LoadingComponent
         title="Users"

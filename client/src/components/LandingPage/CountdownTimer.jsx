@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 const TARGET_DATE = new Date("February 19, 2026").getTime();
 
 const CountdownTimer = () => {
   const [timeLeft, setTimeLeft] = useState(null);
+  const timeoutRef = useRef(null);
 
   const calculateTimeLeft = () => {
     const diff = TARGET_DATE - Date.now();
@@ -20,10 +21,14 @@ const CountdownTimer = () => {
   useEffect(() => {
     const update = () => {
       setTimeLeft(calculateTimeLeft());
-      setTimeout(update, 1000);
+      timeoutRef.current = setTimeout(update, 1000);
     };
     update();
-    return () => { };
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
   }, []);
 
   if (timeLeft === null) {

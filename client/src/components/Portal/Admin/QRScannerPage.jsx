@@ -139,6 +139,8 @@ export default function QRScannerPage() {
   const [submitting, setSubmitting] = useState(false);
   const scannerRef = useRef(null);
   const scanLockRef = useRef(false);
+  const timeoutRef = useRef(null);
+  const soundTimeoutRef = useRef(null);
 
   const API_URL = import.meta.env.VITE_API_URL;
 
@@ -170,7 +172,15 @@ export default function QRScannerPage() {
       })
       .catch(() => {});
 
-    return () => stopScanning();
+    return () => {
+      stopScanning();
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      if (soundTimeoutRef.current) {
+        clearTimeout(soundTimeoutRef.current);
+      }
+    };
   }, []);
 
   // Filter events by selected category
@@ -346,7 +356,7 @@ export default function QRScannerPage() {
     } finally {
       setProcessing(false);
 
-      setTimeout(() => {
+      timeoutRef.current = setTimeout(() => {
         scanLockRef.current = false;
         setScanResult(null);
       }, 1200);
@@ -368,7 +378,7 @@ export default function QRScannerPage() {
       gainNode.gain.value = 0.3;
 
       oscillator.start();
-      setTimeout(() => oscillator.stop(), 150);
+      soundTimeoutRef.current = setTimeout(() => oscillator.stop(), 150);
     } catch (e) {}
   };
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import axios from "axios";
 import InputField from "./InputField";
@@ -18,6 +18,7 @@ export default function Step3PersonalDetails({ nextStep }) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
+  const timeoutRef = useRef(null);
 
   const courseBranchMap = {
     "B.Tech": [
@@ -60,6 +61,15 @@ export default function Step3PersonalDetails({ nextStep }) {
       setIsBranchDisabled(true);
     }
   }, [selectedCourse]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   const onFormSubmit = async (data) => {
     const API_URL = import.meta.env.VITE_API_URL;
@@ -104,7 +114,7 @@ export default function Step3PersonalDetails({ nextStep }) {
 
         if (loginResponse.message === "Login successful!") {
           setMessage("🎉 Login successful! Redirecting...");
-          setTimeout(() => navigate("/portal"), 5000);
+          timeoutRef.current = setTimeout(() => navigate("/portal"), 5000);
         }
 
         return;
@@ -112,7 +122,7 @@ export default function Step3PersonalDetails({ nextStep }) {
 
       if (msg === "Account already exists") {
         setMessage("⚠️ Account already exists. Redirecting to login...");
-        setTimeout(() => navigate("/login"), 1500);
+        timeoutRef.current = setTimeout(() => navigate("/login"), 1500);
         return;
       }
 
@@ -148,7 +158,7 @@ export default function Step3PersonalDetails({ nextStep }) {
         setMessage(
           "⚠️ Registration already completed. Redirecting to login...",
         );
-        setTimeout(() => navigate("/login"), 1500);
+        timeoutRef.current = setTimeout(() => navigate("/login"), 1500);
         return;
       }
 

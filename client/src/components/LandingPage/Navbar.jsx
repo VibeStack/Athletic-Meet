@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Sun, Moon, Menu, X } from "../../icons/index.jsx";
 import { useNavigate } from "react-router-dom";
 import { eventConfig } from "../../config/eventConfig.js";
@@ -117,9 +117,19 @@ const Navbar = ({
   const [menuOpen, setMenuOpen] = useState(false);
   const [showRegistrationModal, setShowRegistrationModal] = useState(false);
   const navigate = useNavigate();
+  const timeoutRef = useRef(null);
 
   const isRegistrationOpen = eventConfig.isRegistrationOpen();
   const registrationDate = eventConfig.getRegistrationStartDateFormatted();
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   const navItems = [
     "Home",
@@ -139,7 +149,7 @@ const Navbar = ({
     if (activePage) {
       navigate("/");
       // After navigation, scroll to section (handled by home page)
-      setTimeout(() => {
+      timeoutRef.current = setTimeout(() => {
         const element = document.getElementById(id);
         if (element) {
           element.scrollIntoView({ behavior: "smooth" });

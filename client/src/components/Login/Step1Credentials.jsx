@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -6,6 +6,16 @@ import InputField from "./InputField";
 
 export default function Step1Credentials({ nextStep }) {
   const navigate = useNavigate();
+  const timeoutRef = useRef(null);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
   const { login } = useAuth();
   const {
     register,
@@ -22,7 +32,7 @@ export default function Step1Credentials({ nextStep }) {
         alert("✅ Login successful!");
         nextStep();
 
-        setTimeout(() => {
+        timeoutRef.current = setTimeout(() => {
           navigate("/portal");
         }, 2000);
       } else {

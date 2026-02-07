@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useTheme } from "../../../context/ThemeContext";
 import axios from "axios";
@@ -44,6 +44,7 @@ export default function EventResultsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [error, setError] = useState(null);
+  const timeoutRef = useRef(null);
 
   // React Hook Form setup
   const {
@@ -120,6 +121,15 @@ export default function EventResultsPage() {
     fetchEvents();
   }, [API_URL]);
 
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
   // Handle form submission
   const onSubmit = async (data) => {
     const jerseyNumbers = parseJerseyNumbers(data.jerseyNumbers);
@@ -152,7 +162,7 @@ export default function EventResultsPage() {
           `✅ Position ${payload.position} recorded for ${jerseyNumbers.length} participant(s)!`,
         );
         reset();
-        setTimeout(() => setSubmitSuccess(false), 3000);
+        timeoutRef.current = setTimeout(() => setSubmitSuccess(false), 3000);
       }
     } catch (err) {
       console.error("Failed to submit results", err);

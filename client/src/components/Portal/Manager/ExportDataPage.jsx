@@ -86,8 +86,16 @@ export default function ExportDataPage() {
         const usersData =
           usersRes.data?.data?.users || usersRes.data?.data || [];
 
+        const sortedStudents = usersData
+          .filter((u) => u.isUserDetailsComplete === "true")
+          .sort((a, b) => {
+            const numA = parseInt(a.jerseyNumber) || 0;
+            const numB = parseInt(b.jerseyNumber) || 0;
+            return numA - numB;
+          });
+
         setEvents(sortEvents(eventsData));
-        setAllStudents(usersData);
+        setAllStudents(sortedStudents);
         setError(null);
       } catch (err) {
         console.error("Failed to fetch initial data", err);
@@ -121,10 +129,20 @@ export default function ExportDataPage() {
 
     try {
       const workbook = XLSX.utils.book_new();
+      const sheetNames = new Set(); // To tracking duplicate sheet names
 
       // 1. Create Master List Sheet - Only if no event is filtered
+      // Filter for complete profiles only and sort by jersey number
+      const completeStudents = allStudents
+        .filter((s) => s.isUserDetailsComplete === "true")
+        .sort((a, b) => {
+          const numA = parseInt(a.jerseyNumber) || 0;
+          const numB = parseInt(b.jerseyNumber) || 0;
+          return numA - numB;
+        });
+
       if (!selectedEvent) {
-        const masterRows = allStudents.map((student, idx) => ({
+        const masterRows = completeStudents.map((student, idx) => ({
           ...buildBaseRow(student, idx + 1),
           Attendance: "",
         }));
@@ -138,6 +156,7 @@ export default function ExportDataPage() {
           XLSX.utils.sheet_add_json(masterWs, masterRows, { origin: "A4" });
           formatWorksheet(masterWs, masterRows);
           XLSX.utils.book_append_sheet(workbook, masterWs, "Master List");
+          sheetNames.add("Master List");
         }
       }
 
@@ -152,9 +171,14 @@ export default function ExportDataPage() {
         const eventType = getEventType(event);
 
         // Detect gender from event name - if (B) or (G) is in name, only create one sheet
-        const eventGender = getEventGenderFromName(eventName);
-        const genderGroups = eventGender
-          ? [{ label: eventGender === "male" ? "B" : "G", gender: eventGender }]
+        const eventGenderInput = getEventGenderFromName(eventName);
+        const genderGroups = eventGenderInput
+          ? [
+              {
+                label: eventGenderInput === "male" ? "B" : "G",
+                gender: eventGenderInput,
+              },
+            ]
           : getGenderGroups();
 
         genderGroups.forEach(({ label, gender }) => {
@@ -162,8 +186,12 @@ export default function ExportDataPage() {
           let sr = 1;
           const rows = [];
 
-          // Simplest check: is student in this event?
-          allStudents.forEach((student) => {
+          // Filter students for this event AND this gender
+          completeStudents.forEach((student) => {
+            // Check gender match
+            if (student.gender?.toLowerCase() !== gender.toLowerCase()) return;
+
+            // Check if registered for event
             const isRegistered = student.selectedEvents?.some(
               (se) => (se.eventId || se._id) === eventId,
             );
@@ -178,7 +206,18 @@ export default function ExportDataPage() {
             );
           });
 
-          if (!rows.length) return;
+          if (rows.length === 0) return;
+
+          let finalSheetName = buildSheetName(eventName, label);
+
+          // Handle duplicate sheet names (XLSX limitation)
+          let counter = 1;
+          const originalName = finalSheetName;
+          while (sheetNames.has(finalSheetName)) {
+            const suffix = ` (${counter++})`;
+            finalSheetName = originalName.slice(0, 31 - suffix.length) + suffix;
+          }
+          sheetNames.add(finalSheetName);
 
           const worksheet = XLSX.utils.aoa_to_sheet([
             ["Annual Athletic Meet 2026"],
@@ -187,11 +226,7 @@ export default function ExportDataPage() {
           ]);
           XLSX.utils.sheet_add_json(worksheet, rows, { origin: "A4" });
           formatWorksheet(worksheet, rows);
-          XLSX.utils.book_append_sheet(
-            workbook,
-            worksheet,
-            buildSheetName(eventName, label),
-          );
+          XLSX.utils.book_append_sheet(workbook, worksheet, finalSheetName);
         });
       });
 
@@ -210,7 +245,7 @@ export default function ExportDataPage() {
       XLSX.writeFile(workbook, fileName);
     } catch (err) {
       console.error("Excel export failed", err);
-      alert("Failed to export Excel file");
+      alert("Failed to export Excel file: " + err.message);
     } finally {
       setExporting(false);
     }

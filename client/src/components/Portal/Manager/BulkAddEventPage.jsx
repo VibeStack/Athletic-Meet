@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useTheme } from "../../../context/ThemeContext";
 import axios from "axios";
@@ -44,6 +44,7 @@ export default function BulkAddEventPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [error, setError] = useState(null);
+  const timeoutRef = useRef(null);
 
   // React Hook Form setup
   const {
@@ -119,6 +120,15 @@ export default function BulkAddEventPage() {
     fetchEvents();
   }, [API_URL]);
 
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
   // Get selected event details for display
   const getSelectedEvent = () => {
     return events.find((e) => String(e.id) === String(watchedValues.eventId));
@@ -193,7 +203,7 @@ export default function BulkAddEventPage() {
         );
 
         reset();
-        setTimeout(() => setSubmitSuccess(false), 3000);
+        timeoutRef.current = setTimeout(() => setSubmitSuccess(false), 3000);
       }
     } catch (err) {
       console.log(err.response);

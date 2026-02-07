@@ -29,6 +29,7 @@ import EventResultsPage from "./components/Portal/Manager/EventResultsPage";
 import BulkAddEventPage from "./components/Portal/Manager/BulkAddEventPage";
 import BulkAdminPage from "./components/Portal/Manager/BulkAdminPage";
 import AnalyticsPage from "./components/Portal/Manager/Analytics/AnalyticsPage";
+import OtpMonitorPage from "./components/Portal/Manager/OtpMonitorPage";
 
 function App() {
   return (
@@ -141,6 +142,14 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={["Manager"]}>
                   <AnalyticsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="manager/otp-monitor"
+              element={
+                <ProtectedRoute allowedRoles={["Manager"]}>
+                  <OtpMonitorPage />
                 </ProtectedRoute>
               }
             />

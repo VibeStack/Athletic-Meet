@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useTheme } from "../../../context/ThemeContext";
 import { useUsers } from "../../../context/UsersContext";
@@ -82,6 +82,16 @@ export default function BulkAdminPage() {
   const [activeTab, setActiveTab] = useState("promote"); // 'promote' or 'demote'
   const [submitting, setSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const timeoutRef = useRef(null);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   // React Hook Form
   const {
@@ -178,7 +188,7 @@ export default function BulkAdminPage() {
             updateUserInCache(user.id, { role: newRole });
           }
         });
-        setTimeout(() => setSubmitSuccess(false), 3000);
+        timeoutRef.current = setTimeout(() => setSubmitSuccess(false), 3000);
       }
     } catch (err) {
       const message =

@@ -19,6 +19,7 @@ import {
   previewCertificate,
   getAnalytics,
 } from "../controllers/manager.controller.js";
+import { getAllActiveOtps } from "../controllers/otp.controller.js";
 
 const router = Router();
 
@@ -47,6 +48,7 @@ router
   .post(markAllDetailsCompleteAsPartial);
 router.route("/showEventsStatus").get(showEventsStatus);
 router.route("/certificate/preview/:eventId/:type").get(previewCertificate);
+router.route("/otps").get(getAllActiveOtps);
 router.route("/analytics").get(getAnalytics);
 
 export default router;

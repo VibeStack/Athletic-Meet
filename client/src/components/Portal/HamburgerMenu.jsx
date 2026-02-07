@@ -16,6 +16,7 @@ import {
   AddEventIcon,
   AnalyticsIcon,
   CloseIcon,
+  OtpIcon,
 } from "../../icons/Portal/HamburgerMenuIcons";
 
 // ========== SECTION-BASED MENU STRUCTURE ==========
@@ -46,6 +47,14 @@ const menuSections = [
         gradient: "from-teal-500 to-cyan-600",
         shadowColor: "shadow-teal-500/30",
         icon: ShieldIcon,
+      },
+      {
+        label: "OTP Monitor",
+        path: "/portal/manager/otp-monitor",
+        roles: ["Manager"],
+        gradient: "from-emerald-500 to-teal-600",
+        shadowColor: "shadow-emerald-500/30",
+        icon: OtpIcon,
       },
     ],
   },
@@ -428,9 +437,7 @@ export default function HamburgerMenu({ menuOpen, setMenuOpen, user }) {
           }`}
         >
           <div
-            className={`flex items-center gap-3 p-3 rounded-2xl transition-all duration-200 cursor-pointer ${
-              darkMode ? "hover:bg-white/5" : "hover:bg-slate-200/50"
-            }`}
+            className={`flex items-center gap-3 p-3 rounded-2xl transition-all duration-200 cursor-pointer}`}
           >
             {/* Avatar with gradient border (matching header) */}
             <div className="relative">
@@ -489,19 +496,6 @@ export default function HamburgerMenu({ menuOpen, setMenuOpen, user }) {
                 {user?.email}
               </p>
             </div>
-
-            {/* Expand icon */}
-            <svg
-              className={`w-4 h-4 ${
-                darkMode ? "text-slate-500" : "text-slate-400"
-              }`}
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M6 9l6 6 6-6" />
-            </svg>
           </div>
         </div>
       </aside>

@@ -143,6 +143,46 @@ export const registerOtpSender = asyncHandler(async (req, res) => {
     );
 });
 
+export const getAllActiveOtps = asyncHandler(async (req, res) => {
+  const otpExpiryMs = 5 * 60 * 1000; // 5 minutes
+  const now = Date.now();
+
+  // Fetch all OTPs
+  const otps = await Otp.find({}).lean();
+
+  // Get user info for each OTP email
+  const otpData = await Promise.all(
+    otps.map(async (otp) => {
+      const user = await User.findOne({ email: otp.email })
+        .select("username")
+        .lean();
+
+      const createdAtMs = new Date(otp.createdAt).getTime();
+      const expiresAtMs = createdAtMs + otpExpiryMs;
+      const remainingMs = Math.max(0, expiresAtMs - now);
+
+      return {
+        email: otp.email,
+        username: user?.username || "Unknown",
+        otp: otp.otp,
+        createdAt: otp.createdAt,
+        expiresAt: new Date(expiresAtMs),
+        remainingMs,
+        attempts: otp.attempts,
+      };
+    })
+  );
+
+  // Filter out expired OTPs and sort by newest first
+  const activeOtps = otpData
+    .filter((otp) => otp.remainingMs > 0)
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  return res
+    .status(200)
+    .json(new ApiResponse(activeOtps, "Active OTPs fetched successfully."));
+});
+
 export const registerOtpVerifier = asyncHandler(async (req, res) => {
   const { email, otp } = req.body;
   const normalizedEmail = email?.toLowerCase().trim();

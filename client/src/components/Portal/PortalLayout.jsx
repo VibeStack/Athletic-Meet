@@ -20,6 +20,7 @@ export default function PortalLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showLogoutPopup, setShowLogoutPopup] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const API_URL = import.meta.env.VITE_API_URL;
 
@@ -32,6 +33,7 @@ export default function PortalLayout() {
   }, []);
 
   const handleLogout = async () => {
+    setLoggingOut(true);
     try {
       const { data: response } = await axios.post(
         `${API_URL}/auth/logout`,
@@ -44,6 +46,7 @@ export default function PortalLayout() {
       }
     } catch (err) {
       console.error("Logout failed:", err);
+      setLoggingOut(false);
     }
   };
 
@@ -129,11 +132,7 @@ export default function PortalLayout() {
 
                 {!loading && userDetail && (
                   <div
-                    className={`flex items-center gap-2 pl-2 pr-1 py-1 rounded-xl ${
-                      darkMode
-                        ? "bg-slate-800/70"
-                        : "bg-white/80 border border-slate-200"
-                    }`}
+                    className={`flex items-center gap-2 pl-2 pr-1 py-1 rounded-xl`}
                   >
                     <div className="hidden sm:flex items-center gap-3 px-3 py-1.5">
                       <div
@@ -210,7 +209,7 @@ export default function PortalLayout() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={() => setShowLogoutPopup(false)}
+            onClick={() => !loggingOut && setShowLogoutPopup(false)}
           />
           <div
             className={`relative w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl ${
@@ -286,7 +285,10 @@ export default function PortalLayout() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowLogoutPopup(false)}
+                  disabled={loggingOut}
                   className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${
+                    loggingOut ? "opacity-50 cursor-not-allowed" : ""
+                  } ${
                     darkMode
                       ? "bg-slate-800 text-slate-300 hover:bg-slate-700"
                       : "bg-slate-100 text-slate-700 hover:bg-slate-200"
@@ -295,11 +297,13 @@ export default function PortalLayout() {
                   Cancel
                 </button>
                 <button
-                  onClick={() => {
-                    setShowLogoutPopup(false);
-                    handleLogout();
-                  }}
-                  className={`flex-1 py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 ${
+                  onClick={handleLogout}
+                  disabled={loggingOut}
+                  className={`flex-1 py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg flex items-center justify-center gap-2 ${
+                    loggingOut
+                      ? "opacity-80 cursor-not-allowed"
+                      : "hover:brightness-110"
+                  } ${
                     userDetail?.role === "Manager"
                       ? "bg-linear-to-r from-red-500 to-red-600 shadow-red-500/25"
                       : userDetail?.role === "Admin"
@@ -311,7 +315,32 @@ export default function PortalLayout() {
                         : "bg-linear-to-r from-slate-700 to-slate-800 shadow-slate-500/25"
                   }`}
                 >
-                  Logout
+                  {loggingOut ? (
+                    <>
+                      <svg
+                        className="w-4 h-4 animate-spin"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        />
+                      </svg>
+                      <span>Logging out...</span>
+                    </>
+                  ) : (
+                    "Logout"
+                  )}
                 </button>
               </div>
             </div>

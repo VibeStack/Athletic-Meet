@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useTheme } from "../../../context/ThemeContext";
 import axios from "axios";
 import { useNavigate, useOutletContext, useParams } from "react-router-dom";
@@ -23,6 +23,7 @@ export default function UserDetailPage() {
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [deleteState, setDeleteState] = useState("confirm"); // 'confirm' | 'deleting' | 'success'
   const [accessDenied, setAccessDenied] = useState(false);
+  const timeoutRef = useRef(null);
 
   // Get current logged-in user
   const { user } = useOutletContext();
@@ -103,6 +104,15 @@ export default function UserDetailPage() {
     }
   };
 
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
   const deleteUser = async () => {
     setDeleteState("deleting");
     try {
@@ -113,7 +123,7 @@ export default function UserDetailPage() {
       // Remove user from cache
       removeUserFromCache(studentUserData.id);
       // Wait for success animation then navigate
-      setTimeout(() => {
+      timeoutRef.current = setTimeout(() => {
         setShowDeletePopup(false);
         setDeleteState("confirm");
         navigate(-1);

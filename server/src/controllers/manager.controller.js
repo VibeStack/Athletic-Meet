@@ -126,9 +126,11 @@ export const bulkAddEvents = asyncHandler(async (req, res) => {
 
     // No valid users found (shouldn't reach here, but safety check)
     if (users.length === 0) {
-      throw new ApiError(404, "No matching users found for given jersey numbers");
+      throw new ApiError(
+        404,
+        "No matching users found for given jersey numbers"
+      );
     }
-
 
     // Already enrolled
     const usersAlreadyHavingEvent = users.filter((u) =>
@@ -207,8 +209,11 @@ export const bulkAddEvents = asyncHandler(async (req, res) => {
 });
 
 export const getAllUsers = asyncHandler(async (req, res) => {
-  const users = await User.find()
-    .select("fullname course branch year jerseyNumber urn selectedEvents")
+  const users = await User.find({ isUserDetailsComplete: "true" })
+    .select(
+      "fullname course branch year jerseyNumber urn gender selectedEvents isUserDetailsComplete"
+    )
+    .sort({ jerseyNumber: 1 })
     .lean();
 
   return res.status(200).json(
@@ -650,9 +655,11 @@ export const markingResults = asyncHandler(async (req, res) => {
 
     // No valid users found (shouldn't reach here, but safety check)
     if (users.length === 0) {
-      throw new ApiError(404, "No matching users found for given jersey numbers");
+      throw new ApiError(
+        404,
+        "No matching users found for given jersey numbers"
+      );
     }
-
 
     const usersNotEnrolledJerseyNumbers = users
       .filter((u) =>

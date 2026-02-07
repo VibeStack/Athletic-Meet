@@ -1,4 +1,6 @@
 import axios from "axios";
+import { useEffect } from "react";
+import { useRef } from "react";
 import { createContext, useContext, useState, useCallback } from "react";
 
 const UsersContext = createContext();
@@ -12,15 +14,37 @@ export function UsersProvider({ children }) {
   const [hasFetched, setHasFetched] = useState(false);
   const [error, setError] = useState(null);
 
+  // Use refs to avoid fetchUsers being recreated on every data change
+  const hasFetchedRef = useRef(hasFetched);
+  const allUsersRef = useRef(allUsers);
+  const totalUsersCountRef = useRef(totalUsersCount);
+
+  // Keep refs in sync
+  useEffect(() => {
+    hasFetchedRef.current = hasFetched;
+  }, [hasFetched]);
+  useEffect(() => {
+    allUsersRef.current = allUsers;
+  }, [allUsers]);
+  useEffect(() => {
+    totalUsersCountRef.current = totalUsersCount;
+  }, [totalUsersCount]);
+
   const fetchUsers = useCallback(
     async (forceRefresh = false) => {
       // Return cached data if already fetched and not forcing refresh
-      if (hasFetched && !forceRefresh) {
-        return { users: allUsers, usersCount: totalUsersCount };
+      if (hasFetchedRef.current && !forceRefresh) {
+        return {
+          users: allUsersRef.current,
+          usersCount: totalUsersCountRef.current,
+        };
       }
 
       try {
-        setIsLoading(true);
+        // Only show loading state if we have no users yet
+        if (allUsersRef.current.length === 0) {
+          setIsLoading(true);
+        }
         setError(null);
 
         const { data: response } = await axios.get(`${API_URL}/admin/users`, {
@@ -44,7 +68,7 @@ export function UsersProvider({ children }) {
         setIsLoading(false);
       }
     },
-    [API_URL, hasFetched, allUsers, totalUsersCount],
+    [API_URL], // Only depend on API_URL to keep function identity stable
   );
 
   // Update a single user in the cache (useful after editing a user)
@@ -104,7 +128,7 @@ export function UsersProvider({ children }) {
     >
       {children}
     </UsersContext.Provider>
-  ); 
+  );
 }
 
 export function useUsers() {

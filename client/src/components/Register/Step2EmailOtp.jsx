@@ -8,6 +8,7 @@ export default function Step2EmailOtp({ nextStep }) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [resendTimer, setResendTimer] = useState(0);
+  const timeoutRef = useRef(null);
 
   const handleKeyDown = (e, index) => {
     const key = e.key;
@@ -158,8 +159,8 @@ export default function Step2EmailOtp({ nextStep }) {
       // ❌ OTP expired
       if (errMsg === "No OTP found. Please request a new one.") {
         setMessage("⏳ OTP expired. Go back and request a new OTP.");
-        setTimeout(() => {
-          nextStep(-1);
+        timeoutRef.current = setTimeout(() => {
+
         }, 2000);
         return;
       }
@@ -183,6 +184,14 @@ export default function Step2EmailOtp({ nextStep }) {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <form
