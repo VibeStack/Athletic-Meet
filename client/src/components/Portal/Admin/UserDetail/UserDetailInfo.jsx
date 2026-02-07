@@ -29,8 +29,8 @@ export default function UserDetailInfo({ studentUserData, darkMode }) {
     { label: "Branch", value: studentUserData.branch },
     { label: "Year", value: studentUserData.year },
     { label: "Gender", value: studentUserData.gender },
-    { label: "CRN", value: studentUserData.crn },
-    { label: "URN", value: studentUserData.urn },
+    { label: "URN / CRN", value: `${studentUserData.urn} / ${studentUserData.crn}` },
+    { label: "Phone", value: studentUserData.phone },
   ];
 
   return (
