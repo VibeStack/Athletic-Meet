@@ -8,14 +8,6 @@ export default function Step1Credentials({ nextStep }) {
   const navigate = useNavigate();
   const timeoutRef = useRef(null);
 
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
   const { login } = useAuth();
   const {
     register,
@@ -31,10 +23,6 @@ export default function Step1Credentials({ nextStep }) {
       if (response.success && response.message === "Login successful!") {
         alert("✅ Login successful!");
         nextStep();
-
-        timeoutRef.current = setTimeout(() => {
-          navigate("/portal");
-        }, 2000);
       } else {
         alert(response.data?.message || "Login failed. Please try again.");
       }
@@ -48,6 +36,14 @@ export default function Step1Credentials({ nextStep }) {
       reset({ username: "", email: "", password: "" });
     }
   };
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <>

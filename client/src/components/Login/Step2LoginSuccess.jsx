@@ -2,6 +2,16 @@ import React from "react";
 import { CheckIcon } from "../../icons";
 
 export default function LoginSuccess() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      navigate("/portal");
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <div className="bg-white/80 backdrop-blur-sm shadow-2xl rounded-2xl w-full max-w-md p-10 border border-white/50 text-center animate-fade-in relative overflow-hidden">
       {/* Decorative circles */}
