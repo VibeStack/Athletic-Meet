@@ -121,3 +121,7 @@ scripts
 
 # End of https://mrkandreev.name/snippets/gitignore-generator/#Node
 .DS_Store
+
+# making folder ignore
+/public/galleryPageImages
+/public/landingPageImages

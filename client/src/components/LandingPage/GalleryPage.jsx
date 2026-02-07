@@ -1,144 +1,155 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Trophy, Sun, Moon, ArrowLeft } from "../../icons/index.jsx";
+import { Sun, Moon, Trophy } from "../../icons/index.jsx";
+import galleryImages from "../../Data/galleryPageImages.json";
+import { eventConfig } from "../../config/eventConfig.js";
+
+// Helper to get optimized Cloudinary URL
+const getOptimizedUrl = (url, width = 400) => {
+  return url.replace("/upload/", `/upload/f_auto,q_auto,w_${width}/`);
+};
+
+// Registration Modal - same as home page
+const RegistrationClosedModal = ({ darkMode, onClose, registrationDate }) => {
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleEsc);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", handleEsc);
+      document.body.style.overflow = "unset";
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-100 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div
+        className={`relative w-full max-w-md rounded-3xl overflow-hidden shadow-2xl ${
+          darkMode ? "bg-gray-900" : "bg-white"
+        }`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="h-2 bg-linear-to-r from-cyan-500 via-blue-500 to-purple-500" />
+        <div className="p-8 text-center">
+          <div className="mx-auto w-20 h-20 rounded-full bg-linear-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center mb-6">
+            <span className="text-5xl">🗓️</span>
+          </div>
+          <h3
+            className={`text-2xl font-black mb-3 ${
+              darkMode ? "text-white" : "text-gray-900"
+            }`}
+          >
+            Registration Opens Soon!
+          </h3>
+          <p
+            className={`text-base mb-6 ${
+              darkMode ? "text-gray-400" : "text-gray-600"
+            }`}
+          >
+            You can register for the{" "}
+            <span className="font-semibold">65th Annual Athletic Meet</span>{" "}
+            starting from:
+          </p>
+          <div
+            className={`inline-block px-6 py-4 rounded-2xl mb-6 ${
+              darkMode
+                ? "bg-linear-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30"
+                : "bg-linear-to-r from-cyan-50 to-blue-50 border border-cyan-200"
+            }`}
+          >
+            <p
+              className={`text-sm font-medium mb-1 ${
+                darkMode ? "text-cyan-400" : "text-cyan-600"
+              }`}
+            >
+              Registration Start Date
+            </p>
+            <p
+              className={`text-2xl font-black ${
+                darkMode ? "text-white" : "text-gray-900"
+              }`}
+            >
+              {registrationDate}
+            </p>
+          </div>
+          <p
+            className={`text-sm mb-6 ${
+              darkMode ? "text-gray-500" : "text-gray-500"
+            }`}
+          >
+            ⏰ Mark your calendar and come back to register!
+          </p>
+          <button
+            onClick={onClose}
+            className="w-full py-3 px-6 rounded-xl font-bold text-white bg-linear-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/25"
+          >
+            Got it!
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const GalleryPage = () => {
   const navigate = useNavigate();
   const [darkMode, setDarkMode] = useState(false);
+  const [loadedImages, setLoadedImages] = useState({});
+  const [showModal, setShowModal] = useState(false);
 
-  const allImages = [
-    {
-      url: "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=1200&h=600&fit=crop",
-      title: "Track Sprint Finals",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=600&h=400&fit=crop",
-      title: "Long Jump Champions",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1517649763962-0c623066013b?w=600&h=400&fit=crop",
-      title: "Victory Celebration",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=600&h=400&fit=crop",
-      title: "Field Events",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1519315901367-f34ff9154487?w=600&h=400&fit=crop",
-      title: "Team Spirit",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1556817411-31ae72fa3ea0?w=600&h=400&fit=crop",
-      title: "Relay Race",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1200&h=600&fit=crop",
-      title: "Medal Ceremony",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1426927308491-6380b6a9936f?w=600&h=400&fit=crop",
-      title: "Starting Blocks",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1502224562085-639556652f33?w=600&h=400&fit=crop",
-      title: "High Jump Action",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1530549387789-4c1017266635?w=600&h=400&fit=crop",
-      title: "Swimming Heat",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=600&h=400&fit=crop",
-      title: "Track Overview",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?w=600&h=400&fit=crop",
-      title: "Crowd Cheering",
-    },
-  ];
+  const isRegistrationOpen = eventConfig.isRegistrationOpen();
+  const registrationDate = eventConfig.getRegistrationStartDateFormatted();
 
-  const ImageCard = ({ image, size = "medium" }) => {
-    const sizeClasses = {
-      large: "h-48 sm:h-64 md:h-80",
-      medium: "h-36 sm:h-44 md:h-52",
-      small: "h-28 sm:h-36 md:h-44",
-    };
+  const handleImageLoad = (idx) => {
+    setLoadedImages((prev) => ({ ...prev, [idx]: true }));
+  };
 
-    const showCaption = size === "large";
-
-    return (
-      <div
-        className={`relative overflow-hidden rounded-2xl group cursor-pointer ${sizeClasses[size]}`}
-      >
-        <img
-          src={image.url}
-          alt={image.title}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-        />
-        <div className="absolute inset-0 bg-linear-to-br from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        {showCaption && (
-          <div className="absolute inset-x-0 bottom-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-            <p className="text-white font-semibold text-base sm:text-lg drop-shadow-lg">
-              {image.title}
-            </p>
-          </div>
-        )}
-      </div>
-    );
+  const handleLoginClick = () => {
+    if (!isRegistrationOpen) {
+      setShowModal(true);
+    } else {
+      navigate("/login");
+    }
   };
 
   return (
     <div className={`min-h-screen ${darkMode ? "bg-gray-900" : "bg-white"}`}>
-      <header
-        className={`fixed w-full z-50 backdrop-blur-xl ${
-          darkMode ? "bg-gray-900/95 shadow-2xl" : "bg-white/95 shadow-lg"
-        } border-b ${darkMode ? "border-gray-800" : "border-gray-100"}`}
+      {/* Header - Matching home page exactly */}
+      <nav
+        className={`fixed w-full z-50 transition-all duration-500 backdrop-blur-xl ${
+          darkMode ? "bg-gray-900/98 shadow-2xl" : "bg-white/98 shadow-2xl"
+        }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => navigate("/")}
-                className={`flex items-center gap-2 px-3 py-2 rounded-xl font-medium text-sm transition-all ${
+            {/* Logo */}
+            <div
+              className="flex items-center space-x-2 group cursor-pointer"
+              onClick={() => navigate("/")}
+            >
+              <img
+                src={
                   darkMode
-                    ? "bg-gray-800 hover:bg-gray-700 text-gray-300"
-                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                }`}
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span className="hidden sm:inline">Back</span>
-              </button>
-
-              <div
-                className="flex items-center gap-2 cursor-pointer group"
-                onClick={() => navigate("/")}
-              >
-                <img
-                  src={
-                    darkMode
-                      ? "/images/dark_mode_logo.png"
-                      : "/images/light_mode_logo.png"
-                  }
-                  alt="Logo"
-                  className="w-12 h-12 rounded-2xl"
-                />
-                <span className="font-black text-xl bg-linear-to-r from-cyan-500 via-blue-500 to-purple-500 bg-clip-text text-transparent">
-                  Athletix
-                </span>
-              </div>
+                    ? "/images/dark_mode_logo.png"
+                    : "/images/light_mode_logo.png"
+                }
+                alt="Logo"
+                className="w-12 h-12 rounded-2xl"
+              />
+              <span className="font-black text-xl md:text-2xl bg-linear-to-r from-cyan-500 via-blue-500 to-purple-500 bg-clip-text text-transparent">
+                Athletix
+              </span>
             </div>
 
-            <div className="absolute left-1/2 -translate-x-1/2 hidden md:block">
-              <h1
-                className={`text-lg font-bold ${
-                  darkMode ? "text-white" : "text-gray-800"
-                }`}
-              >
-                ✨ See Memories
-              </h1>
-            </div>
-
-            <div className="flex items-center gap-3">
+            {/* Right actions */}
+            <div className="flex items-center space-x-3">
+              {/* Dark mode toggle - rounded-xl */}
               <button
                 onClick={() => setDarkMode(!darkMode)}
                 className={`p-3 rounded-xl transition-all duration-300 ${
@@ -154,154 +165,159 @@ const GalleryPage = () => {
                 )}
               </button>
 
+              {/* Login button */}
               <button
-                onClick={() => navigate("/register")}
-                className="px-5 py-2.5 rounded-xl font-bold text-white bg-linear-to-r from-cyan-500 via-blue-500 to-purple-500 hover:shadow-lg hover:scale-105 transition-all duration-300"
+                onClick={handleLoginClick}
+                className="relative px-6 py-3 rounded-xl font-bold text-white overflow-hidden bg-linear-to-r from-cyan-500 via-blue-500 to-purple-500 hover:scale-105 transition-transform duration-300"
               >
-                Register
+                Login
+                {!isRegistrationOpen && (
+                  <span className="absolute -top-1 -right-1 text-[10px] bg-yellow-400 text-gray-900 px-2 py-0.5 rounded-full font-bold">
+                    Soon
+                  </span>
+                )}
               </button>
             </div>
           </div>
         </div>
-      </header>
+      </nav>
 
+      {/* Spacer for fixed nav */}
       <div className="h-20" />
 
+      {/* Hero - Matching home page style */}
       <div
-        className={`relative overflow-hidden py-10 sm:py-12 ${
-          darkMode ? "bg-gray-800" : "bg-linear-to-b from-gray-100 to-white"
-        }`}
+        className="relative overflow-hidden py-14 sm:py-20"
+        style={{
+          background: darkMode
+            ? "linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)"
+            : "linear-gradient(135deg, #0891b2 0%, #6366f1 50%, #8b5cf6 100%)",
+        }}
       >
-        <div className="absolute inset-0 opacity-5">
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage: `linear-linear(${
-                darkMode ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)"
-              } 1px, transparent 1px), linear-linear(90deg, ${
-                darkMode ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)"
-              } 1px, transparent 1px)`,
-              backgroundSize: "50px 50px",
-            }}
-          />
+        {/* Background image - sports complex */}
+        <div
+          className="absolute xl:-top-30 lg:-top-40 md:-top-45 sm:-top-40 -top-40 inset-0 opacity-15"
+          style={{
+            backgroundImage: "url('/images/sports_complex.png')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        />
+        <div className="absolute inset-0 bg-linear-to-b from-transparent via-black/30 to-black/50" />
+
+        {/* Gradient blobs */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-20 -left-20 w-72 h-72 bg-cyan-400/30 rounded-full blur-3xl" />
+          <div className="absolute -bottom-20 -right-20 w-72 h-72 bg-purple-500/30 rounded-full blur-3xl" />
         </div>
 
-        <div
-          className={`absolute top-0 left-1/4 w-72 h-72 ${
-            darkMode ? "bg-cyan-500/10" : "bg-cyan-400/20"
-          } rounded-full blur-[80px]`}
-        />
-        <div
-          className={`absolute bottom-0 right-1/4 w-64 h-64 ${
-            darkMode ? "bg-purple-500/10" : "bg-purple-400/20"
-          } rounded-full blur-[80px]`}
-        />
-
-        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div
-            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-sm border mb-4 ${
-              darkMode
-                ? "bg-white/5 border-white/10"
-                : "bg-white/60 border-gray-200"
-            }`}
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-cyan-500" />
-            <span
-              className={`text-[10px] font-semibold tracking-[0.15em] uppercase ${
-                darkMode ? "text-white/60" : "text-gray-600"
-              }`}
-            >
-              Photo Gallery
+        {/* Content */}
+        <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
+          {/* Badge - cyan gradient for better trophy visibility */}
+          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-linear-to-r from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/25 mb-6">
+            <Trophy className="w-5 h-5 text-amber-300" />
+            <span className="text-sm font-bold text-white">
+              GNDEC Annual Sports Championship
             </span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black mb-3 leading-tight tracking-tight">
-            <span className={darkMode ? "text-white" : "text-gray-800"}>
-              Moments That{" "}
-            </span>
-            <span className="bg-linear-to-r from-orange-400 via-pink-500 to-cyan-400 bg-clip-text text-transparent">
-              Define Champions
+          {/* Title with gradient */}
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black mb-4 leading-tight">
+            <span className="bg-linear-to-r from-cyan-300 via-white to-purple-300 bg-clip-text text-transparent drop-shadow-2xl">
+              Photo Gallery
             </span>
           </h1>
 
-          <p
-            className={`text-sm sm:text-base font-light max-w-md mx-auto mb-6 ${
-              darkMode ? "text-white/40" : "text-gray-500"
-            }`}
-          >
-            Every sprint, leap, and victory — captured forever.
+          {/* Year */}
+          <p className="text-3xl sm:text-4xl font-black mb-4">
+            <span className="bg-linear-to-r from-amber-400 via-orange-400 to-pink-400 bg-clip-text text-transparent">
+              2026
+            </span>
           </p>
 
-          <div className="flex justify-center gap-3 sm:gap-4">
-            {[
-              { value: "100+", label: "Photos" },
-              { value: "10+", label: "Events" },
-              { value: new Date().getFullYear(), label: "Season" },
-            ].map((stat, idx) => (
-              <div
-                key={idx}
-                className={`px-4 py-2 rounded-xl border transition-colors duration-300 ${
-                  darkMode
-                    ? "bg-white/5 border-white/10 hover:bg-white/10"
-                    : "bg-white/80 border-gray-200 hover:bg-white shadow-sm"
-                }`}
-              >
-                <div
-                  className={`text-lg sm:text-xl font-bold ${
-                    darkMode ? "text-white" : "text-gray-800"
-                  }`}
-                >
-                  {stat.value}
-                </div>
-                <div
-                  className={`text-[9px] uppercase tracking-widest ${
-                    darkMode ? "text-white/40" : "text-gray-500"
-                  }`}
-                >
-                  {stat.label}
-                </div>
-              </div>
-            ))}
-          </div>
+          {/* Subtitle */}
+          <p className="text-base sm:text-lg text-white/80 font-medium">
+            ✨ Captured moments of glory & determination
+          </p>
         </div>
       </div>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
-        <div className="space-y-4">
-          <ImageCard image={allImages[0]} size="large" />
-          <div className="grid grid-cols-2 gap-4">
-            <ImageCard image={allImages[1]} size="medium" />
-            <ImageCard image={allImages[2]} size="medium" />
-          </div>
-          <div className="grid grid-cols-3 gap-4">
-            <ImageCard image={allImages[3]} size="small" />
-            <ImageCard image={allImages[4]} size="small" />
-            <ImageCard image={allImages[5]} size="small" />
-          </div>
-          <ImageCard image={allImages[6]} size="large" />
-          <div className="grid grid-cols-2 gap-4">
-            <ImageCard image={allImages[7]} size="medium" />
-            <ImageCard image={allImages[8]} size="medium" />
-          </div>
-          <div className="grid grid-cols-3 gap-4">
-            <ImageCard image={allImages[9]} size="small" />
-            <ImageCard image={allImages[10]} size="small" />
-            <ImageCard image={allImages[11]} size="small" />
-          </div>
+      {/* Gallery */}
+      <main
+        className={`p-1 sm:p-2 ${darkMode ? "bg-gray-900" : "bg-gray-100"}`}
+      >
+        <div className="columns-2 sm:columns-3 lg:columns-4 xl:columns-5 gap-1 sm:gap-2">
+          {galleryImages.map((img, idx) => (
+            <div
+              key={idx}
+              className="break-inside-avoid mb-1 sm:mb-2 group relative overflow-hidden rounded-lg cursor-pointer"
+            >
+              {!loadedImages[idx] && (
+                <div
+                  className={`absolute inset-0 animate-pulse ${
+                    darkMode ? "bg-gray-800" : "bg-gray-300"
+                  }`}
+                />
+              )}
+
+              <img
+                src={getOptimizedUrl(img.url, 500)}
+                alt={`Photo ${idx + 1}`}
+                loading={idx < 12 ? "eager" : "lazy"}
+                onLoad={() => handleImageLoad(idx)}
+                className={`w-full h-auto block group-hover:scale-105 transition-transform duration-500 ${
+                  loadedImages[idx] ? "opacity-100" : "opacity-0"
+                }`}
+              />
+
+              <div className="absolute inset-0 bg-linear-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+              <div className="absolute bottom-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <span className="px-2 py-1 bg-black/60 backdrop-blur-sm rounded text-xs font-medium text-white">
+                  {idx + 1}
+                </span>
+              </div>
+            </div>
+          ))}
         </div>
       </main>
 
+      {/* Footer */}
       <footer
-        className={`py-6 text-center border-t ${
-          darkMode ? "border-gray-800 bg-gray-900" : "border-gray-200 bg-white"
+        className={`py-6 text-center ${
+          darkMode ? "bg-gray-900" : "bg-gray-100"
         }`}
       >
+        <div className="flex items-center justify-center gap-3 mb-3">
+          <div
+            className={`h-px w-10 ${darkMode ? "bg-gray-700" : "bg-gray-300"}`}
+          />
+          <span
+            className={`text-xs tracking-wider uppercase ${
+              darkMode ? "text-gray-600" : "text-gray-400"
+            }`}
+          >
+            End
+          </span>
+          <div
+            className={`h-px w-10 ${darkMode ? "bg-gray-700" : "bg-gray-300"}`}
+          />
+        </div>
         <p
-          className={`text-xs ${darkMode ? "text-gray-500" : "text-gray-400"}`}
+          className={`text-xs ${darkMode ? "text-gray-600" : "text-gray-400"}`}
         >
-          © 2026 Athletix. All rights reserved.
+          © 2026 Athletix
         </p>
       </footer>
+
+      {/* Registration Modal */}
+      {showModal && (
+        <RegistrationClosedModal
+          darkMode={darkMode}
+          onClose={() => setShowModal(false)}
+          registrationDate={registrationDate}
+        />
+      )}
     </div>
   );
 };

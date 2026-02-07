@@ -1,41 +1,9 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import galleryImages from "../../Data/landingPageImages.json";
 
 const Gallery = ({ darkMode }) => {
   const navigate = useNavigate();
-  const galleryImages = [
-    {
-      url: "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=800&h=600&fit=crop",
-      title: "Ready to Race",
-      badge: "🏁 Starting Line",
-      featured: true,
-    },
-    {
-      url: "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=600&h=400&fit=crop",
-      title: "Morning Training",
-      badge: "⚡ Peak Action",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1517649763962-0c623066013b?w=600&h=400&fit=crop",
-      title: "The Chase",
-      badge: "🔥 Competition",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=600&h=400&fit=crop",
-      title: "Building Strength",
-      badge: "💪 Preparation",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1519315901367-f34ff9154487?w=600&h=400&fit=crop",
-      title: "Final Sprint",
-      badge: "🏆 Winning Moment",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1556817411-31ae72fa3ea0?w=600&h=400&fit=crop",
-      title: "Power & Focus",
-      badge: "🎯 Determination",
-    },
-  ];
 
   return (
     <section
@@ -70,52 +38,121 @@ const Gallery = ({ darkMode }) => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-          {galleryImages.map((img, idx) => (
-            <div
-              key={idx}
-              className={`relative overflow-hidden rounded-2xl group cursor-pointer ${
-                img.featured
-                  ? "sm:col-span-2 lg:row-span-2 aspect-[4/3] lg:aspect-auto"
-                  : "aspect-[4/3]"
-              }`}
-            >
-              <img
-                src={img.url}
-                alt={img.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-              />
-
-              <div className="absolute top-3 left-3 z-10">
-                <span
-                  className={`px-3 py-1.5 rounded-full text-xs font-bold backdrop-blur-md ${
-                    darkMode
-                      ? "bg-black/60 text-white"
-                      : "bg-white/90 text-gray-800 shadow-sm"
-                  }`}
-                >
-                  {img.badge}
-                </span>
-              </div>
-
+        {/* Row 1: Featured Image (Full Width) */}
+        <div className="mb-4 sm:mb-5">
+          {galleryImages
+            .filter((img) => img.featured)
+            .map((img, idx) => (
               <div
-                className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col items-start justify-end p-5 transition-opacity duration-500 ${
-                  img.featured
-                    ? "opacity-100"
-                    : "opacity-0 group-hover:opacity-100"
-                }`}
+                key={`featured-${idx}`}
+                className="relative overflow-hidden rounded-2xl group cursor-pointer aspect-4/5 sm:aspect-3/2 lg:aspect-4/3"
               >
-                <p className="text-white font-bold text-lg mb-1 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                  {img.title}
-                </p>
-                <p className="text-gray-300 text-sm transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-75">
-                  Athletic Meet 2024
-                </p>
+                <img
+                  src={img.url}
+                  alt={img.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  style={{ objectPosition: "center 25%" }}
+                />
+                <div className="absolute top-3 left-3 z-10">
+                  <span
+                    className={`px-3 py-1.5 rounded-full text-xs font-bold backdrop-blur-md ${
+                      darkMode
+                        ? "bg-black/60 text-white"
+                        : "bg-white/90 text-gray-800 shadow-sm"
+                    }`}
+                  >
+                    {img.badge}
+                  </span>
+                </div>
+                <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent flex flex-col items-start justify-end p-5 opacity-100">
+                  <p className="text-white font-bold text-xl sm:text-2xl mb-1">
+                    {img.title}
+                  </p>
+                  <p className="text-gray-300 text-sm">Athletic Meet 2024</p>
+                </div>
+                <div className="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-white/30 transition-all duration-500" />
               </div>
+            ))}
+        </div>
 
-              <div className="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-white/30 transition-all duration-500" />
-            </div>
-          ))}
+        {/* Row 2: 3 Images */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5 mb-4 sm:mb-5">
+          {galleryImages
+            .filter((img) => !img.featured)
+            .slice(0, 3)
+            .map((img, idx) => (
+              <div
+                key={`row2-${idx}`}
+                className="relative overflow-hidden rounded-2xl group cursor-pointer aspect-4/5"
+              >
+                <img
+                  src={img.url}
+                  alt={img.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  style={{ objectPosition: "center" }}
+                />
+                <div className="absolute top-3 left-3 z-10">
+                  <span
+                    className={`px-3 py-1.5 rounded-full text-xs font-bold backdrop-blur-md ${
+                      darkMode
+                        ? "bg-black/60 text-white"
+                        : "bg-white/90 text-gray-800 shadow-sm"
+                    }`}
+                  >
+                    {img.badge}
+                  </span>
+                </div>
+                <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent flex flex-col items-start justify-end p-5 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                  <p className="text-white font-bold text-lg mb-1 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                    {img.title}
+                  </p>
+                  <p className="text-gray-300 text-sm transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-75">
+                    Athletic Meet 2024
+                  </p>
+                </div>
+                <div className="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-white/30 transition-all duration-500" />
+              </div>
+            ))}
+        </div>
+
+        {/* Row 3: 2 Images (Centered) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 mx-auto">
+          {galleryImages
+            .filter((img) => !img.featured)
+            .slice(3, 5)
+            .map((img, idx) => (
+              <div
+                key={`row3-${idx}`}
+                className="relative overflow-hidden rounded-2xl group cursor-pointer aspect-4/5"
+              >
+                <img
+                  src={img.url}
+                  alt={img.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  style={{ objectPosition: "center" }}
+                />
+                <div className="absolute top-3 left-3 z-10">
+                  <span
+                    className={`px-3 py-1.5 rounded-full text-xs font-bold backdrop-blur-md ${
+                      darkMode
+                        ? "bg-black/60 text-white"
+                        : "bg-white/90 text-gray-800 shadow-sm"
+                    }`}
+                  >
+                    {img.badge}
+                  </span>
+                </div>
+                <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent flex flex-col items-start justify-end p-5 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                  <p className="text-white font-bold text-lg mb-1 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                    {img.title}
+                  </p>
+                  <p className="text-gray-300 text-sm transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-75">
+                    Athletic Meet 2024
+                  </p>
+                </div>
+                <div className="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-white/30 transition-all duration-500" />
+              </div>
+            ))}
         </div>
 
         <div className="text-center mt-10">

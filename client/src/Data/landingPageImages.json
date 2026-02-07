@@ -1,0 +1,56 @@
+[
+  {
+    "fileName": "ceremony.jpg",
+    "public_id": "landingPageImages/landingPageImages/ceremony",
+    "url": "https://res.cloudinary.com/radioactivehub/image/upload/v1770451788/landingPageImages/landingPageImages/ceremony.jpg",
+    "folder": "landingPageImages",
+    "title": "Opening Ceremony",
+    "badge": "🎉 Grand Kickoff",
+    "featured": true
+  },
+  {
+    "fileName": "trackEvent.jpg",
+    "public_id": "landingPageImages/landingPageImages/trackEvent",
+    "url": "https://res.cloudinary.com/radioactivehub/image/upload/v1770451790/landingPageImages/landingPageImages/trackEvent.jpg",
+    "folder": "landingPageImages",
+    "title": "Track Events",
+    "badge": "🏃 Speed & Endurance",
+    "featured": false
+  },
+  {
+    "fileName": "longJump.jpg",
+    "public_id": "landingPageImages/landingPageImages/longJump",
+    "url": "https://res.cloudinary.com/radioactivehub/image/upload/v1770451788/landingPageImages/landingPageImages/longJump.jpg",
+    "folder": "landingPageImages",
+    "title": "Long Jump",
+    "badge": "🦘 Power & Precision",
+    "featured": false
+  },
+  {
+    "fileName": "shortPut.jpg",
+    "public_id": "landingPageImages/landingPageImages/shortPut",
+    "url": "https://res.cloudinary.com/radioactivehub/image/upload/v1770451790/landingPageImages/landingPageImages/shortPut.jpg",
+    "folder": "landingPageImages",
+    "title": "Shot Put",
+    "badge": "💥 Strength Challenge",
+    "featured": false
+  },
+  {
+    "fileName": "javlinThrow.jpg",
+    "public_id": "landingPageImages/landingPageImages/javlinThrow",
+    "url": "https://res.cloudinary.com/radioactivehub/image/upload/v1770451788/landingPageImages/landingPageImages/javlinThrow.jpg",
+    "folder": "landingPageImages",
+    "title": "Javelin Throw",
+    "badge": "🎯 Skill & Accuracy",
+    "featured": false
+  },
+  {
+    "fileName": "tugofWar.jpg",
+    "public_id": "landingPageImages/landingPageImages/tugofWar",
+    "url": "https://res.cloudinary.com/radioactivehub/image/upload/v1770451791/landingPageImages/landingPageImages/tugofWar.jpg",
+    "folder": "landingPageImages",
+    "title": "Tug of War",
+    "badge": "🤝 Team Strength",
+    "featured": false
+  }
+]
