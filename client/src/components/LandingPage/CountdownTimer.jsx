@@ -33,8 +33,8 @@ const CountdownTimer = () => {
 
   if (timeLeft === null) {
     return (
-      <div className="animate-pulse text-2xl sm:text-3xl md:text-4xl font-black text-cyan-400 mt-8 tracking-wider uppercase drop-shadow-[0_0_15px_rgba(34,211,238,0.5)]">
-        🎉 Event is Going On! 🎉
+      <div className="animate-pulse text-2xl sm:text-3xl md:text-4xl font-black text-cyan-400 mt-8 mb-4 tracking-wider uppercase drop-shadow-[0_0_15px_rgba(34,211,238,0.5)]">
+        🥳 Join Us - The Event Is On! 🥳
       </div>
     );
   }
