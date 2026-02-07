@@ -237,7 +237,14 @@ export default function OtpMonitorPage() {
     return expiresAtMs > now;
   });
 
-  if (loading) return <LoadingComponent />;
+  if (loading)
+    return (
+      <LoadingComponent
+        darkMode={darkMode}
+        title="Monitoring OTPs"
+        message="Fetching real-time verification codes..."
+      />
+    );
 
   return (
     <div

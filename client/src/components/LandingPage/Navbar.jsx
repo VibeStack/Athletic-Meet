@@ -236,7 +236,7 @@ const Navbar = ({
             <div className="hidden lg:flex items-center space-x-3">
               <button
                 onClick={() => setDarkMode(!darkMode)}
-                className={`p-3 rounded-xl transition-all duration-300 ${
+                className={`p-3 rounded-lg transition-all duration-300 ${
                   darkMode
                     ? "bg-gray-800 hover:bg-gray-700 text-yellow-400"
                     : "bg-gray-100 hover:bg-gray-200 text-gray-700"
@@ -249,16 +249,18 @@ const Navbar = ({
                 )}
               </button>
               <button
-                className={`relative px-6 py-3 rounded-xl font-bold text-white overflow-hidden group cursor-pointer inset-0 bg-linear-to-r from-cyan-500 via-blue-500 to-purple-500 group-hover:scale-110 transition-transform duration-300 ${
-                  !isRegistrationOpen ? "opacity-90" : ""
+                className={`relative px-6 py-3 rounded-lg font-bold text-white overflow-hidden group cursor-pointer inset-0 bg-linear-to-r from-cyan-500 via-blue-500 to-purple-500 transition-all duration-300 hover:scale-105 active:scale-95 ${
+                  !isRegistrationOpen ? "opacity-95" : ""
                 }`}
                 onClick={() => handleAuthClick("/login")}
               >
-                Login
+                <span className="relative z-10">Login</span>
                 {!isRegistrationOpen && (
-                  <span className="absolute -top-1 -right-1 text-[10px] bg-yellow-400 text-gray-900 px-2 py-0.5 rounded-full font-bold">
-                    Soon
-                  </span>
+                  <div className="absolute top-0 right-0 w-12 h-12 overflow-hidden pointer-events-none z-20">
+                    <div className="absolute -top-1 -right-1 bg-red-600 text-[6px] font-black text-white py-0.5 w-[140%] text-center uppercase tracking-tighter transform rotate-45 translate-x-[25%] translate-y-[50%] shadow-lg shadow-black/20 border-b border-white/20">
+                      Soon
+                    </div>
+                  </div>
                 )}
               </button>
             </div>
@@ -319,13 +321,15 @@ const Navbar = ({
             ))}
             <button
               onClick={() => handleAuthClick("/login")}
-              className="relative overflow-hidden group cursor-pointer font-bold text-white rounded-xl bg-linear-to-r from-cyan-500 via-blue-500 to-purple-500 px-4 py-3 w-full sm:px-6 sm:py-3 sm:w-auto transition-transform duration-300 group-hover:scale-110"
+              className="relative overflow-hidden group cursor-pointer font-bold text-white rounded-lg bg-linear-to-r from-cyan-500 via-blue-500 to-purple-500 px-4 py-3 w-full transition-all duration-300 active:scale-95 shadow-lg"
             >
-              Login
+              <span className="relative z-10">Login</span>
               {!isRegistrationOpen && (
-                <span className="absolute top-1 right-2 text-xs bg-yellow-400 text-gray-900 px-2 py-0.5 rounded-full font-bold">
-                  Soon
-                </span>
+                <div className="absolute top-0 right-0 w-12 h-12 overflow-hidden pointer-events-none z-20">
+                  <div className="absolute top-0 right-0 bg-red-600 text-[10px] font-black text-white py-0.5 w-[141%] text-center uppercase tracking-tighter transform rotate-45 translate-x-[30%] translate-y-[10%] shadow-lg shadow-black/20 border-b border-white/20">
+                    Soon
+                  </div>
+                </div>
               )}
             </button>
           </div>

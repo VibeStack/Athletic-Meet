@@ -152,7 +152,7 @@ const GalleryPage = () => {
               {/* Dark mode toggle - rounded-xl */}
               <button
                 onClick={() => setDarkMode(!darkMode)}
-                className={`p-3 rounded-xl transition-all duration-300 ${
+                className={`p-3 rounded-lg transition-all duration-300 ${
                   darkMode
                     ? "bg-gray-800 hover:bg-gray-700 text-yellow-400"
                     : "bg-gray-100 hover:bg-gray-200 text-gray-700"
@@ -167,14 +167,18 @@ const GalleryPage = () => {
 
               {/* Login button */}
               <button
+                className={`relative px-6 py-3 rounded-lg font-bold text-white overflow-hidden group cursor-pointer inset-0 bg-linear-to-r from-cyan-500 via-blue-500 to-purple-500 transition-all duration-300 hover:scale-105 active:scale-95 ${
+                  !isRegistrationOpen ? "opacity-95" : ""
+                }`}
                 onClick={handleLoginClick}
-                className="relative px-6 py-3 rounded-xl font-bold text-white overflow-hidden bg-linear-to-r from-cyan-500 via-blue-500 to-purple-500 hover:scale-105 transition-transform duration-300"
               >
-                Login
+                <span className="relative z-10">Login</span>
                 {!isRegistrationOpen && (
-                  <span className="absolute -top-1 -right-1 text-[10px] bg-yellow-400 text-gray-900 px-2 py-0.5 rounded-full font-bold">
-                    Soon
-                  </span>
+                  <div className="absolute top-0 right-0 w-12 h-12 overflow-hidden pointer-events-none z-20">
+                    <div className="absolute -top-1 -right-1 bg-red-600 text-[6px] font-black text-white py-0.5 w-[140%] text-center uppercase tracking-tighter transform rotate-45 translate-x-[25%] translate-y-[50%] shadow-lg shadow-black/20 border-b border-white/20">
+                      Soon
+                    </div>
+                  </div>
                 )}
               </button>
             </div>
@@ -288,21 +292,6 @@ const GalleryPage = () => {
           darkMode ? "bg-gray-900" : "bg-gray-100"
         }`}
       >
-        <div className="flex items-center justify-center gap-3 mb-3">
-          <div
-            className={`h-px w-10 ${darkMode ? "bg-gray-700" : "bg-gray-300"}`}
-          />
-          <span
-            className={`text-xs tracking-wider uppercase ${
-              darkMode ? "text-gray-600" : "text-gray-400"
-            }`}
-          >
-            End
-          </span>
-          <div
-            className={`h-px w-10 ${darkMode ? "bg-gray-700" : "bg-gray-300"}`}
-          />
-        </div>
         <p
           className={`text-xs ${darkMode ? "text-gray-600" : "text-gray-400"}`}
         >

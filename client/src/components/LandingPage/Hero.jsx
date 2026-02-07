@@ -158,22 +158,24 @@ const Hero = ({ scrollToSection }) => {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
             <button
-              className="group relative px-8 py-4 bg-linear-to-r from-cyan-500 to-blue-600 text-white rounded-full font-bold text-base sm:text-lg overflow-hidden transform hover:scale-105 transition-all duration-300 shadow-2xl hover:shadow-cyan-500/25 w-full sm:w-auto"
+              className="group relative px-8 py-4 bg-linear-to-r from-cyan-500 to-blue-600 text-white rounded-xl font-bold text-base sm:text-lg overflow-hidden transform hover:scale-105 transition-all duration-300 shadow-2xl hover:shadow-cyan-500/25 w-full sm:w-auto"
               onClick={handleRegisterClick}
             >
               <span className="relative z-10">Register Now</span>
               {!isRegistrationOpen && (
-                <span className="absolute top-0 right-1 text-[10px] bg-yellow-400 text-gray-900 px-2 py-0.5 rounded-full font-bold">
-                  Soon
-                </span>
+                <div className="absolute top-0 right-0 w-16 h-16 overflow-hidden pointer-events-none z-20">
+                  <div className="absolute top-0 right-0 bg-red-600 text-[10px] font-black text-white py-1 w-[141%] text-center uppercase tracking-tighter transform rotate-45 translate-x-[30%] translate-y-[10%] shadow-lg shadow-black/20 border-b border-white/20">
+                    Soon
+                  </div>
+                </div>
               )}
               <div className="absolute inset-0 bg-linear-to-r from-blue-600 to-purple-600 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300"></div>
               {/* Glow effect */}
-              <div className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-[0_0_30px_rgba(6,182,212,0.5)]"></div>
+              <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-[0_0_30px_rgba(6,182,212,0.5)]"></div>
             </button>
             <button
               onClick={() => scrollToSection("events")}
-              className="relative px-8 py-4 bg-white/10 backdrop-blur-md text-white border-2 border-white/30 rounded-full font-bold text-base sm:text-lg hover:bg-white/20 hover:border-white/50 transition-all duration-300 w-full sm:w-auto"
+              className="relative px-8 py-4 bg-white/10 backdrop-blur-md text-white border-2 border-white/30 rounded-xl font-bold text-base sm:text-lg hover:bg-white/20 hover:border-white/50 transition-all duration-300 w-full sm:w-auto"
             >
               Explore Events
             </button>

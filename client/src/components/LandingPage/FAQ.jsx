@@ -74,10 +74,6 @@ const FAQ = ({ darkMode, scrollToSection }) => {
                   : darkMode
                     ? "border border-gray-700"
                     : "border border-gray-100 shadow-sm"
-              } ${
-                faq.featured && openFaq === idx
-                  ? "border-l-4 border-l-teal-500"
-                  : ""
               }`}
             >
               <button

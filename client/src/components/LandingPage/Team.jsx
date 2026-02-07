@@ -176,7 +176,7 @@ const Team = ({ darkMode }) => {
               }`}
             >
               <span className="bg-linear-to-br from-purple-600 via-blue-600 to-purple-600 bg-clip-text text-transparent bg-size-[200%_auto] animate-gradient">
-                Efforts By the Developer
+                Engineering & Product Evolution
               </span>
             </h2>
 
