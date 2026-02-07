@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useTheme } from "../../context/ThemeContext";
@@ -20,9 +20,18 @@ export default function PortalLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showLogoutPopup, setShowLogoutPopup] = useState(false);
-  const [loggingOut, setLoggingOut] = useState(false);
+  const [logoutState, setLogoutState] = useState("confirm"); // 'confirm' | 'logging-out' | 'success'
+  const timeoutRef = useRef(null);
 
   const API_URL = import.meta.env.VITE_API_URL;
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -33,7 +42,7 @@ export default function PortalLayout() {
   }, []);
 
   const handleLogout = async () => {
-    setLoggingOut(true);
+    setLogoutState("logging-out");
     try {
       const { data: response } = await axios.post(
         `${API_URL}/auth/logout`,
@@ -42,11 +51,17 @@ export default function PortalLayout() {
       );
 
       if (response?.success) {
-        navigate("/");
+        setLogoutState("success");
+        // Wait for success animation then navigate
+        timeoutRef.current = setTimeout(() => {
+          setShowLogoutPopup(false);
+          setLogoutState("confirm");
+          navigate("/");
+        }, 1500);
       }
     } catch (err) {
       console.error("Logout failed:", err);
-      setLoggingOut(false);
+      setLogoutState("confirm");
     }
   };
 
@@ -209,10 +224,12 @@ export default function PortalLayout() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={() => !loggingOut && setShowLogoutPopup(false)}
+            onClick={() =>
+              logoutState === "confirm" && setShowLogoutPopup(false)
+            }
           />
           <div
-            className={`relative w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl ${
+            className={`relative w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl transition-all duration-300 ${
               darkMode
                 ? "bg-slate-900 border border-white/10"
                 : "bg-white border border-slate-200"
@@ -221,128 +238,143 @@ export default function PortalLayout() {
             {/* Glow based on user role/gender */}
             {darkMode && (
               <div
-                className={`absolute -top-20 -right-20 w-40 h-40 rounded-full blur-3xl pointer-events-none ${
-                  userDetail?.role === "Manager"
-                    ? "bg-red-500/20"
-                    : userDetail?.role === "Admin"
-                      ? userDetail?.gender === "Male"
-                        ? "bg-sky-500/20"
-                        : userDetail?.gender === "Female"
-                          ? "bg-pink-500/20"
-                          : "bg-emerald-500/20"
-                      : "bg-slate-500/20"
+                className={`absolute -top-20 -right-20 w-40 h-40 rounded-full blur-3xl pointer-events-none transition-colors duration-500 ${
+                  logoutState === "success"
+                    ? "bg-emerald-500/30"
+                    : userDetail?.role === "Manager"
+                      ? "bg-red-500/20"
+                      : userDetail?.role === "Admin"
+                        ? userDetail?.gender === "Male"
+                          ? "bg-sky-500/20"
+                          : userDetail?.gender === "Female"
+                            ? "bg-pink-500/20"
+                            : "bg-emerald-500/20"
+                        : "bg-slate-500/20"
                 }`}
               />
             )}
 
             <div className="relative p-6 text-center">
-              {/* Icon - Color based on role/gender */}
+              {/* Icon - Changes based on state */}
               <div
-                className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center ${
-                  userDetail?.role === "Manager"
-                    ? "bg-red-500/10"
-                    : userDetail?.role === "Admin"
-                      ? userDetail?.gender === "Male"
-                        ? "bg-sky-500/10"
-                        : userDetail?.gender === "Female"
-                          ? "bg-pink-500/10"
-                          : "bg-emerald-500/10"
-                      : "bg-slate-500/10"
+                className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center transition-all duration-300 ${
+                  logoutState === "success"
+                    ? "bg-emerald-500/15 scale-110"
+                    : logoutState === "logging-out"
+                      ? "bg-amber-500/15"
+                      : userDetail?.role === "Manager"
+                        ? "bg-red-500/10"
+                        : userDetail?.role === "Admin"
+                          ? userDetail?.gender === "Male"
+                            ? "bg-sky-500/10"
+                            : userDetail?.gender === "Female"
+                              ? "bg-pink-500/10"
+                              : "bg-emerald-500/10"
+                          : "bg-slate-500/10"
                 }`}
               >
-                <LogoutIcon
-                  className={`w-8 h-8 ${
-                    userDetail?.role === "Manager"
-                      ? "text-red-500"
-                      : userDetail?.role === "Admin"
-                        ? userDetail?.gender === "Male"
-                          ? "text-sky-500"
-                          : userDetail?.gender === "Female"
-                            ? "text-pink-500"
-                            : "text-emerald-500"
-                        : darkMode
-                          ? "text-slate-400"
-                          : "text-slate-600"
-                  }`}
-                />
+                {logoutState === "success" ? (
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="w-8 h-8 text-emerald-500"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                ) : logoutState === "logging-out" ? (
+                  <span className="animate-spin h-8 w-8 border-3 border-amber-500/30 rounded-full border-t-amber-500" />
+                ) : (
+                  <LogoutIcon
+                    className={`w-8 h-8 ${
+                      userDetail?.role === "Manager"
+                        ? "text-red-500"
+                        : userDetail?.role === "Admin"
+                          ? userDetail?.gender === "Male"
+                            ? "text-sky-500"
+                            : userDetail?.gender === "Female"
+                              ? "text-pink-500"
+                              : "text-emerald-500"
+                          : darkMode
+                            ? "text-slate-400"
+                            : "text-slate-600"
+                    }`}
+                  />
+                )}
               </div>
 
               <h3
-                className={`text-xl font-bold mb-2 ${
-                  darkMode ? "text-white" : "text-slate-900"
+                className={`text-xl font-bold mb-2 transition-colors duration-300 ${
+                  logoutState === "success"
+                    ? darkMode
+                      ? "text-emerald-400"
+                      : "text-emerald-600"
+                    : darkMode
+                      ? "text-white"
+                      : "text-slate-900"
                 }`}
               >
-                Confirm Logout
+                {logoutState === "success"
+                  ? "Logged out successfully!"
+                  : logoutState === "logging-out"
+                    ? "Logging out..."
+                    : "Confirm Logout"}
               </h3>
               <p
                 className={`text-sm mb-6 ${
                   darkMode ? "text-slate-400" : "text-slate-500"
                 }`}
               >
-                Are you sure you want to logout from your account?
+                {logoutState === "success"
+                  ? "Redirecting you to the landing page..."
+                  : logoutState === "logging-out"
+                    ? "Please wait while we secure your session..."
+                    : "Are you sure you want to logout from your account?"}
               </p>
 
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowLogoutPopup(false)}
-                  disabled={loggingOut}
-                  className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${
-                    loggingOut ? "opacity-50 cursor-not-allowed" : ""
-                  } ${
-                    darkMode
-                      ? "bg-slate-800 text-slate-300 hover:bg-slate-700"
-                      : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+              {logoutState === "confirm" && (
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowLogoutPopup(false)}
+                    className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${
+                      darkMode
+                        ? "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                    }`}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className={`flex-1 py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 ${
+                      userDetail?.role === "Manager"
+                        ? "bg-linear-to-r from-red-500 to-red-600 shadow-red-500/25"
+                        : userDetail?.role === "Admin"
+                          ? userDetail?.gender === "Male"
+                            ? "bg-linear-to-r from-sky-500 to-blue-600 shadow-sky-500/25"
+                            : userDetail?.gender === "Female"
+                              ? "bg-linear-to-r from-pink-500 to-pink-600 shadow-pink-500/25"
+                              : "bg-linear-to-r from-emerald-500 to-emerald-600 shadow-emerald-500/25"
+                          : "bg-linear-to-r from-slate-700 to-slate-800 shadow-slate-500/25"
+                    }`}
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
+
+              {logoutState === "success" && (
+                <p
+                  className={`text-xs ${
+                    darkMode ? "text-slate-500" : "text-slate-400"
                   }`}
                 >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleLogout}
-                  disabled={loggingOut}
-                  className={`flex-1 py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg flex items-center justify-center gap-2 ${
-                    loggingOut
-                      ? "opacity-80 cursor-not-allowed"
-                      : "hover:brightness-110"
-                  } ${
-                    userDetail?.role === "Manager"
-                      ? "bg-linear-to-r from-red-500 to-red-600 shadow-red-500/25"
-                      : userDetail?.role === "Admin"
-                        ? userDetail?.gender === "Male"
-                          ? "bg-linear-to-r from-sky-500 to-blue-600 shadow-sky-500/25"
-                          : userDetail?.gender === "Female"
-                            ? "bg-linear-to-r from-pink-500 to-pink-600 shadow-pink-500/25"
-                            : "bg-linear-to-r from-emerald-500 to-emerald-600 shadow-emerald-500/25"
-                        : "bg-linear-to-r from-slate-700 to-slate-800 shadow-slate-500/25"
-                  }`}
-                >
-                  {loggingOut ? (
-                    <>
-                      <svg
-                        className="w-4 h-4 animate-spin"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        />
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        />
-                      </svg>
-                      <span>Logging out...</span>
-                    </>
-                  ) : (
-                    "Logout"
-                  )}
-                </button>
-              </div>
+                  See you soon!
+                </p>
+              )}
             </div>
           </div>
         </div>
