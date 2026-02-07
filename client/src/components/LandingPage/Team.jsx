@@ -23,7 +23,7 @@ const Team = ({ darkMode }) => {
   const stats = [
     { value: "20+", label: "Features" },
     { value: "3+", label: "Months" },
-    { value: "Solo", label: "Development Effort" }
+    { value: "Solo", label: "Development Effort" },
   ];
 
   const highlights = [
@@ -175,9 +175,8 @@ const Team = ({ darkMode }) => {
                 darkMode ? "text-white" : ""
               }`}
             >
-              Built & Maintained by a{" "}
               <span className="bg-linear-to-br from-purple-600 via-blue-600 to-purple-600 bg-clip-text text-transparent bg-size-[200%_auto] animate-gradient">
-                Solo Developer
+                Efforts By the Developer
               </span>
             </h2>
 
