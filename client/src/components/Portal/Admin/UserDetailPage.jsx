@@ -211,10 +211,12 @@ export default function UserDetailPage() {
                     ? "bg-emerald-500/30"
                     : studentUserData.role === "Manager"
                       ? "bg-red-500/20"
-                      : studentUserData.gender === "Male"
-                        ? "bg-sky-500/20"
-                        : studentUserData.gender === "Female"
-                          ? "bg-pink-500/20"
+                      : studentUserData.isUserDetailsComplete === "true"
+                        ? studentUserData.gender === "Male"
+                          ? "bg-sky-500/20"
+                          : "bg-pink-500/20"
+                        : studentUserData.isUserDetailsComplete === "partial"
+                          ? "bg-slate-500/20"
                           : "bg-emerald-500/20"
                 }`}
               />
@@ -230,10 +232,12 @@ export default function UserDetailPage() {
                       ? "bg-amber-500/15"
                       : studentUserData.role === "Manager"
                         ? "bg-red-500/10"
-                        : studentUserData.gender === "Male"
-                          ? "bg-sky-500/10"
-                          : studentUserData.gender === "Female"
-                            ? "bg-pink-500/10"
+                        : studentUserData.isUserDetailsComplete === "true"
+                          ? studentUserData.gender === "Male"
+                            ? "bg-sky-500/10"
+                            : "bg-pink-500/10"
+                          : studentUserData.isUserDetailsComplete === "partial"
+                            ? "bg-slate-500/10"
                             : "bg-emerald-500/10"
                 }`}
               >
@@ -257,10 +261,12 @@ export default function UserDetailPage() {
                     className={`w-8 h-8 fill-current ${
                       studentUserData.role === "Manager"
                         ? "text-red-500"
-                        : studentUserData.gender === "Male"
-                          ? "text-sky-500"
-                          : studentUserData.gender === "Female"
-                            ? "text-pink-500"
+                        : studentUserData.isUserDetailsComplete === "true"
+                          ? studentUserData.gender === "Male"
+                            ? "text-sky-500"
+                            : "text-pink-500"
+                          : studentUserData.isUserDetailsComplete === "partial"
+                            ? "text-slate-500"
                             : "text-emerald-500"
                     }`}
                   >
@@ -348,15 +354,15 @@ export default function UserDetailPage() {
                   <button
                     onClick={deleteUser}
                     className={`flex-1 py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 ${
-                      studentUserData.isUserDetailsComplete === "partial"
-                        ? "bg-linear-to-r from-slate-500 to-slate-600 shadow-slate-500/25"
-                        : studentUserData.role === "Manager"
-                          ? "bg-linear-to-r from-red-500 to-red-600 shadow-red-500/25"
-                          : studentUserData.gender === "Male"
+                      studentUserData.role === "Manager"
+                        ? "bg-linear-to-r from-red-500 to-red-600 shadow-red-500/25"
+                        : studentUserData.isUserDetailsComplete === "true"
+                          ? studentUserData.gender === "Male"
                             ? "bg-linear-to-r from-sky-500 to-blue-600 shadow-sky-500/25"
-                            : studentUserData.gender === "Female"
-                              ? "bg-linear-to-r from-pink-500 to-pink-600 shadow-pink-500/25"
-                              : "bg-linear-to-r from-emerald-500 to-emerald-600 shadow-emerald-500/25"
+                            : "bg-linear-to-r from-pink-500 to-pink-600 shadow-pink-500/25"
+                          : studentUserData.isUserDetailsComplete === "partial"
+                            ? "bg-linear-to-r from-slate-500 to-slate-600 shadow-slate-500/25"
+                            : "bg-linear-to-r from-emerald-500 to-emerald-600 shadow-emerald-500/25"
                     }`}
                   >
                     Delete

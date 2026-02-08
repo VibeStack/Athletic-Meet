@@ -24,7 +24,7 @@ export default function QuickActionsCard({ darkMode }) {
       color: "blue",
     },
     {
-      label: "Add User",
+      label: "See All Users",
       icon: <UserAddIcon className="w-5 h-5" />,
       path: "/portal/admin/users",
       color: "amber",

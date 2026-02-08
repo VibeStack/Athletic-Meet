@@ -19,6 +19,24 @@ import {
 } from "../../../../icons/Portal/Manager/AnalyticsIcons";
 
 import QuickActionsCard from "./cards/QuickActionsCard";
+import { LockIcon, UnlockIcon } from "../../../../icons/Portal/Manager/EventControlsIcons";
+
+const ROLE_COLORS = {
+  Admin: "bg-emerald-500",
+  Manager: "bg-red-500",
+  User: "bg-amber-400",
+};
+
+const CATEGORY_COLORS = {
+  Boys: "bg-blue-500",
+  Girls: "bg-pink-500",
+};
+
+const PROFILE_TEXT_COLORS = {
+  true: "text-emerald-500",
+  partial: "text-amber-500",
+  false: "text-red-500",
+};
 
 export default function AnalyticsPage() {
   const { darkMode } = useTheme();
@@ -153,7 +171,6 @@ export default function AnalyticsPage() {
           {refreshing ? "Refreshing..." : "Refresh Data"}
         </button>
       </div>
-
       {/* Main Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard
@@ -189,40 +206,36 @@ export default function AnalyticsPage() {
           darkMode={darkMode}
         />
       </div>
-
       {/* Quick Actions */}
       <div className="mb-8">
         <QuickActionsCard darkMode={darkMode} />
       </div>
-
       {/* Charts Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
         <GenderChartCard data={data?.users?.byGender} darkMode={darkMode} />
-        <EventTypeChartCard data={data?.events?.byType} darkMode={darkMode} />
-      </div>
-
-      {/* Charts Row 2 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
         <AttendanceChartCard
           data={data?.users?.attendanceBreakdown}
           eventWiseAttendance={data?.events?.eventWiseAttendance}
           darkMode={darkMode}
         />
+      </div>
+      {/* Charts Row 2 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
+        <CourseBreakdownCard data={data?.users?.byCourse} darkMode={darkMode} />
+        <EventTypeChartCard data={data?.events?.byType} darkMode={darkMode} />
+      </div>
+      {/* Charts Row 3 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
         <WinnersCard
           data={data?.users?.positionBreakdown}
           darkMode={darkMode}
         />
-      </div>
-
-      {/* Charts Row 3 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
-        <CourseBreakdownCard data={data?.users?.byCourse} darkMode={darkMode} />
         <YearBreakdownCard data={data?.users?.byYear} darkMode={darkMode} />
       </div>
 
-      {/* Additional Stats */}
+      {/* ================= ADDITIONAL STATS ================= */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
-        {/* User Roles */}
+        {/* ===== User Roles ===== */}
         <div
           className={`rounded-2xl p-4 sm:p-6 ${
             darkMode
@@ -231,24 +244,17 @@ export default function AnalyticsPage() {
           }`}
         >
           <h3
-            className={`text-lg font-semibold mb-4 ${
-              darkMode ? "text-white" : "text-slate-900"
-            }`}
+            className={`text-lg font-semibold mb-4 ${darkMode ? "text-white" : "text-slate-900"}`}
           >
             User Roles
           </h3>
+
           <div className="space-y-3">
-            {data?.users?.byRole?.map((role) => (
+            {(data?.users?.byRole || []).map((role) => (
               <div key={role._id} className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div
-                    className={`w-3 h-3 rounded-full ${
-                      role._id === "Manager"
-                        ? "bg-red-500"
-                        : role._id === "Admin"
-                          ? "bg-emerald-500"
-                          : "bg-amber-400"
-                    }`}
+                    className={`w-3 h-3 rounded-full ${ROLE_COLORS[role._id] || "bg-slate-400"}`}
                   />
                   <span
                     className={darkMode ? "text-slate-300" : "text-slate-700"}
@@ -257,18 +263,16 @@ export default function AnalyticsPage() {
                   </span>
                 </div>
                 <span
-                  className={`font-semibold ${
-                    darkMode ? "text-white" : "text-slate-900"
-                  }`}
+                  className={`font-semibold ${darkMode ? "text-white" : "text-slate-900"}`}
                 >
-                  {role.count.toLocaleString()}
+                  {(role.count ?? 0).toLocaleString()}
                 </span>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Events by Day */}
+        {/* ===== Events by Day ===== */}
         <div
           className={`rounded-2xl p-4 sm:p-6 ${
             darkMode
@@ -277,14 +281,13 @@ export default function AnalyticsPage() {
           }`}
         >
           <h3
-            className={`text-lg font-semibold mb-4 ${
-              darkMode ? "text-white" : "text-slate-900"
-            }`}
+            className={`text-lg font-semibold mb-4 ${darkMode ? "text-white" : "text-slate-900"}`}
           >
             Events by Day
           </h3>
+
           <div className="space-y-3">
-            {data?.events?.byDay?.map((day) => (
+            {(data?.events?.byDay || []).map((day) => (
               <div key={day._id} className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-3 h-3 rounded-full bg-linear-to-r from-cyan-500 to-blue-500" />
@@ -295,18 +298,16 @@ export default function AnalyticsPage() {
                   </span>
                 </div>
                 <span
-                  className={`font-semibold ${
-                    darkMode ? "text-white" : "text-slate-900"
-                  }`}
+                  className={`font-semibold ${darkMode ? "text-white" : "text-slate-900"}`}
                 >
-                  {day.count.toLocaleString()}
+                  {(day.count ?? 0).toLocaleString()}
                 </span>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Events by Category */}
+        {/* ===== Events by Category ===== */}
         <div
           className={`rounded-2xl p-4 sm:p-6 ${
             darkMode
@@ -315,20 +316,17 @@ export default function AnalyticsPage() {
           }`}
         >
           <h3
-            className={`text-lg font-semibold mb-4 ${
-              darkMode ? "text-white" : "text-slate-900"
-            }`}
+            className={`text-lg font-semibold mb-4 ${darkMode ? "text-white" : "text-slate-900"}`}
           >
             Events by Category
           </h3>
+
           <div className="space-y-3">
-            {data?.events?.byCategory?.map((cat) => (
+            {(data?.events?.byCategory || []).map((cat) => (
               <div key={cat._id} className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div
-                    className={`w-3 h-3 rounded-full ${
-                      cat._id === "Boys" ? "bg-blue-500" : "bg-pink-500"
-                    }`}
+                    className={`w-3 h-3 rounded-full ${CATEGORY_COLORS[cat._id] || "bg-slate-400"}`}
                   />
                   <span
                     className={darkMode ? "text-slate-300" : "text-slate-700"}
@@ -337,11 +335,9 @@ export default function AnalyticsPage() {
                   </span>
                 </div>
                 <span
-                  className={`font-semibold ${
-                    darkMode ? "text-white" : "text-slate-900"
-                  }`}
+                  className={`font-semibold ${darkMode ? "text-white" : "text-slate-900"}`}
                 >
-                  {cat.count.toLocaleString()}
+                  {(cat.count ?? 0).toLocaleString()}
                 </span>
               </div>
             ))}
@@ -349,9 +345,10 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* Certificate Status & Profile Completion */}
+      {/* ================= CERTIFICATE & PROFILE ================= */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Certificate Status */}
+        {/* ===== Certificate Status ===== */}
+
         <div
           className={`rounded-2xl p-6 ${
             darkMode
@@ -366,6 +363,7 @@ export default function AnalyticsPage() {
           >
             Certificate Status
           </h3>
+
           <div className="flex items-center gap-4">
             <div
               className={`w-14 h-14 rounded-2xl flex items-center justify-center ${
@@ -375,23 +373,12 @@ export default function AnalyticsPage() {
               }`}
             >
               {data?.certificatesLocked ? (
-                <svg
-                  className="w-7 h-7"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
-                </svg>
+                <LockIcon className="w-7 h-7 fill-current" />
               ) : (
-                <svg
-                  className="w-7 h-7"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path d="M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h1.9c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10z" />
-                </svg>
+                <UnlockIcon className="w-7 h-7 fill-current" />
               )}
             </div>
+
             <div>
               <p
                 className={`text-xl font-bold ${
@@ -406,14 +393,14 @@ export default function AnalyticsPage() {
                 }`}
               >
                 {data?.certificatesLocked
-                  ? "Users cannot download certificates"
-                  : "Users can download their certificates"}
+                  ? "Certificate downloads are disabled"
+                  : "Users can download certificates"}
               </p>
             </div>
           </div>
         </div>
 
-        {/* Profile Completion */}
+        {/* ===== Profile Completion ===== */}
         <div
           className={`rounded-2xl p-6 ${
             darkMode
@@ -422,40 +409,34 @@ export default function AnalyticsPage() {
           }`}
         >
           <h3
-            className={`text-lg font-semibold mb-4 ${
-              darkMode ? "text-white" : "text-slate-900"
-            }`}
+            className={`text-lg font-semibold mb-4 ${darkMode ? "text-white" : "text-slate-900"}`}
           >
             Profile Completion
           </h3>
+
           <div className="grid grid-cols-3 gap-4">
             {["true", "partial", "false"].map((status) => {
               const statusData = data?.users?.detailsComplete?.find(
                 (d) => d._id === status,
               );
-              const count = statusData?.count || 0;
+              const count = statusData?.count ?? 0;
+
               const label =
                 status === "true"
                   ? "Complete"
                   : status === "partial"
                     ? "Partial"
                     : "Incomplete";
-              const color =
-                status === "true"
-                  ? "emerald"
-                  : status === "partial"
-                    ? "amber"
-                    : "red";
 
               return (
                 <div key={status} className="text-center">
-                  <p className={`text-2xl font-bold text-${color}-500`}>
+                  <p
+                    className={`text-2xl font-bold ${PROFILE_TEXT_COLORS[status]}`}
+                  >
                     {count.toLocaleString()}
                   </p>
                   <p
-                    className={`text-xs ${
-                      darkMode ? "text-slate-400" : "text-slate-500"
-                    }`}
+                    className={`text-xs ${darkMode ? "text-slate-400" : "text-slate-500"}`}
                   >
                     {label}
                   </p>
@@ -465,12 +446,9 @@ export default function AnalyticsPage() {
           </div>
         </div>
       </div>
-
-      {/* Footer */}
+      {/* ================= FOOTER ================= */}
       <p
-        className={`text-xs text-center py-8 ${
-          darkMode ? "text-slate-600" : "text-slate-400"
-        }`}
+        className={`text-xs text-center py-8 ${darkMode ? "text-slate-600" : "text-slate-400"}`}
       >
         © {new Date().getFullYear()} Athletix • Analytics Dashboard
       </p>

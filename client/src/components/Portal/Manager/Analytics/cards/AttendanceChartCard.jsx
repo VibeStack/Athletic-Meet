@@ -29,10 +29,8 @@ export default function AttendanceChartCard({
 }) {
   const [selectedEvent, setSelectedEvent] = useState("");
 
-  // Get attendance data based on selected event
   const getAttendanceData = () => {
-    if (!selectedEvent || selectedEvent === "") {
-      // Overall attendance
+    if (!selectedEvent) {
       return (
         data
           ?.filter((d) => d._id)
@@ -42,53 +40,31 @@ export default function AttendanceChartCard({
             key: d._id,
           })) || []
       );
-    } else {
-      // Event-specific attendance
-      const event = eventWiseAttendance?.find((e) => e._id === selectedEvent);
-      if (!event) return [];
-      return [
-        { name: "Present", value: event.present || 0, key: "present" },
-        { name: "Absent", value: event.absent || 0, key: "absent" },
-        { name: "Not Marked", value: event.notMarked || 0, key: "notMarked" },
-      ].filter((d) => d.value > 0);
     }
+
+    const event = eventWiseAttendance?.find((e) => e._id === selectedEvent);
+    if (!event) return [];
+
+    return [
+      { name: "Present", value: event.present || 0, key: "present" },
+      { name: "Absent", value: event.absent || 0, key: "absent" },
+      { name: "Not Marked", value: event.notMarked || 0, key: "notMarked" },
+    ].filter((d) => d.value > 0);
   };
 
   const chartData = getAttendanceData();
   const total = chartData.reduce((acc, d) => acc + d.value, 0);
 
-  if (!data && !eventWiseAttendance) {
-    return (
-      <div
-        className={`rounded-2xl p-4 sm:p-6 ${
-          darkMode
-            ? "bg-slate-900/80 border border-slate-800/50"
-            : "bg-white border border-slate-200/50 shadow-lg"
-        }`}
-      >
-        <h3
-          className={`text-lg font-semibold mb-4 ${
-            darkMode ? "text-white" : "text-slate-900"
-          }`}
-        >
-          Attendance Status
-        </h3>
-        <p className={darkMode ? "text-slate-400" : "text-slate-500"}>
-          No data available
-        </p>
-      </div>
-    );
-  }
-
   return (
     <div
-      className={`rounded-2xl p-4 sm:p-6 ${
+      className={`rounded-2xl p-6 ${
         darkMode
           ? "bg-slate-900/80 border border-slate-800/50"
           : "bg-white border border-slate-200/50 shadow-lg"
       }`}
     >
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
+      {/* ================= HEADER (FIXED HEIGHT) ================= */}
+      <div className="mb-4 min-h-[88px] flex items-start justify-between">
         <div>
           <h3
             className={`text-lg font-semibold ${
@@ -107,47 +83,58 @@ export default function AttendanceChartCard({
           </p>
         </div>
 
-        {/* Enhanced Event Select Dropdown */}
-        {eventWiseAttendance && eventWiseAttendance.length > 0 && (
-          <div className="relative">
-            <select
-              value={selectedEvent}
-              onChange={(e) => setSelectedEvent(e.target.value)}
-              className={`appearance-none w-full sm:w-56 px-4 py-2.5 pr-10 rounded-xl text-sm font-medium border-2 transition-all cursor-pointer ${
-                darkMode
-                  ? "bg-slate-800/80 border-slate-700 text-white hover:border-slate-600 focus:border-cyan-500"
-                  : "bg-white border-slate-200 text-slate-700 hover:border-slate-300 focus:border-cyan-500"
-              } focus:outline-none focus:ring-2 focus:ring-cyan-500/20 shadow-sm`}
-            >
-              <option value="">All Events</option>
-              {sortEvents(eventWiseAttendance).map((event) => (
-                <option key={event._id} value={event._id}>
-                  {event.name} ({event.category})
-                </option>
-              ))}
-            </select>
-            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-              <ChevronIcon />
+        {/* Right Slot (reserved space) */}
+        <div className="h-[40px] w-[224px]">
+          {eventWiseAttendance?.length > 0 && (
+            <div className="relative">
+              <select
+                value={selectedEvent}
+                onChange={(e) => setSelectedEvent(e.target.value)}
+                className={`appearance-none w-full px-4 py-2.5 pr-10 rounded-xl text-sm font-medium border-2 transition-all cursor-pointer ${
+                  darkMode
+                    ? "bg-slate-800/80 border-slate-700 text-white hover:border-slate-600 focus:border-cyan-500"
+                    : "bg-white border-slate-200 text-slate-700 hover:border-slate-300 focus:border-cyan-500"
+                } focus:outline-none focus:ring-2 focus:ring-cyan-500/20 shadow-sm`}
+              >
+                <option value="">All Events</option>
+                {sortEvents(eventWiseAttendance).map((event) => (
+                  <option key={event._id} value={event._id}>
+                    {event.name} ({event.category})
+                  </option>
+                ))}
+              </select>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                <ChevronIcon />
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
+      {/* ================= CHART (FIXED HEIGHT) ================= */}
       {chartData.length === 0 ? (
-        <div className="h-64 flex items-center justify-center">
-          <p className={darkMode ? "text-slate-400" : "text-slate-500"}>
-            No attendance data for this event
+        <div className="h-[260px] flex flex-col items-center justify-center text-center px-6">
+          <div
+            className={`mb-3 text-sm font-medium ${
+              darkMode ? "text-slate-300" : "text-slate-600"
+            }`}
+          >
+            No attendance recorded
+          </div>
+
+          <p
+            className={`text-xs sm:text-sm max-w-xs ${
+              darkMode ? "text-slate-400" : "text-slate-500"
+            }`}
+          >
+            Attendance for this event has not been marked yet. Once attendance
+            is taken, details will appear here.
           </p>
         </div>
       ) : (
         <>
-          <div className="h-64">
-            <ResponsiveContainer
-              width="100%"
-              height="100%"
-              minWidth={0}
-              minHeight={0}
-            >
+          <div className="h-[260px] flex items-center justify-center">
+            <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={chartData}
@@ -161,11 +148,12 @@ export default function AttendanceChartCard({
                 >
                   {chartData.map((entry) => (
                     <Cell
-                      key={entry.name}
+                      key={entry.key}
                       fill={STATUS_COLORS[entry.key] || "#f59e0b"}
                     />
                   ))}
                 </Pie>
+
                 <Tooltip
                   contentStyle={{
                     backgroundColor: darkMode ? "#1e293b" : "#ffffff",
@@ -177,9 +165,11 @@ export default function AttendanceChartCard({
                     color: darkMode ? "#f1f5f9" : "#1e293b",
                   }}
                 />
+
                 <Legend
                   verticalAlign="bottom"
-                  height={36}
+                  height={40}
+                  align="center"
                   formatter={(value) => (
                     <span
                       style={{
@@ -195,29 +185,27 @@ export default function AttendanceChartCard({
             </ResponsiveContainer>
           </div>
 
-          {/* Stats below chart - with better gap */}
-          <div
-            className={`flex justify-around items-center gap-6 mt-6 pt-5 border-t ${
-              darkMode ? "border-slate-700/50" : "border-slate-200"
-            }`}
-          >
-            {chartData.map((d) => (
-              <div key={d.name} className="text-center px-2">
-                <p
-                  className="text-2xl sm:text-3xl font-bold"
-                  style={{ color: STATUS_COLORS[d.key] || "#f59e0b" }}
-                >
-                  {d.value.toLocaleString()}
-                </p>
-                <p
-                  className={`text-xs sm:text-sm mt-1 ${
-                    darkMode ? "text-slate-400" : "text-slate-500"
-                  }`}
-                >
-                  {d.name}
-                </p>
-              </div>
-            ))}
+          {/* ================= STATS (FIXED HEIGHT) ================= */}
+          <div className="mt-4 pt-4 border-t border-slate-700/30 min-h-[96px]">
+            <div className={`grid grid-cols-${chartData.length} gap-4`}>
+              {chartData.map((d) => (
+                <div key={d.key} className="text-center">
+                  <p
+                    className="text-2xl sm:text-3xl font-bold"
+                    style={{ color: STATUS_COLORS[d.key] }}
+                  >
+                    {d.value}
+                  </p>
+                  <p
+                    className={`text-xs sm:text-sm mt-1 ${
+                      darkMode ? "text-slate-400" : "text-slate-500"
+                    }`}
+                  >
+                    {d.name} ({((d.value / total) * 100).toFixed(1)}%)
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
         </>
       )}

@@ -16,29 +16,6 @@ export default function YearBreakdownCard({ data, darkMode }) {
 
   const total = chartData.reduce((acc, d) => acc + d.count, 0);
 
-  if (chartData.length === 0) {
-    return (
-      <div
-        className={`rounded-2xl p-6 ${
-          darkMode
-            ? "bg-slate-900/80 border border-slate-800/50"
-            : "bg-white border border-slate-200/50 shadow-lg"
-        }`}
-      >
-        <h3
-          className={`text-lg font-semibold mb-4 ${
-            darkMode ? "text-white" : "text-slate-900"
-          }`}
-        >
-          Participants by Year
-        </h3>
-        <p className={darkMode ? "text-slate-400" : "text-slate-500"}>
-          No data available
-        </p>
-      </div>
-    );
-  }
-
   return (
     <div
       className={`rounded-2xl p-6 ${
@@ -47,29 +24,33 @@ export default function YearBreakdownCard({ data, darkMode }) {
           : "bg-white border border-slate-200/50 shadow-lg"
       }`}
     >
-      <h3
-        className={`text-lg font-semibold mb-2 ${
-          darkMode ? "text-white" : "text-slate-900"
-        }`}
-      >
-        Participants by Year
-      </h3>
-      <p
-        className={`text-sm mb-6 ${
-          darkMode ? "text-slate-400" : "text-slate-500"
-        }`}
-      >
-        {total.toLocaleString()} registered users
-      </p>
+      {/* HEADER */}
+      <div className="mb-4 min-h-[88px]">
+        <h3
+          className={`text-lg font-semibold ${
+            darkMode ? "text-white" : "text-slate-900"
+          }`}
+        >
+          Participants by Year
+        </h3>
+        <p
+          className={`text-sm ${
+            darkMode ? "text-slate-400" : "text-slate-500"
+          }`}
+        >
+          {total.toLocaleString()} registered users
+        </p>
+      </div>
 
-      <div className="space-y-4">
+      {/* PROGRESS LIST */}
+      <div className="space-y-5">
         {chartData.map((d) => {
-          const percentage = total > 0 ? (d.count / total) * 100 : 0;
+          const percentage = total ? (d.count / total) * 100 : 0;
           const color = YEAR_COLORS[d._id] || "#6b7280";
 
           return (
             <div key={d._id}>
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex justify-between mb-2">
                 <span
                   className={`text-sm font-medium ${
                     darkMode ? "text-slate-300" : "text-slate-700"
@@ -85,16 +66,17 @@ export default function YearBreakdownCard({ data, darkMode }) {
                   {d.count.toLocaleString()} ({percentage.toFixed(1)}%)
                 </span>
               </div>
+
               <div
-                className={`relative h-3 rounded-full overflow-hidden ${
+                className={`h-4 rounded-full overflow-hidden ${
                   darkMode ? "bg-slate-800" : "bg-slate-200"
                 }`}
               >
                 <div
-                  className="absolute top-0 left-0 h-full rounded-full transition-all duration-500 ease-out"
+                  className="h-full rounded-full transition-all duration-500"
                   style={{
                     width: `${percentage}%`,
-                    background: `linear-gradient(90deg, ${color}, ${color}dd)`,
+                    background: `linear-gradient(90deg, ${color}, ${color}cc)`,
                   }}
                 />
               </div>
@@ -103,21 +85,21 @@ export default function YearBreakdownCard({ data, darkMode }) {
         })}
       </div>
 
-      {/* Summary grid */}
-      <div className="grid grid-cols-4 gap-2 mt-6 pt-4 border-t border-slate-700/30">
+      {/* SUMMARY */}
+      <div className="grid grid-cols-4 gap-3 mt-6 pt-4 border-t border-slate-700/30">
         {["1st Year", "2nd Year", "3rd Year", "4th Year"].map((year) => {
           const yearData = chartData.find((d) => d._id === year);
           return (
             <div key={year} className="text-center">
               <p
-                className="text-lg font-bold"
+                className="text-xl font-bold"
                 style={{ color: YEAR_COLORS[year] }}
               >
                 {yearData?.count?.toLocaleString() || 0}
               </p>
               <p
-                className={`text-[10px] ${
-                  darkMode ? "text-slate-500" : "text-slate-400"
+                className={`text-xs ${
+                  darkMode ? "text-slate-400" : "text-slate-500"
                 }`}
               >
                 {year.replace(" Year", "")}

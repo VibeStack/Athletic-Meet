@@ -386,11 +386,13 @@ export default function ExportDataPage() {
   if (loading || (allStudents.length === 0 && !error)) {
     return (
       <LoadingComponent
+        title="Export Sheets"
         message={
           allStudents.length === 0 && !loading
             ? "Waiting for student data..."
             : "Syncing student database..."
         }
+        darkMode={darkMode}
       />
     );
   }

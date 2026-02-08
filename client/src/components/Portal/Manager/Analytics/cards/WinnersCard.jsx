@@ -1,7 +1,7 @@
 const POSITION_COLORS = {
-  1: "#fbbf24", // Gold
-  2: "#94a3b8", // Silver
-  3: "#cd7f32", // Bronze
+  1: "#fbbf24",
+  2: "#94a3b8",
+  3: "#cd7f32",
 };
 
 const POSITION_LABELS = {
@@ -20,97 +20,97 @@ export default function WinnersCard({ data, darkMode }) {
 
   const totalWinners = sortedData.reduce((acc, d) => acc + d.count, 0);
 
-  if (sortedData.length === 0) {
-    return (
-      <div
-        className={`rounded-2xl p-6 ${
-          darkMode
-            ? "bg-slate-900/80 border border-slate-800/50"
-            : "bg-white border border-slate-200/50 shadow-lg"
-        }`}
-      >
-        <h3
-          className={`text-lg font-semibold mb-4 ${
-            darkMode ? "text-white" : "text-slate-900"
-          }`}
-        >
-          Winners & Positions
-        </h3>
-        <p className={darkMode ? "text-slate-400" : "text-slate-500"}>
-          No winners data yet
-        </p>
-      </div>
-    );
-  }
-
   return (
     <div
-      className={`rounded-2xl p-6 ${
+      className={`rounded-2xl p-6 flex flex-col ${
         darkMode
           ? "bg-slate-900/80 border border-slate-800/50"
           : "bg-white border border-slate-200/50 shadow-lg"
       }`}
     >
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h3
-            className={`text-lg font-semibold ${
-              darkMode ? "text-white" : "text-slate-900"
+      {/* HEADER */}
+      <div className="mb-4">
+        <h3
+          className={`text-lg font-semibold ${
+            darkMode ? "text-white" : "text-slate-900"
+          }`}
+        >
+          Winners & Positions
+        </h3>
+        <p
+          className={`text-sm ${
+            darkMode ? "text-slate-400" : "text-slate-500"
+          }`}
+        >
+          {totalWinners.toLocaleString()} total winners
+        </p>
+      </div>
+
+      {/* CONTENT */}
+      {sortedData.length === 0 ? (
+        <div className="flex flex-col flex-1 items-center justify-center text-center px-6">
+          <div
+            className={`mb-2 text-sm font-medium ${
+              darkMode ? "text-slate-300" : "text-slate-600"
             }`}
           >
-            Winners & Positions
-          </h3>
+            No winners declared
+          </div>
+
           <p
-            className={`text-sm ${
+            className={`text-xs sm:text-sm max-w-xs ${
               darkMode ? "text-slate-400" : "text-slate-500"
             }`}
           >
-            {totalWinners.toLocaleString()} total winners
+            Winners will appear here once results are announced and positions
+            are finalized.
           </p>
         </div>
-      </div>
+      ) : (
+        <div className="flex flex-wrap my-auto gap-4">
+          {[1, 2, 3].map((position) => {
+            const posData = sortedData.find((d) => d._id === position);
+            const count = posData?.count || 0;
 
-      <div className="grid grid-cols-3 gap-4">
-        {[1, 2, 3].map((position) => {
-          const posData = sortedData.find((d) => d._id === position);
-          const count = posData?.count || 0;
+            return (
+              <div
+                key={position}
+                className={`relative flex-1 min-w-[160px] rounded-xl p-5 text-center ${
+                  darkMode
+                    ? "bg-slate-800/60 border border-slate-700/50"
+                    : "bg-slate-50 border border-slate-200"
+                }`}
+              >
+                {/* Highlight 1st place */}
+                {position === 1 && (
+                  <div className="absolute inset-0 rounded-xl bg-yellow-500/5" />
+                )}
 
-          return (
-            <div
-              key={position}
-              className={`relative overflow-hidden rounded-xl p-4 text-center transition-all duration-300 hover:scale-105 ${
-                darkMode
-                  ? "bg-slate-800/50 border border-slate-700/50"
-                  : "bg-linear-to-br from-slate-50 to-slate-100 border border-slate-200"
-              }`}
-            >
-              {/* Shine effect for 1st place */}
-              {position === 1 && (
-                <div className="absolute inset-0 bg-linear-to-br from-yellow-500/10 to-transparent" />
-              )}
+                <div className="relative">
+                  <div className="flex justify-center mb-3">
+                    <TrophyIcon color={POSITION_COLORS[position]} />
+                  </div>
 
-              <div className="relative">
-                <div className="flex justify-center mb-2">
-                  <TrophyIcon color={POSITION_COLORS[position]} />
+                  <p
+                    className="text-3xl font-bold"
+                    style={{ color: POSITION_COLORS[position] }}
+                  >
+                    {count.toLocaleString()}
+                  </p>
+
+                  <p
+                    className={`mt-1 text-sm font-medium ${
+                      darkMode ? "text-slate-400" : "text-slate-500"
+                    }`}
+                  >
+                    {POSITION_LABELS[position]}
+                  </p>
                 </div>
-                <p
-                  className="text-2xl font-bold"
-                  style={{ color: POSITION_COLORS[position] }}
-                >
-                  {count.toLocaleString()}
-                </p>
-                <p
-                  className={`text-xs mt-1 ${
-                    darkMode ? "text-slate-400" : "text-slate-500"
-                  }`}
-                >
-                  {POSITION_LABELS[position]}
-                </p>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
