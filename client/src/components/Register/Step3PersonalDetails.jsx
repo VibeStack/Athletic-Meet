@@ -204,7 +204,7 @@ export default function Step3PersonalDetails({ nextStep }) {
 
       <div className="relative space-y-4 pb-1">
         <div className="relative">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 md:gap-4">
             <InputField
               label="Full Name"
               id="fullname"
@@ -228,7 +228,7 @@ export default function Step3PersonalDetails({ nextStep }) {
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 md:gap-4">
             <SelectField
               label="Course"
               id="course"
@@ -255,7 +255,7 @@ export default function Step3PersonalDetails({ nextStep }) {
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 md:gap-4">
             <InputField
               label="College Roll Number (CRN)"
               id="crn"
@@ -291,7 +291,7 @@ export default function Step3PersonalDetails({ nextStep }) {
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 md:gap-4">
             <SelectField
               label="Year"
               id="year"
