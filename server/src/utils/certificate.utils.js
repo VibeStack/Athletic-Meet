@@ -1,4 +1,8 @@
-import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+// ============================================================
+//  certificate.utils.js  –  rewritten with node-canvas + PDFKit
+// ============================================================
+import { createCanvas, loadImage, registerFont } from "canvas";
+import PDFDocument from "pdfkit";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -6,173 +10,175 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-/**
- * PDF COORDINATE SYSTEM (pdf-lib)
- * ------------------------------
- * Origin (0,0) is BOTTOM-LEFT.
- * x -> left to right
- * y -> bottom to top
- */
+// ========================
+//  DIMENSIONS
+// ========================
+const WIDTH = 900;
+const HEIGHT = 635;
 
-const CERTIFICATE_WIDTH = 900;
-const CERTIFICATE_HEIGHT = 635;
+// ========================
+//  FONT REGISTRATION
+// ========================
+const FONTS_DIR = path.join(__dirname, "..", "..", "public", "fonts");
 
-const SHARED_TEXT_COLOR = rgb(0, 0, 0);
+const safeRegisterFont = (fileName, opts) => {
+  const fullPath = path.join(FONTS_DIR, fileName);
+  if (fs.existsSync(fullPath)) {
+    registerFont(fullPath, opts);
+  } else {
+    console.warn(`⚠️  Font not found, skipping: ${fileName}`);
+  }
+};
 
-/* ===========================
-   CERTIFICATE LAYOUT CONFIG
-   (ALL VALUES NOW RELATIVE
-    TO 900 x 635)
-   =========================== */
+// -------------------------------------------------------
+//  ALL YOUR AVAILABLE FONTS (matched to your actual files)
+// -------------------------------------------------------
+safeRegisterFont("NewRocker-Regular.ttf", {
+  family: "New Rocker",
+});
 
+// ========================
+//  FONT OPTIONS
+// ========================
+//
+//  ┌─────────────────────────┬──────────────────────────────────────┐
+//  │  Font Name              │  Style / Best For                    │
+//  ├─────────────────────────┼──────────────────────────────────────┤
+//  │  "Dancing Script"       │  Cursive, elegant (great for names)  │
+//  │  "Playfair Display"     │  Serif, formal, classic              │
+//  │  "Merriweather"         │  Serif, readable, traditional        │
+//  │  "League Spartan"       │  Bold, modern, clean                 │
+//  │  "Nunito"               │  Rounded, friendly, clean            │
+//  └─────────────────────────┴──────────────────────────────────────┘
+//
+//  HOW TO CHANGE FONT:
+//  Just change the family name in FONT_PRESETS below.
+//  Example:  'bold 32px "Dancing Script"'
+//            '700 22px "Playfair Display"'
+//            'bold 20px "Nunito"'
+
+// ========================
+//  ACTIVE FONT PRESETS
+//  ↓↓↓ CHANGE FONT HERE ↓↓↓
+// ========================
+// const ACTIVE_FONT = "Dancing Script";       // cursive, elegant
+// const ACTIVE_FONT = "Playfair Display";  // serif, formal
+// const ACTIVE_FONT = "Merriweather";      // serif, traditional
+// const ACTIVE_FONT = "League Spartan";    // bold, modern
+// const ACTIVE_FONT = "Nunito";            // rounded, friendly
+// const ACTIVE_FONT = "Open Sans";  // ← Change to this
+const ACTIVE_FONT = "New Rocker";
+
+// ← Change this one value to switch ALL fonts
+
+const FONT_PRESETS = {
+  name: { font: `700 32px "${ACTIVE_FONT}"`, color: "#000000" },
+  primary: { font: `700 24px "${ACTIVE_FONT}"`, color: "#000000" },
+};
+
+// ========================
+//  LAYOUT CONFIG
+// ========================
 const CERTIFICATE_LAYOUT = {
   participation: {
-    // Student name (centered on full page)
     name: {
       align: "page-center",
-      y: 290,
-      font: StandardFonts.HelveticaBold,
-      size: 28,
-      color: SHARED_TEXT_COLOR,
+      y: HEIGHT - 290,
+      ...FONT_PRESETS.name,
     },
-
-    // Course / Branch
     courseBranch: {
       startX: 80,
       endX: 550,
-      y: 240,
-      font: StandardFonts.HelveticaBold,
-      size: 20,
-      color: SHARED_TEXT_COLOR,
+      y: HEIGHT - 240,
       align: "center-between",
+      ...FONT_PRESETS.primary,
     },
-
-    // Roll number
     urn: {
       startX: 690,
       endX: 850,
-      y: 240,
-      font: StandardFonts.HelveticaBold,
-      size: 20,
-      color: SHARED_TEXT_COLOR,
+      y: HEIGHT - 240,
       align: "center-between",
+      ...FONT_PRESETS.primary,
     },
-
-    // Event name
     eventName: {
       startX: 290,
       endX: 535,
-      y: 183,
-      font: StandardFonts.HelveticaBold,
-      size: 20,
-      color: SHARED_TEXT_COLOR,
+      y: HEIGHT - 183,
       align: "center-between",
+      ...FONT_PRESETS.primary,
     },
   },
 
   winner: {
     name: {
       align: "page-center",
-      y: 290,
-      font: StandardFonts.HelveticaBold,
-      size: 28,
-      color: SHARED_TEXT_COLOR,
+      y: HEIGHT - 290,
+      ...FONT_PRESETS.name,
     },
-
-    // Course / Branch
     courseBranch: {
       startX: 85,
       endX: 555,
-      y: 235,
-      font: StandardFonts.HelveticaBold,
-      size: 20,
-      color: SHARED_TEXT_COLOR,
+      y: HEIGHT - 235,
       align: "center-between",
+      ...FONT_PRESETS.primary,
     },
-
-    // Roll number
     urn: {
       startX: 690,
       endX: 850,
-      y: 235,
-      font: StandardFonts.HelveticaBold,
-      size: 20,
-      color: SHARED_TEXT_COLOR,
+      y: HEIGHT - 235,
       align: "center-between",
+      ...FONT_PRESETS.primary,
     },
-
     position: {
       startX: 130,
       endX: 300,
-      y: 175,
-      font: StandardFonts.HelveticaBold,
-      size: 20,
-      color: SHARED_TEXT_COLOR,
+      y: HEIGHT - 175,
       align: "center-between",
+      ...FONT_PRESETS.primary,
     },
-
     eventName: {
       startX: 330,
       endX: 500,
-      y: 175,
-      font: StandardFonts.HelveticaBold,
-      size: 20,
-      color: SHARED_TEXT_COLOR,
+      y: HEIGHT - 175,
       align: "center-between",
+      ...FONT_PRESETS.primary,
     },
   },
 };
 
-/* ===========================
-   TEXT DRAW HELPER
-   =========================== */
+// ========================
+//  DRAW HELPER
+// ========================
+const drawTextField = (
+  ctx,
+  { text, x, y, startX, endX, font, color, align }
+) => {
+  ctx.font = font;
+  ctx.fillStyle = color;
 
-const drawTextField = ({
-  page,
-  text,
-  x,
-  y,
-  startX,
-  endX,
-  font,
-  size,
-  color,
-  align,
-  pageWidth,
-}) => {
   let drawX = x ?? 0;
 
-  // Center across full page
   if (align === "page-center") {
-    const textWidth = font.widthOfTextAtSize(text, size);
-    drawX = pageWidth / 2 - textWidth / 2;
+    const measured = ctx.measureText(text);
+    drawX = WIDTH / 2 - measured.width / 2;
   }
 
-  // Center inside a defined horizontal range
   if (align === "center-between") {
     const boxWidth = endX - startX;
-    const textWidth = font.widthOfTextAtSize(text, size);
-    drawX = startX + (boxWidth - textWidth) / 2;
+    const measured = ctx.measureText(text);
+    drawX = startX + (boxWidth - measured.width) / 2;
   }
 
-  page.drawText(text, {
-    x: drawX,
-    y,
-    size,
-    font,
-    color,
-  });
+  ctx.fillText(text, drawX, y);
 };
 
-/* ===========================
-   MAIN PDF GENERATOR
-   =========================== */
-
+// ========================
+//  MAIN GENERATOR
+// ========================
 export const generateCertificatePDF = async ({ user, userEvent, type }) => {
   const layout = CERTIFICATE_LAYOUT[type];
   const eventName = String(userEvent.eventName || "Event");
 
-  /* ---------- LOAD TEMPLATE ---------- */
   const templateFileName =
     type === "winner"
       ? "winnersCertificate.png"
@@ -191,72 +197,22 @@ export const generateCertificatePDF = async ({ user, userEvent, type }) => {
     throw new Error("Certificate template not found");
   }
 
-  const pdfDoc = await PDFDocument.create();
+  const templateImage = await loadImage(templatePath);
 
-  const templateImage = await pdfDoc.embedPng(fs.readFileSync(templatePath));
+  // Step 1: Create canvas and draw certificate with text
+  const canvas = createCanvas(WIDTH, HEIGHT);
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(templateImage, 0, 0, WIDTH, HEIGHT);
 
-  /* ---------- FIXED PAGE SIZE ---------- */
-  const page = pdfDoc.addPage([CERTIFICATE_WIDTH, CERTIFICATE_HEIGHT]);
-
-  /* ---------- SCALE IMAGE TO FIT PAGE ---------- */
-  page.drawImage(templateImage, {
-    x: 0,
-    y: 0,
-    width: CERTIFICATE_WIDTH,
-    height: CERTIFICATE_HEIGHT,
-  });
-
-  /* ---------- EMBED FONTS ---------- */
-  const fonts = {
-    [StandardFonts.Helvetica]: await pdfDoc.embedFont(StandardFonts.Helvetica),
-    [StandardFonts.HelveticaBold]: await pdfDoc.embedFont(
-      StandardFonts.HelveticaBold
-    ),
-  };
-
-  /* ---------- DATA ---------- */
   const studentName = String(user.fullname || user.username);
   const courseBranch = user.branch
     ? `${user.course} - ${user.branch}`
     : user.course;
   const urn = String(user.urn || "N/A");
 
-  /* ---------- DRAW TEXT ---------- */
-
-  // Name
-  drawTextField({
-    page,
-    text: studentName,
-    ...layout.name,
-    font: fonts[layout.name.font],
-    pageWidth: CERTIFICATE_WIDTH,
-  });
-
-  if (type === "participation") {
-    drawTextField({
-      page,
-      text: courseBranch,
-      ...layout.courseBranch,
-      font: fonts[layout.courseBranch.font],
-      pageWidth: CERTIFICATE_WIDTH,
-    });
-
-    drawTextField({
-      page,
-      text: urn,
-      ...layout.urn,
-      font: fonts[layout.urn.font],
-      pageWidth: CERTIFICATE_WIDTH,
-    });
-
-    drawTextField({
-      page,
-      text: eventName,
-      ...layout.eventName,
-      font: fonts[layout.eventName.font],
-      pageWidth: CERTIFICATE_WIDTH,
-    });
-  }
+  drawTextField(ctx, { text: studentName, ...layout.name });
+  drawTextField(ctx, { text: courseBranch, ...layout.courseBranch });
+  drawTextField(ctx, { text: urn, ...layout.urn });
 
   if (type === "winner") {
     const positionText =
@@ -266,43 +222,36 @@ export const generateCertificatePDF = async ({ user, userEvent, type }) => {
           ? "2nd Position"
           : "3rd Position";
 
-    // ✅ Course / Branch
-    drawTextField({
-      page,
-      text: courseBranch,
-      ...layout.courseBranch,
-      font: fonts[layout.courseBranch.font],
-      pageWidth: CERTIFICATE_WIDTH,
-    });
-
-    // ✅ Roll Number
-    drawTextField({
-      page,
-      text: urn,
-      ...layout.urn,
-      font: fonts[layout.urn.font],
-      pageWidth: CERTIFICATE_WIDTH,
-    });
-
-    // Position
-    drawTextField({
-      page,
-      text: positionText,
-      ...layout.position,
-      font: fonts[layout.position.font],
-      pageWidth: CERTIFICATE_WIDTH,
-    });
-
-    // Event Name
-    drawTextField({
-      page,
-      text: eventName,
-      ...layout.eventName,
-      font: fonts[layout.eventName.font],
-      pageWidth: CERTIFICATE_WIDTH,
-    });
+    drawTextField(ctx, { text: positionText, ...layout.position });
   }
 
-  const pdfBytes = await pdfDoc.save();
-  return { pdfBytes, studentName, eventName };
+  drawTextField(ctx, { text: eventName, ...layout.eventName });
+
+  // Step 2: Convert canvas to PNG buffer
+  const pngBuffer = canvas.toBuffer("image/png");
+
+  // Step 3: Create PDF and embed the PNG image
+  const pdf = new PDFDocument({
+    size: [WIDTH, HEIGHT],
+    margins: { top: 0, bottom: 0, left: 0, right: 0 }
+  });
+
+  const chunks = [];
+  
+  return new Promise((resolve, reject) => {
+    pdf.on('data', (chunk) => chunks.push(chunk));
+    pdf.on('end', () => {
+      const pdfBytes = Buffer.concat(chunks);
+      resolve({ pdfBytes, studentName, eventName });
+    });
+    pdf.on('error', reject);
+
+    // Embed the certificate image into the PDF
+    pdf.image(pngBuffer, 0, 0, {
+      width: WIDTH,
+      height: HEIGHT
+    });
+
+    pdf.end();
+  });
 };
