@@ -16,7 +16,7 @@ const cookieOptions = {
 };
 
 export const loginUser = asyncHandler(async (req, res) => {
-  const { username, email, password } = req.body;
+  const { email, password } = req.body;
 
   const existingSid = req.signedCookies?.sid;
   if (existingSid) {
@@ -31,7 +31,7 @@ export const loginUser = asyncHandler(async (req, res) => {
   }
 
   const isPasswordValid = await user.comparePassword(password);
-  if (!isPasswordValid || user.username !== username.toLowerCase()) {
+  if (!isPasswordValid) {
     throw new ApiError(401, "Invalid credentials");
   }
 

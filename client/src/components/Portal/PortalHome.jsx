@@ -38,14 +38,7 @@ export default function PortalHome() {
       return;
     }
 
-    const qrPayload = {
-      id: "GNDEC Athletix 2026",
-      jerseyNumber: user.jerseyNumber,
-    };
-
-    console.log({ qrPayload });
-
-    generateQr(qrPayload, {
+    generateQr(user.jerseyNumber, {
       darkMode,
       width: 180,
     }).then(setQrCodeDataUrl);

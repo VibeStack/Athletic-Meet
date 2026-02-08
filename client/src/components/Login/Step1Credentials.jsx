@@ -80,7 +80,7 @@ export default function Step1Credentials({ nextStep }) {
         </h3>
 
         <div className="space-y-4 pb-1">
-          <InputField
+          {/* <InputField
             label="Username"
             id="username"
             placeholder="Enter Username"
@@ -96,7 +96,7 @@ export default function Step1Credentials({ nextStep }) {
               },
             }}
             errors={errors}
-          />
+          /> */}
 
           <InputField
             label="Email"

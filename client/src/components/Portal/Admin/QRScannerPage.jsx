@@ -258,40 +258,31 @@ export default function QRScannerPage() {
     setScanning(false);
   }, []);
 
-  const onScanSuccess = async (decodedText) => {
+  const onScanSuccess = async (jerseyNumber) => {
     if (scanLockRef.current) return;
     scanLockRef.current = true;
 
     setProcessing(true);
 
-    let parsedData;
-
     try {
-      parsedData = JSON.parse(decodedText);
-
-      if (!parsedData.jerseyNumber || !parsedData.id) {
-        throw new Error("Invalid QR code format");
-      }
-
       await axios.post(
         `${API_URL}/admin/user/event/qrAttendance`,
         {
-          recognitionId: parsedData.id,
-          jerseyNumber: parsedData.jerseyNumber,
+          jerseyNumber,
           eventId: selectedEvent,
         },
         { withCredentials: true },
       );
 
       /* ---------- SUCCESS ---------- */
-      toast.success(`✅ Jersey ${parsedData.jerseyNumber} marked PRESENT`, {
+      toast.success(`✅ Jersey ${jerseyNumber} marked PRESENT`, {
         position: "bottom-right",
       });
 
       setScanResult({
         success: true,
-        jerseyNumber: parsedData.jerseyNumber,
-        name: parsedData.name || "Student",
+        jerseyNumber,
+        name: "Student",
         message: "Attendance marked successfully",
         alreadyPresent: false,
       });
@@ -305,14 +296,14 @@ export default function QRScannerPage() {
 
       /* ---------- ALREADY MARKED ---------- */
       if (status === 400 && message.includes("already marked")) {
-        toast.info(`ℹ️ Jersey ${parsedData?.jerseyNumber} already PRESENT`, {
+        toast.info(`ℹ️ Jersey ${jerseyNumber} already PRESENT`, {
           position: "bottom-right",
         });
 
         setScanResult({
           success: true,
-          jerseyNumber: parsedData?.jerseyNumber,
-          name: parsedData?.name || "Student",
+          jerseyNumber,
+          name: "Student",
           message: "Already marked present",
           alreadyPresent: true,
         });
@@ -326,7 +317,7 @@ export default function QRScannerPage() {
 
         setScanResult({
           success: false,
-          jerseyNumber: parsedData?.jerseyNumber,
+          jerseyNumber,
           message: "Temporary conflict — retry scan",
         });
 
@@ -347,7 +338,7 @@ export default function QRScannerPage() {
 
         setScanResult({
           success: false,
-          jerseyNumber: parsedData?.jerseyNumber,
+          jerseyNumber,
           message,
         });
 

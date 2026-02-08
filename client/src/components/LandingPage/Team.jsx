@@ -23,7 +23,7 @@ const Team = ({ darkMode }) => {
   const stats = [
     { value: "20+", label: "Features" },
     { value: "3+", label: "Months" },
-    { value: "Solo", label: "Development Effort" },
+    { value: "Solo", label: "Single-Developer Build" }
   ];
 
   const highlights = [
