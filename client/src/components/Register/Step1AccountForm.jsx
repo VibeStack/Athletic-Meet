@@ -133,7 +133,7 @@ export default function Step1AccountForm({ nextStep, setStep }) {
         <InputField
           label="Username"
           id="username"
-          placeholder="Enter your new Username"
+          placeholder="Create a new Username"
           register={register}
           rules={{
             required: {
