@@ -80,7 +80,7 @@ export default function Step4Success() {
             </p>
 
             <a
-              href="YOUR_WHATSAPP_LINK"
+              href="https://chat.whatsapp.com/EOdhUazk3YGHEIYPc9NZKl"
               target="_blank"
               rel="noopener noreferrer"
               className="block w-full py-2.5 sm:py-3
