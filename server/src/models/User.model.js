@@ -120,6 +120,11 @@ const userSchema = new mongoose.Schema(
               message: "Position can only be assigned if student is present",
             },
           },
+          serialNo: {
+            type: Number,
+            default: 0,
+            min: 0,
+          },
         },
       ],
       default: [],

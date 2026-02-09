@@ -107,6 +107,13 @@ const CERTIFICATE_LAYOUT = {
       align: "center-between",
       ...FONT_PRESETS.primary,
     },
+    serialNo: {
+      x: 685,
+      y: 20,
+      font: '14px "New Rocker"',
+      color: "#333333",
+      align: "right",
+    },
   },
 
   winner: {
@@ -142,6 +149,13 @@ const CERTIFICATE_LAYOUT = {
       y: HEIGHT - 175,
       align: "center-between",
       ...FONT_PRESETS.primary,
+    },
+    serialNo: {
+      x: 685,
+      y: 20,
+      font: '14px "New Rocker"',
+      color: "#333333",
+      align: "right",
     },
   },
 };
@@ -227,29 +241,43 @@ export const generateCertificatePDF = async ({ user, userEvent, type }) => {
 
   drawTextField(ctx, { text: eventName, ...layout.eventName });
 
+  // Draw serial number if present
+  const serialNo = userEvent.serialNo || 0;
+  if (serialNo > 0 && layout.serialNo) {
+    // Get current academic year (e.g., "25-26" for 2025-2026)
+    const now = new Date();
+    const year = now.getFullYear() % 100;
+    const month = now.getMonth(); // 0-11
+    // Academic year starts in April (month 3)
+    const academicYear =
+      month >= 3 ? `${year}-${year + 1}` : `${year - 1}-${year}`;
+    const serialText = `Serial No: SP/ATH/${academicYear}/${String(serialNo).padStart(4, "0")}`;
+    drawTextField(ctx, { text: serialText, ...layout.serialNo });
+  }
+
   // Step 2: Convert canvas to PNG buffer
   const pngBuffer = canvas.toBuffer("image/png");
 
   // Step 3: Create PDF and embed the PNG image
   const pdf = new PDFDocument({
     size: [WIDTH, HEIGHT],
-    margins: { top: 0, bottom: 0, left: 0, right: 0 }
+    margins: { top: 0, bottom: 0, left: 0, right: 0 },
   });
 
   const chunks = [];
-  
+
   return new Promise((resolve, reject) => {
-    pdf.on('data', (chunk) => chunks.push(chunk));
-    pdf.on('end', () => {
+    pdf.on("data", (chunk) => chunks.push(chunk));
+    pdf.on("end", () => {
       const pdfBytes = Buffer.concat(chunks);
       resolve({ pdfBytes, studentName, eventName });
     });
-    pdf.on('error', reject);
+    pdf.on("error", reject);
 
     // Embed the certificate image into the PDF
     pdf.image(pngBuffer, 0, 0, {
       width: WIDTH,
-      height: HEIGHT
+      height: HEIGHT,
     });
 
     pdf.end();

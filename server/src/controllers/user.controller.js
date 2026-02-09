@@ -121,7 +121,7 @@ export const registerUser = asyncHandler(async (req, res) => {
     // Put jersey back if user update failed
     await SystemConfig.updateOne(
       { _id: "GLOBAL" },
-      { $addToSet: { freeJerseyNumbers: jerseyNumber } }
+      { $push: { freeJerseyNumbers: { $each: [jerseyNumber], $sort: 1 } } }
     );
 
     throw new ApiError(

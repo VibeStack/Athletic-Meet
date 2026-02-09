@@ -45,6 +45,107 @@ const canDeleteUser = (headRole, userRole = null) => {
   return false;
 };
 
+// =============================================
+// SERIAL NUMBER HELPERS
+// =============================================
+
+/**
+ * Get the next available serial number (reuses freed ones first)
+ * @param {mongoose.ClientSession} session - Optional transaction session
+ * @returns {Promise<number>} The next serial number
+ */
+const getNextSerialNumber = async (session = null) => {
+  // Try to pop from freeSerialNumbers first
+  const configWithFree = await SystemConfig.findOneAndUpdate(
+    { _id: "GLOBAL", "freeSerialNumbers.0": { $exists: true } },
+    { $pop: { freeSerialNumbers: -1 } },
+    { new: false, session }
+  );
+
+  if (configWithFree?.freeSerialNumbers?.length > 0) {
+    return configWithFree.freeSerialNumbers[0];
+  }
+
+  // No free numbers, increment counter
+  const updated = await SystemConfig.findOneAndUpdate(
+    { _id: "GLOBAL" },
+    { $inc: { lastAssignedSerialNumber: 1 } },
+    { new: true, session }
+  );
+
+  return updated.lastAssignedSerialNumber;
+};
+
+/**
+ * Get multiple serial numbers at once (for bulk operations)
+ * @param {number} count - Number of serial numbers needed
+ * @param {mongoose.ClientSession} session - Optional transaction session
+ * @returns {Promise<number[]>} Array of serial numbers
+ */
+const getMultipleSerialNumbers = async (count, session = null) => {
+  if (count <= 0) return [];
+
+  const serialNumbers = [];
+
+  // First, try to use free serial numbers
+  const config = await SystemConfig.findOne({ _id: "GLOBAL" }).session(session);
+  const freeCount = Math.min(count, config?.freeSerialNumbers?.length || 0);
+
+  if (freeCount > 0) {
+    const updated = await SystemConfig.findOneAndUpdate(
+      { _id: "GLOBAL" },
+      {
+        $push: {
+          freeSerialNumbers: {
+            $each: [],
+            $slice: -Math.max(
+              0,
+              (config.freeSerialNumbers?.length || 0) - freeCount
+            ),
+          },
+        },
+      },
+      { new: false, session }
+    );
+
+    // Get the removed serial numbers
+    const freedNumbers = updated.freeSerialNumbers.slice(0, freeCount);
+    serialNumbers.push(...freedNumbers);
+  }
+
+  // If we still need more, increment the counter
+  const remaining = count - serialNumbers.length;
+  if (remaining > 0) {
+    const updated = await SystemConfig.findOneAndUpdate(
+      { _id: "GLOBAL" },
+      { $inc: { lastAssignedSerialNumber: remaining } },
+      { new: true, session }
+    );
+
+    const startSerial = updated.lastAssignedSerialNumber - remaining + 1;
+    for (let i = 0; i < remaining; i++) {
+      serialNumbers.push(startSerial + i);
+    }
+  }
+
+  return serialNumbers;
+};
+
+/**
+ * Free a serial number for reuse
+ * @param {number} serialNo - Serial number to free
+ * @param {mongoose.ClientSession} session - Optional transaction session
+ */
+const freeSerialNumber = async (serialNo, session = null) => {
+  if (!serialNo || serialNo <= 0) return;
+
+  await SystemConfig.updateOne(
+    { _id: "GLOBAL" },
+    { $push: { freeSerialNumbers: { $each: [serialNo], $sort: 1 } } },
+    { session }
+  );
+};
+
 export const getAllUsers = asyncHandler(async (req, res) => {
   const users = await User.find(
     {},
@@ -392,6 +493,18 @@ export const unlockUserEvents = asyncHandler(async (req, res) => {
       .json(new ApiResponse(null, "Events unlocked successfully"));
   }
 
+  // Free serial numbers for events that were marked present
+  const serialNumbersToFree = selectedEvents
+    .filter((ev) => ev.status === "present" && ev.serialNo > 0)
+    .map((ev) => ev.serialNo);
+
+  if (serialNumbersToFree.length > 0) {
+    await SystemConfig.updateOne(
+      { _id: "GLOBAL" },
+      { $push: { freeSerialNumbers: { $each: serialNumbersToFree, $sort: 1 } } }
+    );
+  }
+
   // Build bulk decrement operations
   const bulkUpdates = selectedEvents.map((ev) => {
     const status = ev.status || "notMarked";
@@ -514,6 +627,7 @@ export const updateUserEvents = asyncHandler(async (req, res) => {
     eventId: new mongoose.Types.ObjectId(eventId),
     status: "notMarked",
     position: 0,
+    serialNo: 0,
   }));
 
   // Atomic user update (NO TRANSACTION NEEDED)
@@ -587,6 +701,23 @@ export const markAttendance = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Event not selected by user");
   }
 
+  // Step 5: Handle serial number assignment/freeing
+  let serialNoUpdate = {};
+  let assignedSerialNo = null;
+  const previousSerialNo = eventEntry.serialNo || 0;
+
+  if (newStatus === "present" && prevStatus !== "present") {
+    // Marking as present - assign new serial number
+    assignedSerialNo = await getNextSerialNumber();
+    serialNoUpdate = { "selectedEvents.$.serialNo": assignedSerialNo };
+  } else if (prevStatus === "present" && newStatus !== "present") {
+    // Unmarking from present - free serial number
+    if (previousSerialNo > 0) {
+      await freeSerialNumber(previousSerialNo);
+    }
+    serialNoUpdate = { "selectedEvents.$.serialNo": 0 };
+  }
+
   const userUpdate = await User.updateOne(
     {
       jerseyNumber,
@@ -599,11 +730,18 @@ export const markAttendance = asyncHandler(async (req, res) => {
       isEventsLocked: true,
     },
     {
-      $set: { "selectedEvents.$.status": newStatus },
+      $set: {
+        "selectedEvents.$.status": newStatus,
+        ...serialNoUpdate,
+      },
     }
   );
 
   if (!userUpdate.modifiedCount) {
+    // Rollback serial number if we assigned one
+    if (assignedSerialNo) {
+      await freeSerialNumber(assignedSerialNo);
+    }
     throw new ApiError(409, "Attendance state has already changed");
   }
 
@@ -629,9 +767,17 @@ export const markAttendance = asyncHandler(async (req, res) => {
         "selectedEvents.status": newStatus,
       },
       {
-        $set: { "selectedEvents.$.status": prevStatus },
+        $set: {
+          "selectedEvents.$.status": prevStatus,
+          "selectedEvents.$.serialNo": previousSerialNo,
+        },
       }
     );
+
+    // Rollback serial number changes
+    if (assignedSerialNo) {
+      await freeSerialNumber(assignedSerialNo);
+    }
 
     throw new ApiError(409, "Event counter conflict");
   }
@@ -665,7 +811,10 @@ export const markAttendanceByQr = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Attendance already marked for this event");
   }
 
-  // Step 2: Mark attendance atomically
+  // Step 2: Get next serial number
+  const serialNo = await getNextSerialNumber();
+
+  // Step 3: Mark attendance atomically with serial number
   const updatedUser = await User.findOneAndUpdate(
     {
       jerseyNumber,
@@ -678,16 +827,21 @@ export const markAttendanceByQr = asyncHandler(async (req, res) => {
       isEventsLocked: true,
     },
     {
-      $set: { "selectedEvents.$.status": "present" },
+      $set: {
+        "selectedEvents.$.status": "present",
+        "selectedEvents.$.serialNo": serialNo,
+      },
     },
     { new: true }
   );
 
   if (!updatedUser) {
+    // Free the serial number if user update failed
+    await freeSerialNumber(serialNo);
     throw new ApiError(400, "User not eligible or event mismatch");
   }
 
-  // Step 3: Update event counters safely
+  // Step 4: Update event counters safely
   const counterUpdate = await Event.updateOne(
     {
       _id: eventObjectId,
@@ -711,9 +865,15 @@ export const markAttendanceByQr = asyncHandler(async (req, res) => {
         "selectedEvents.status": "present",
       },
       {
-        $set: { "selectedEvents.$.status": "notMarked" },
+        $set: {
+          "selectedEvents.$.status": "notMarked",
+          "selectedEvents.$.serialNo": 0,
+        },
       }
     );
+
+    // Free the serial number
+    await freeSerialNumber(serialNo);
 
     throw new ApiError(409, "Event counter out of sync. Contact admin.");
   }
@@ -722,7 +882,7 @@ export const markAttendanceByQr = asyncHandler(async (req, res) => {
     .status(200)
     .json(
       new ApiResponse(
-        { eventId, status: "present" },
+        { eventId, status: "present", serialNo },
         "Attendance marked successfully"
       )
     );
@@ -799,25 +959,34 @@ export const markAttendanceByGivingJerseyArray = asyncHandler(
         );
       }
 
-      // 4️⃣ Update only eligible + notMarked users
+      // 4️⃣ Get serial numbers for all users to mark
+      let assignedSerials = [];
       if (toMark.length > 0) {
-        await User.updateMany(
-          {
-            jerseyNumber: { $in: toMark },
-            isEventsLocked: true,
-            selectedEvents: {
-              $elemMatch: {
-                eventId,
-                status: "notMarked",
-                position: 0,
+        assignedSerials = await getMultipleSerialNumbers(
+          toMark.length,
+          session
+        );
+
+        // 5️⃣ Update each user with their individual serial number
+        const bulkOps = toMark.map((jersey, index) => ({
+          updateOne: {
+            filter: {
+              jerseyNumber: jersey,
+              isEventsLocked: true,
+              selectedEvents: {
+                $elemMatch: {
+                  eventId,
+                  status: "notMarked",
+                  position: 0,
+                },
               },
             },
-          },
-          {
-            $set: { "selectedEvents.$[ev].status": "present" },
-          },
-          {
-            session,
+            update: {
+              $set: {
+                "selectedEvents.$[ev].status": "present",
+                "selectedEvents.$[ev].serialNo": assignedSerials[index],
+              },
+            },
             arrayFilters: [
               {
                 "ev.eventId": eventId,
@@ -825,10 +994,12 @@ export const markAttendanceByGivingJerseyArray = asyncHandler(
                 "ev.position": 0,
               },
             ],
-          }
-        );
+          },
+        }));
 
-        // 5️⃣ Event counter update
+        await User.bulkWrite(bulkOps, { session });
+
+        // 6️⃣ Event counter update
         const eventUpdate = await Event.updateOne(
           {
             _id: eventId,
@@ -960,7 +1131,9 @@ export const deleteUser = asyncHandler(async (req, res) => {
       await SystemConfig.updateOne(
         { _id: "GLOBAL" },
         {
-          $addToSet: { freeJerseyNumbers: user.jerseyNumber },
+          $push: {
+            freeJerseyNumbers: { $each: [user.jerseyNumber], $sort: 1 },
+          },
         },
         { session }
       );

@@ -106,7 +106,7 @@ try {
             bsonType: "array",
             items: {
               bsonType: "object",
-              required: ["eventId", "status", "position"],
+              required: ["eventId", "status", "position", "serialNo"],
 
               properties: {
                 eventId: {
@@ -121,6 +121,13 @@ try {
                 position: {
                   bsonType: "int",
                   enum: [0, 1, 2, 3],
+                },
+
+                serialNo: {
+                  bsonType: "int",
+                  minimum: 0,
+                  description:
+                    "Unique certificate serial number, 0 if not assigned",
                 },
               },
 
@@ -172,7 +179,11 @@ try {
     validator: {
       $jsonSchema: {
         bsonType: "object",
-        required: ["_id", "lastAssignedJerseyNumber"],
+        required: [
+          "_id",
+          "lastAssignedJerseyNumber",
+          "lastAssignedSerialNumber",
+        ],
 
         properties: {
           _id: {
@@ -194,6 +205,22 @@ try {
               minimum: 1,
             },
           },
+
+          lastAssignedSerialNumber: {
+            bsonType: "int",
+            minimum: 0,
+            description: "Last assigned certificate serial number",
+          },
+
+          freeSerialNumbers: {
+            bsonType: "array",
+            description: "List of reusable certificate serial numbers",
+            items: {
+              bsonType: "int",
+              minimum: 1,
+            },
+          },
+
           areCertificatesLocked: {
             bsonType: "bool",
           },

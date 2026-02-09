@@ -16,6 +16,16 @@ const systemConfigSchema = new Schema(
       required: true,
       default: [],
     },
+    lastAssignedSerialNumber: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
+    freeSerialNumbers: {
+      type: [Number],
+      required: true,
+      default: [],
+    },
     areCertificatesLocked: {
       type: Boolean,
       default: true,
