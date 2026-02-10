@@ -19,6 +19,11 @@ import {
   previewCertificate,
   getAnalytics,
 } from "../controllers/manager.controller.js";
+import {
+  exportAllEvents,
+  exportSingleEvent,
+  exportWinners,
+} from "../controllers/export.controller.js";
 import { getAllActiveOtps } from "../controllers/otp.controller.js";
 
 const router = Router();
@@ -28,6 +33,9 @@ router.route("/event/bulkAdd").post(bulkAddEvents);
 router.route("/event/results").post(markingResults);
 
 router.route("/export/allUsers").get(getAllUsers);
+router.route("/export/excel/all").get(exportAllEvents);
+router.route("/export/excel/event/:eventId").get(exportSingleEvent);
+router.route("/export/excel/winners").get(exportWinners);
 
 router.route("/user/:userId/makeSingleAsAdmin").post(makeSingleAsAdmin);
 router.route("/user/:userId/removeSingleAsAdmin").post(removeSingleAsAdmin);

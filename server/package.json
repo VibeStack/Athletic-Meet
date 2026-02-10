@@ -28,7 +28,8 @@
     "nodemailer": "^7.0.10",
     "pdf-lib": "^1.17.1",
     "pdfkit": "^0.17.2",
-    "resend": "^6.4.2"
+    "resend": "^6.4.2",
+    "xlsx-js-style": "^1.2.0"
   },
   "devDependencies": {
     "prettier": "^3.6.2"
