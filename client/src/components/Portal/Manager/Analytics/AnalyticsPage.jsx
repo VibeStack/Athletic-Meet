@@ -24,7 +24,7 @@ import { LockIcon, UnlockIcon } from "../../../../icons/Portal/Manager/EventCont
 const ROLE_COLORS = {
   Admin: "bg-emerald-500",
   Manager: "bg-red-500",
-  User: "bg-amber-400",
+  Student: "bg-yellow-400",
 };
 
 const CATEGORY_COLORS = {
@@ -294,7 +294,7 @@ export default function AnalyticsPage() {
                   <span
                     className={darkMode ? "text-slate-300" : "text-slate-700"}
                   >
-                    {day._id}
+                    {day._id === "Both" ? "Both Days (1 & 2)" : day._id}
                   </span>
                 </div>
                 <span
@@ -415,7 +415,7 @@ export default function AnalyticsPage() {
           </h3>
 
           <div className="grid grid-cols-3 gap-4">
-            {["true", "partial", "false"].map((status) => {
+            {["false", "partial", "true"].map((status) => {
               const statusData = data?.users?.detailsComplete?.find(
                 (d) => d._id === status,
               );
