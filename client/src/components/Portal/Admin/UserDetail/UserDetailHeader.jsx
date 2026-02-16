@@ -1,6 +1,7 @@
 import axios from "axios";
-import React, { useState } from "react";
-import { useOutletContext } from "react-router-dom";
+import React, { useState, useRef } from "react";
+import { useNavigate, useOutletContext } from "react-router-dom";
+import { useUsers } from "../../../../context/UsersContext";
 
 /* -------------------- Color Theme Functions -------------------- */
 const getJerseyBadgeTheme = (role, gender, isUserDetailsComplete) => {
@@ -128,11 +129,13 @@ export default function UserDetailHeader({
   isUserEventsLocked,
   lockUserEvents,
   unlockUserEvents,
-  setShowDeletePopup,
   updateUserInCache,
 }) {
   const { user } = useOutletContext(); // user is me and studentUserData is that student whole profile i am viewing it can be me also ok
   const API_URL = import.meta.env.VITE_API_URL;
+  const navigate = useNavigate();
+  const { removeUserFromCache } = useUsers();
+
   const [isUserHavingAdminAccess, setIsUserHavingAdminAccess] = useState(
     ["Manager", "Admin"].includes(studentUserData.role),
   );
@@ -142,6 +145,12 @@ export default function UserDetailHeader({
   const [localDetailsComplete, setLocalDetailsComplete] = useState(
     studentUserData.isUserDetailsComplete || "false",
   );
+
+  // Delete popup state
+  const [showDeletePopup, setShowDeletePopup] = useState(false);
+  const [deleteState, setDeleteState] = useState("confirm"); // 'confirm' | 'deleting' | 'success'
+  const timeoutRef = useRef(null);
+
   // When isUserHavingAdminAccess changes, we need to compute the displayed role:
   // - Manager always stays Manager
   // - Others show Admin if isUserHavingAdminAccess is true, otherwise Student
@@ -298,170 +307,395 @@ export default function UserDetailHeader({
     }
   };
 
+  const deleteUser = async () => {
+    setDeleteState("deleting");
+    try {
+      await axios.delete(`${API_URL}/admin/user/${studentUserData.id}`, {
+        withCredentials: true,
+      });
+      setDeleteState("success");
+      // Remove user from cache
+      removeUserFromCache(studentUserData.id);
+      // Wait for success animation then navigate
+      timeoutRef.current = setTimeout(() => {
+        setShowDeletePopup(false);
+        setDeleteState("confirm");
+        navigate(-1);
+      }, 1500);
+    } catch (error) {
+      console.error("Failed to delete user", error);
+      setDeleteState("confirm");
+    }
+  };
+
+  const closeDeletePopup = () => {
+    if (deleteState === "deleting") return; // Prevent closing while deleting
+    setShowDeletePopup(false);
+    setDeleteState("confirm");
+  };
+
   return (
-    <section
-      className={`relative overflow-hidden rounded-2xl p-5 sm:p-6 ${
-        darkMode
-          ? "bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 border border-white/10"
-          : "bg-white border border-slate-200 shadow-lg"
-      }`}
-    >
-      {darkMode && (
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute -top-20 -right-20 w-60 h-60 rounded-full blur-3xl opacity-15 bg-cyan-500" />
-        </div>
-      )}
-
-      <div className="relative flex flex-col sm:flex-row justify-between gap-4">
-        {/* Left: Jersey + Info */}
-        <div className="flex items-center gap-4">
-          <div
-            className={`shrink-0 w-20 h-20 rounded-2xl flex items-center justify-center text-2xl font-black ${jerseyTheme}`}
-          >
-            {studentUserData.jerseyNumber || "—"}
+    <>
+      <section
+        className={`relative overflow-hidden rounded-2xl p-5 sm:p-6 ${
+          darkMode
+            ? "bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 border border-white/10"
+            : "bg-white border border-slate-200 shadow-lg"
+        }`}
+      >
+        {darkMode && (
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <div className="absolute -top-20 -right-20 w-60 h-60 rounded-full blur-3xl opacity-15 bg-cyan-500" />
           </div>
+        )}
 
-          <div>
-            <h1
-              className={`text-xl sm:text-[20px] font-black ${
-                darkMode ? "text-white" : "text-slate-900"
-              }`}
+        <div className="relative flex flex-col sm:flex-row justify-between gap-4">
+          {/* Left: Jersey + Info */}
+          <div className="flex items-center gap-4">
+            <div
+              className={`shrink-0 w-20 h-20 rounded-2xl flex items-center justify-center text-2xl font-black ${jerseyTheme}`}
             >
-              {studentUserData.fullname || studentUserData.username}
-            </h1>
-            <p
-              className={`text-[12px] ${
-                darkMode ? "text-slate-400" : "text-slate-500"
-              }`}
-            >
-              {studentUserData.email}
-            </p>
-            <div className="flex items-center gap-1.5 mt-2">
-              <span
-                className={`inline-flex items-center text-[10px] font-semibold px-2.5 py-1 rounded-full ring-1 ${roleTheme}`}
-              >
-                {studentUserData.role === "Manager"
-                  ? "Manager"
-                  : isUserHavingAdminAccess
-                    ? "Admin"
-                    : "Student"}
-              </span>
-              <span
-                className={`inline-flex items-center gap-0.5 text-[10px] ${
-                  darkMode ? "text-slate-500" : "text-slate-400"
+              {studentUserData.jerseyNumber || "—"}
+            </div>
+
+            <div>
+              <h1
+                className={`text-xl sm:text-[20px] font-black ${
+                  darkMode ? "text-white" : "text-slate-900"
                 }`}
               >
-                {ICONS.calendar}
-                Joined{" "}
-                {studentUserData.createdAt
-                  ? new Date(studentUserData.createdAt)
-                      .toLocaleDateString()
-                      .split("/")
-                      .join("-")
-                  : "—"}
-              </span>
+                {studentUserData.fullname || studentUserData.username}
+              </h1>
+              <p
+                className={`text-[12px] ${
+                  darkMode ? "text-slate-400" : "text-slate-500"
+                }`}
+              >
+                {studentUserData.email}
+              </p>
+              <div className="flex items-center gap-1.5 mt-2">
+                <span
+                  className={`inline-flex items-center text-[10px] font-semibold px-2.5 py-1 rounded-full ring-1 ${roleTheme}`}
+                >
+                  {studentUserData.role === "Manager"
+                    ? "Manager"
+                    : isUserHavingAdminAccess
+                      ? "Admin"
+                      : "Student"}
+                </span>
+                <span
+                  className={`inline-flex items-center gap-0.5 text-[10px] ${
+                    darkMode ? "text-slate-500" : "text-slate-400"
+                  }`}
+                >
+                  {ICONS.calendar}
+                  Joined{" "}
+                  {studentUserData.createdAt
+                    ? new Date(studentUserData.createdAt)
+                        .toLocaleDateString()
+                        .split("/")
+                        .join("-")
+                    : "—"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Action Buttons */}
+          <div className="flex flex-col gap-2 sm:gap-3 w-full sm:w-auto">
+            {/* Lock/Unlock + Delete Row */}
+            <div className="flex items-center gap-2 sm:gap-3">
+              {canShowLockUnlock && (
+                <button
+                  onClick={handleLockUnlock}
+                  disabled={lockingEvents}
+                  className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-all sm:min-w-40 shadow-lg hover:brightness-110 whitespace-nowrap ${lockButtonTheme} ${lockingEvents ? "opacity-70 cursor-not-allowed" : ""}`}
+                >
+                  {lockingEvents ? (
+                    <span className="animate-spin h-4 w-4 border-2 border-white/30 rounded-full border-t-white" />
+                  ) : isUserEventsLocked ? (
+                    ICONS.unlock
+                  ) : (
+                    ICONS.lock
+                  )}
+                  <span className="hidden sm:inline">
+                    {lockingEvents
+                      ? isUserEventsLocked
+                        ? "Unlocking..."
+                        : "Locking..."
+                      : isUserEventsLocked
+                        ? "Unlock Events"
+                        : "Lock Events"}
+                  </span>
+                  <span className="sm:hidden">
+                    {lockingEvents
+                      ? "..."
+                      : isUserEventsLocked
+                        ? "Unlock"
+                        : "Lock"}
+                  </span>
+                </button>
+              )}
+
+              {canShowVerifyEmail && (
+                <button
+                  onClick={verifyUserEmail}
+                  disabled={verifyingEmail}
+                  className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 bg-linear-to-r from-emerald-500 to-emerald-600 shadow-emerald-500/25 ${verifyingEmail ? "opacity-70 cursor-not-allowed" : ""}`}
+                >
+                  {verifyingEmail ? (
+                    <span className="animate-spin h-4 w-4 border-2 border-white/30 rounded-full border-t-white" />
+                  ) : (
+                    ICONS.verifyEmail
+                  )}
+                  <span className="hidden sm:inline">
+                    {verifyingEmail ? "Verifying..." : "Verify Email"}
+                  </span>
+                  <span className="sm:hidden">
+                    {verifyingEmail ? "..." : "Verify"}
+                  </span>
+                </button>
+              )}
+
+              {canShowDelete && (
+                <button
+                  onClick={() => setShowDeletePopup(true)}
+                  className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 ${
+                    localDetailsComplete === "partial"
+                      ? "bg-linear-to-r from-slate-500 to-slate-600 shadow-slate-500/25"
+                      : lockButtonTheme
+                  }`}
+                >
+                  {ICONS.trash}
+                  <span>Delete</span>
+                </button>
+              )}
+            </div>
+
+            {/* Make/Remove Admin Button - Only for Manager */}
+            {canShowMakeRemoveAdmin && (
+              <button
+                onClick={isUserHavingAdminAccess ? removeAsAdmin : makeAsAdmin}
+                disabled={togglingAdmin}
+                className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 ${lockButtonTheme} ${togglingAdmin ? "opacity-70 cursor-not-allowed" : ""}`}
+              >
+                {togglingAdmin ? (
+                  <span className="animate-spin h-5 w-5 border-2 border-white/30 rounded-full border-t-white" />
+                ) : isUserHavingAdminAccess ? (
+                  ICONS.demoteAdmin
+                ) : (
+                  ICONS.promoteAdmin
+                )}
+                <span>
+                  {togglingAdmin
+                    ? isUserHavingAdminAccess
+                      ? "Removing..."
+                      : "Making Admin..."
+                    : isUserHavingAdminAccess
+                      ? "Remove As Admin"
+                      : "Make As Admin"}
+                </span>
+              </button>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* ================= DELETE CONFIRMATION POPUP ================= */}
+      {showDeletePopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={closeDeletePopup}
+          />
+          <div
+            className={`relative w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl transition-all duration-300 ${
+              darkMode
+                ? "bg-slate-900 border border-white/10"
+                : "bg-white border border-slate-200"
+            }`}
+          >
+            {/* Glow based on user color */}
+            {darkMode && (
+              <div
+                className={`absolute -top-20 -right-20 w-40 h-40 rounded-full blur-3xl pointer-events-none transition-colors duration-500 ${
+                  deleteState === "success"
+                    ? "bg-emerald-500/30"
+                    : studentUserData.role === "Manager"
+                      ? "bg-red-500/20"
+                      : studentUserData.isUserDetailsComplete === "true"
+                        ? studentUserData.gender === "Male"
+                          ? "bg-sky-500/20"
+                          : "bg-pink-500/20"
+                        : studentUserData.isUserDetailsComplete === "partial"
+                          ? "bg-slate-500/20"
+                          : "bg-emerald-500/20"
+                }`}
+              />
+            )}
+
+            <div className="relative p-6 text-center">
+              {/* Icon - Changes based on state */}
+              <div
+                className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center transition-all duration-300 ${
+                  deleteState === "success"
+                    ? "bg-emerald-500/15 scale-110"
+                    : deleteState === "deleting"
+                      ? "bg-amber-500/15"
+                      : studentUserData.role === "Manager"
+                        ? "bg-red-500/10"
+                        : studentUserData.isUserDetailsComplete === "true"
+                          ? studentUserData.gender === "Male"
+                            ? "bg-sky-500/10"
+                            : "bg-pink-500/10"
+                          : studentUserData.isUserDetailsComplete === "partial"
+                            ? "bg-slate-500/10"
+                            : "bg-emerald-500/10"
+                }`}
+              >
+                {deleteState === "success" ? (
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="w-8 h-8 text-emerald-500"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                ) : deleteState === "deleting" ? (
+                  <span className="animate-spin h-8 w-8 border-3 border-amber-500/30 rounded-full border-t-amber-500" />
+                ) : (
+                  <svg
+                    viewBox="0 0 24 24"
+                    className={`w-8 h-8 fill-current ${
+                      studentUserData.role === "Manager"
+                        ? "text-red-500"
+                        : studentUserData.isUserDetailsComplete === "true"
+                          ? studentUserData.gender === "Male"
+                            ? "text-sky-500"
+                            : "text-pink-500"
+                          : studentUserData.isUserDetailsComplete === "partial"
+                            ? "text-slate-500"
+                            : "text-emerald-500"
+                    }`}
+                  >
+                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
+                  </svg>
+                )}
+              </div>
+
+              {/* Title - Changes based on state */}
+              <h3
+                className={`text-xl font-bold mb-2 transition-colors duration-300 ${
+                  deleteState === "success"
+                    ? darkMode
+                      ? "text-emerald-400"
+                      : "text-emerald-600"
+                    : darkMode
+                      ? "text-white"
+                      : "text-slate-900"
+                }`}
+              >
+                {deleteState === "success"
+                  ? "Deleted Successfully!"
+                  : deleteState === "deleting"
+                    ? "Deleting..."
+                    : "Delete User"}
+              </h3>
+
+              {/* Content - Changes based on state */}
+              {deleteState === "success" ? (
+                <p
+                  className={`text-sm mb-6 ${
+                    darkMode ? "text-emerald-400/80" : "text-emerald-600/80"
+                  }`}
+                >
+                  {studentUserData.fullname || studentUserData.username} has
+                  been removed.
+                </p>
+              ) : deleteState === "deleting" ? (
+                <p
+                  className={`text-sm mb-6 ${
+                    darkMode ? "text-slate-400" : "text-slate-500"
+                  }`}
+                >
+                  Please wait while we remove this user...
+                </p>
+              ) : (
+                <>
+                  <p
+                    className={`text-sm mb-1 ${
+                      darkMode ? "text-slate-400" : "text-slate-500"
+                    }`}
+                  >
+                    Are you sure you want to delete
+                  </p>
+                  <p
+                    className={`text-base font-bold mb-4 ${
+                      darkMode ? "text-white" : "text-slate-800"
+                    }`}
+                  >
+                    {studentUserData.fullname || studentUserData.username}?
+                  </p>
+                  <p
+                    className={`text-xs mb-6 ${
+                      darkMode ? "text-red-400/80" : "text-red-500/80"
+                    }`}
+                  >
+                    This action cannot be undone.
+                  </p>
+                </>
+              )}
+
+              {/* Buttons - Only show for confirm state */}
+              {deleteState === "confirm" && (
+                <div className="flex gap-3">
+                  <button
+                    onClick={closeDeletePopup}
+                    className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${
+                      darkMode
+                        ? "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                    }`}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={deleteUser}
+                    className={`flex-1 py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 ${
+                      studentUserData.role === "Manager"
+                        ? "bg-linear-to-r from-red-500 to-red-600 shadow-red-500/25"
+                        : studentUserData.isUserDetailsComplete === "true"
+                          ? studentUserData.gender === "Male"
+                            ? "bg-linear-to-r from-sky-500 to-blue-600 shadow-sky-500/25"
+                            : "bg-linear-to-r from-pink-500 to-pink-600 shadow-pink-500/25"
+                          : studentUserData.isUserDetailsComplete === "partial"
+                            ? "bg-linear-to-r from-slate-500 to-slate-600 shadow-slate-500/25"
+                            : "bg-linear-to-r from-emerald-500 to-emerald-600 shadow-emerald-500/25"
+                    }`}
+                  >
+                    Delete
+                  </button>
+                </div>
+              )}
+
+              {/* Success state - Show redirecting message */}
+              {deleteState === "success" && (
+                <p
+                  className={`text-xs ${
+                    darkMode ? "text-slate-500" : "text-slate-400"
+                  }`}
+                >
+                  Redirecting...
+                </p>
+              )}
             </div>
           </div>
         </div>
-
-        {/* Right: Action Buttons */}
-        <div className="flex flex-col gap-2 sm:gap-3 w-full sm:w-auto">
-          {/* Lock/Unlock + Delete Row */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            {canShowLockUnlock && (
-              <button
-                onClick={handleLockUnlock}
-                disabled={lockingEvents}
-                className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-all sm:min-w-40 shadow-lg hover:brightness-110 whitespace-nowrap ${lockButtonTheme} ${lockingEvents ? "opacity-70 cursor-not-allowed" : ""}`}
-              >
-                {lockingEvents ? (
-                  <span className="animate-spin h-4 w-4 border-2 border-white/30 rounded-full border-t-white" />
-                ) : isUserEventsLocked ? (
-                  ICONS.unlock
-                ) : (
-                  ICONS.lock
-                )}
-                <span className="hidden sm:inline">
-                  {lockingEvents
-                    ? isUserEventsLocked
-                      ? "Unlocking..."
-                      : "Locking..."
-                    : isUserEventsLocked
-                      ? "Unlock Events"
-                      : "Lock Events"}
-                </span>
-                <span className="sm:hidden">
-                  {lockingEvents
-                    ? "..."
-                    : isUserEventsLocked
-                      ? "Unlock"
-                      : "Lock"}
-                </span>
-              </button>
-            )}
-
-            {canShowVerifyEmail && (
-              <button
-                onClick={verifyUserEmail}
-                disabled={verifyingEmail}
-                className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 bg-linear-to-r from-emerald-500 to-emerald-600 shadow-emerald-500/25 ${verifyingEmail ? "opacity-70 cursor-not-allowed" : ""}`}
-              >
-                {verifyingEmail ? (
-                  <span className="animate-spin h-4 w-4 border-2 border-white/30 rounded-full border-t-white" />
-                ) : (
-                  ICONS.verifyEmail
-                )}
-                <span className="hidden sm:inline">
-                  {verifyingEmail ? "Verifying..." : "Verify Email"}
-                </span>
-                <span className="sm:hidden">
-                  {verifyingEmail ? "..." : "Verify"}
-                </span>
-              </button>
-            )}
-
-            {canShowDelete && (
-              <button
-                onClick={() => setShowDeletePopup(true)}
-                className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 ${
-                  localDetailsComplete === "partial"
-                    ? "bg-linear-to-r from-slate-500 to-slate-600 shadow-slate-500/25"
-                    : lockButtonTheme
-                }`}
-              >
-                {ICONS.trash}
-                <span>Delete</span>
-              </button>
-            )}
-          </div>
-
-          {/* Make/Remove Admin Button - Only for Manager */}
-          {canShowMakeRemoveAdmin && (
-            <button
-              onClick={isUserHavingAdminAccess ? removeAsAdmin : makeAsAdmin}
-              disabled={togglingAdmin}
-              className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 ${lockButtonTheme} ${togglingAdmin ? "opacity-70 cursor-not-allowed" : ""}`}
-            >
-              {togglingAdmin ? (
-                <span className="animate-spin h-5 w-5 border-2 border-white/30 rounded-full border-t-white" />
-              ) : isUserHavingAdminAccess ? (
-                ICONS.demoteAdmin
-              ) : (
-                ICONS.promoteAdmin
-              )}
-              <span>
-                {togglingAdmin
-                  ? isUserHavingAdminAccess
-                    ? "Removing..."
-                    : "Making Admin..."
-                  : isUserHavingAdminAccess
-                    ? "Remove As Admin"
-                    : "Make As Admin"}
-              </span>
-            </button>
-          )}
-        </div>
-      </div>
-    </section>
+      )}
+    </>
   );
 }

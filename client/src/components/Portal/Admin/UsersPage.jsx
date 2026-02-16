@@ -145,7 +145,10 @@ export default function UsersPage() {
           </div>
 
           <div className="w-full lg:max-w-3xl">
-            <label className="text-[11px] uppercase tracking-widest font-bold text-slate-400">
+            <label
+              className="text-[11px] uppercase tracking-widest font-bold text-slate-400"
+              htmlFor="searching-users"
+            >
               Search Users
             </label>
             <div
@@ -159,6 +162,7 @@ export default function UsersPage() {
             >
               <input
                 value={query}
+                id="searching-users"
                 style={{ color: darkMode ? "#ffffff" : "#000000" }}
                 className="w-full bg-transparent py-3 text-sm font-semibold placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none"
                 placeholder="Search by name, email, jersey, URN, CRN…"

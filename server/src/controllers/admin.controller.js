@@ -49,13 +49,7 @@ const canDeleteUser = (headRole, userRole = null) => {
 // SERIAL NUMBER HELPERS
 // =============================================
 
-/**
- * Get the next available serial number (reuses freed ones first)
- * @param {mongoose.ClientSession} session - Optional transaction session
- * @returns {Promise<number>} The next serial number
- */
 const getNextSerialNumber = async (session = null) => {
-  // Try to pop from freeSerialNumbers first
   const configWithFree = await SystemConfig.findOneAndUpdate(
     { _id: "GLOBAL", "freeSerialNumbers.0": { $exists: true } },
     { $pop: { freeSerialNumbers: -1 } },
@@ -76,12 +70,6 @@ const getNextSerialNumber = async (session = null) => {
   return updated.lastAssignedSerialNumber;
 };
 
-/**
- * Get multiple serial numbers at once (for bulk operations)
- * @param {number} count - Number of serial numbers needed
- * @param {mongoose.ClientSession} session - Optional transaction session
- * @returns {Promise<number[]>} Array of serial numbers
- */
 const getMultipleSerialNumbers = async (count, session = null) => {
   if (count <= 0) return [];
 
@@ -131,11 +119,6 @@ const getMultipleSerialNumbers = async (count, session = null) => {
   return serialNumbers;
 };
 
-/**
- * Free a serial number for reuse
- * @param {number} serialNo - Serial number to free
- * @param {mongoose.ClientSession} session - Optional transaction session
- */
 const freeSerialNumber = async (serialNo, session = null) => {
   if (!serialNo || serialNo <= 0) return;
 
@@ -339,25 +322,50 @@ export const unlockMyEvents = asyncHandler(async (req, res) => {
 
 export const changeUserDetails = asyncHandler(async (req, res) => {
   const { userId } = req.params;
+  const head = req.user; // The user making the request
 
   const changedDetails = req.body;
   const user = await User.findById(userId);
   if (!user) {
-    throw ApiResponse(404, "User not found");
+    throw new ApiError(404, "User not found");
   }
+
+  if (
+    !canModifyDetails(
+      { headId: head._id.toString(), headRole: head.role },
+      { userId: user._id.toString(), userRole: user.role }
+    )
+  ) {
+    throw new ApiError(
+      403,
+      "You are not allowed to modify this user's details"
+    );
+  }
+
   if (changedDetails.course) {
     const allowedBranches = courseBranchMap[changedDetails.course];
     if (!allowedBranches) {
       throw new ApiError(400, "Invalid course selected");
     }
-    if (
-      changedDetails.branch &&
-      !allowedBranches.includes(changedDetails.branch)
-    ) {
-      throw new ApiError(
-        400,
-        `Invalid branch for course ${changedDetails.course}`
-      );
+
+    // Only validate branch if the course has branches
+    if (allowedBranches.length > 0) {
+      // Course has branches, so branch must be provided and valid
+      if (!changedDetails.branch) {
+        throw new ApiError(
+          400,
+          `Branch is required for course ${changedDetails.course}`
+        );
+      }
+      if (!allowedBranches.includes(changedDetails.branch)) {
+        throw new ApiError(
+          400,
+          `Invalid branch for course ${changedDetails.course}`
+        );
+      }
+    } else {
+      // Course has no branches (B.Arch, BBA, BCA), set branch to null
+      changedDetails.branch = null;
     }
   }
   const restrictedFields = ["password", "email", "jerseyNumber"];

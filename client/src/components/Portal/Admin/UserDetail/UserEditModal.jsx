@@ -4,21 +4,22 @@ import { useForm, useWatch } from "react-hook-form";
 // Course-branch mapping (matching backend courseBranchMap)
 const courseBranchMap = {
   "B.Tech": [
-    "Computer Science & Engineering",
+    "Robotics & AI",
+    "Civil Engineering",
     "Information Technology",
     "Electrical Engineering",
     "Mechanical Engineering",
-    "Civil Engineering",
+    "Computer Science & Engineering",
     "Electronics & Communication Engineering",
-    "Robotics & AI",
   ],
   "M.Tech": [
-    "Computer Science & Engineering",
-    "Electronics Engineering",
+    "Power Engineering",
     "Mechanical Engineering",
     "Production Engineering",
-    "Geo Technical Engineering",
     "Structural Engineering",
+    "Electronics Engineering",
+    "Geo Technical Engineering",
+    "Computer Science & Engineering",
     "Environmental Science & Engineering",
   ],
   MBA: ["Finance", "Marketing", "Human Resource"],
@@ -30,6 +31,167 @@ const courseBranchMap = {
   "B.Arch": [],
 };
 
+// Reusable Input Component
+function FormInput({
+  label,
+  name,
+  type = "text",
+  disabled = false,
+  darkMode,
+  accent = "blue",
+  autoComplete = "off",
+  register,
+  validation = {},
+  error,
+  numericOnly = false,
+  maxLength,
+  placeholder,
+  ...props
+}) {
+  const baseInput =
+    "w-full px-3 py-2 rounded-lg text-sm font-medium outline-none transition-all";
+
+  const themeInput = darkMode
+    ? "bg-slate-800/80 text-white border border-white/10 focus:border-white/30"
+    : "bg-slate-50 text-slate-900 border border-slate-200 focus:border-slate-300";
+
+  const stateInput = `
+    ${disabled ? "opacity-50 cursor-not-allowed" : ""}
+    ${error ? "border-red-500 focus:border-red-500" : ""}
+  `;
+
+  const placeholderStyle =
+    "placeholder:text-slate-400 dark:placeholder:text-slate-500";
+
+  const inputClasses = `${baseInput} ${themeInput} ${stateInput} ${placeholderStyle}`;
+
+  const labelColor = error ? "text-red-500" : `text-${accent}-500`;
+
+  const labelClasses =
+    "block text-[10px] uppercase tracking-wider font-bold mb-1 " + labelColor;
+
+  const handleKeyDown = (e) => {
+    if (!numericOnly) return;
+
+    if (
+      !/[0-9]/.test(e.key) &&
+      e.key !== "Backspace" &&
+      e.key !== "Delete" &&
+      e.key !== "ArrowLeft" &&
+      e.key !== "ArrowRight" &&
+      e.key !== "Tab"
+    ) {
+      e.preventDefault();
+    }
+  };
+
+  return (
+    <div className="relative mb-4">
+      <label htmlFor={name} className={labelClasses}>
+        {label}
+      </label>
+
+      <input
+        id={name}
+        type={numericOnly ? "text" : type}
+        inputMode={numericOnly ? "numeric" : undefined}
+        pattern={numericOnly ? "[0-9]*" : undefined}
+        maxLength={maxLength}
+        placeholder={placeholder}
+        disabled={disabled}
+        autoComplete={autoComplete}
+        aria-invalid={!!error}
+        aria-describedby={error ? `${name}-error` : undefined}
+        className={inputClasses}
+        onKeyDown={handleKeyDown}
+        {...(register ? register(name, validation) : {})}
+        {...props}
+      />
+
+      {error && (
+        <p
+          id={`${name}-error`}
+          className="text-red-500 text-[10px] mt-1 font-medium absolute"
+        >
+          {error.message}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// Reusable Select Component
+function FormSelect({
+  label,
+  name,
+  options,
+  disabled = false,
+  darkMode,
+  accent = "blue",
+  autoComplete = "off",
+  register,
+  validation = {},
+  error,
+  placeholder = "Select",
+  ...props
+}) {
+  const baseSelect =
+    "w-full px-3 py-2 rounded-lg text-sm font-medium outline-none transition-all";
+
+  const themeSelect = darkMode
+    ? "bg-slate-800/80 text-white border border-white/10 focus:border-white/30"
+    : "bg-slate-50 text-slate-900 border border-slate-200 focus:border-slate-300";
+
+  const stateSelect = `
+    ${disabled ? "opacity-50 cursor-not-allowed" : ""}
+    ${error ? "border-red-500 focus:border-red-500" : ""}
+  `;
+
+  // Gray text when no value selected (using invalid state)
+  const placeholderColor =
+    "[&:invalid]:text-slate-400 [&:invalid]:dark:text-slate-500";
+
+  const selectClasses = `${baseSelect} ${themeSelect} ${stateSelect} ${placeholderColor}`;
+
+  const labelColor = error ? "text-red-500" : `text-${accent}-500`;
+  const labelClasses =
+    "block text-[10px] uppercase tracking-wider font-bold mb-1 " + labelColor;
+
+  return (
+    <div className="relative mb-4">
+      <label htmlFor={name} className={labelClasses}>
+        {label}
+      </label>
+      <select
+        id={name}
+        disabled={disabled}
+        autoComplete={autoComplete}
+        aria-invalid={!!error}
+        aria-describedby={error ? `${name}-error` : undefined}
+        className={selectClasses}
+        required={!!validation.required}
+        {...(register ? register(name, validation) : {})}
+        {...props}
+      >
+        <option value="">{placeholder}</option>
+        {options.map((option) => (
+          <option key={option.value || option} value={option.value || option}>
+            {option.label || option}
+          </option>
+        ))}
+      </select>
+      {error && (
+        <p
+          id={`${name}-error`}
+          className="text-red-500 text-[10px] mt-1 font-medium absolute"
+        >
+          {error.message}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export default function UserEditModal({
   isOpen,
   onClose,
@@ -37,7 +199,15 @@ export default function UserEditModal({
   darkMode,
   onSave,
 }) {
-  const { register, handleSubmit, reset, control } = useForm();
+  const {
+    register,
+    handleSubmit,
+    reset,
+    control,
+    setValue,
+    clearErrors,
+    formState: { errors, isSubmitting },
+  } = useForm();
   const selectedCourse = useWatch({ control, name: "course" });
 
   // Branch state managed by useEffect
@@ -49,11 +219,19 @@ export default function UserEditModal({
       const branches = courseBranchMap[selectedCourse] || [];
       setBranchOptions(branches);
       setIsBranchDisabled(branches.length === 0);
+      // Reset branch value when course changes
+      setValue("branch", "");
+      // Clear any branch errors when course has no branches
+      if (branches.length === 0) {
+        clearErrors("branch");
+      }
     } else {
       setBranchOptions([]);
       setIsBranchDisabled(true);
+      setValue("branch", "");
+      clearErrors("branch");
     }
-  }, [selectedCourse]);
+  }, [selectedCourse, setValue, clearErrors]);
 
   // Reset form when modal opens with user data
   useEffect(() => {
@@ -66,6 +244,7 @@ export default function UserEditModal({
         gender: studentUserData.gender || "",
         crn: studentUserData.crn || "",
         urn: studentUserData.urn || "",
+        phone: studentUserData.phone || "",
       });
     }
   }, [isOpen, studentUserData, reset]);
@@ -98,7 +277,7 @@ export default function UserEditModal({
         onClick={onClose}
       />
       <div
-        className={`relative w-full max-w-md rounded-2xl overflow-hidden shadow-2xl ${
+        className={`relative w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl ${
           darkMode
             ? "bg-slate-900 border border-white/10"
             : "bg-white border border-slate-200"
@@ -153,158 +332,145 @@ export default function UserEditModal({
 
         {/* Form */}
         <form onSubmit={handleSubmit(handleFormSubmit)}>
-          <div className="p-5 max-h-[55vh] overflow-y-auto space-y-3">
-            {/* Full Name */}
-            <div>
-              <label
-                className={`block text-[10px] uppercase tracking-wider font-bold mb-1 text-${accent}-500`}
-              >
-                Full Name
-              </label>
-              <input
-                type="text"
-                {...register("fullname")}
-                className={`w-full px-3 py-2 rounded-lg text-sm font-medium outline-none transition-all ${
-                  darkMode
-                    ? "bg-slate-800/80 text-white border border-white/10 focus:border-white/30"
-                    : "bg-slate-50 text-slate-900 border border-slate-200 focus:border-slate-300"
-                }`}
+          <div className="p-5 max-h-[60vh] overflow-y-auto space-y-3">
+            {/* Row 1: Full Name & Gender */}
+            <div className="grid grid-cols-2 gap-3">
+              <FormInput
+                label="Full Name"
+                name="fullname"
+                darkMode={darkMode}
+                accent={accent}
+                placeholder="Enter Your Full Name"
+                register={register}
+                validation={{
+                  required: "Full name is required",
+                }}
+                error={errors.fullname}
+              />
+              <FormSelect
+                label="Gender"
+                name="gender"
+                options={["Male", "Female"]}
+                darkMode={darkMode}
+                accent={accent}
+                autoComplete="sex"
+                register={register}
+                placeholder="Select Gender"
+                validation={{
+                  required: "Gender is required",
+                }}
+                error={errors.gender}
               />
             </div>
 
-            {/* Course */}
-            <div>
-              <label
-                className={`block text-[10px] uppercase tracking-wider font-bold mb-1 text-${accent}-500`}
-              >
-                Course
-              </label>
-              <select
-                {...register("course")}
-                className={`w-full px-3 py-2 rounded-lg text-sm font-medium outline-none transition-all ${
-                  darkMode
-                    ? "bg-slate-800/80 text-white border border-white/10 focus:border-white/30"
-                    : "bg-slate-50 text-slate-900 border border-slate-200 focus:border-slate-300"
-                }`}
-              >
-                <option value="">Select Course</option>
-                {Object.keys(courseBranchMap).map((course) => (
-                  <option key={course} value={course}>
-                    {course}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Branch & Year */}
+            {/* Row 2: Course & Branch */}
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label
-                  className={`block text-[10px] uppercase tracking-wider font-bold mb-1 text-${accent}-500`}
-                >
-                  Branch
-                </label>
-                <select
-                  {...register("branch")}
-                  disabled={isBranchDisabled}
-                  className={`w-full px-3 py-2 rounded-lg text-sm font-medium outline-none transition-all ${
-                    isBranchDisabled ? "opacity-50 cursor-not-allowed" : ""
-                  } ${
-                    darkMode
-                      ? "bg-slate-800/80 text-white border border-white/10 focus:border-white/30"
-                      : "bg-slate-50 text-slate-900 border border-slate-200 focus:border-slate-300"
-                  }`}
-                >
-                  <option value="">
-                    {isBranchDisabled ? "N/A" : "Select"}
-                  </option>
-                  {branchOptions.map((branch) => (
-                    <option key={branch} value={branch}>
-                      {branch}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label
-                  className={`block text-[10px] uppercase tracking-wider font-bold mb-1 text-${accent}-500`}
-                >
-                  Year
-                </label>
-                <select
-                  {...register("year")}
-                  className={`w-full px-3 py-2 rounded-lg text-sm font-medium outline-none transition-all ${
-                    darkMode
-                      ? "bg-slate-800/80 text-white border border-white/10 focus:border-white/30"
-                      : "bg-slate-50 text-slate-900 border border-slate-200 focus:border-slate-300"
-                  }`}
-                >
-                  <option value="">Select</option>
-                  <option value="1st Year">1st Year</option>
-                  <option value="2nd Year">2nd Year</option>
-                  <option value="3rd Year">3rd Year</option>
-                  <option value="4th Year">4th Year</option>
-                  <option value="5th Year">5th Year</option>
-                </select>
-              </div>
+              <FormSelect
+                label="Course"
+                name="course"
+                options={Object.keys(courseBranchMap)}
+                darkMode={darkMode}
+                accent={accent}
+                autoComplete="off"
+                register={register}
+                placeholder="Select Course"
+                validation={{
+                  required: "Course is required",
+                }}
+                error={errors.course}
+              />
+              <FormSelect
+                label="Branch"
+                name="branch"
+                options={branchOptions}
+                disabled={isBranchDisabled}
+                darkMode={darkMode}
+                accent={accent}
+                autoComplete="off"
+                register={!isBranchDisabled ? register : undefined}
+                placeholder={
+                  isBranchDisabled ? "Not Applicable" : "Select Branch"
+                }
+                validation={{
+                  required: "Branch is required",
+                }}
+                error={!isBranchDisabled ? errors.branch : undefined}
+              />
             </div>
 
-            {/* Gender & CRN */}
+            {/* Row 3: CRN & URN */}
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label
-                  className={`block text-[10px] uppercase tracking-wider font-bold mb-1 text-${accent}-500`}
-                >
-                  Gender
-                </label>
-                <select
-                  {...register("gender")}
-                  className={`w-full px-3 py-2 rounded-lg text-sm font-medium outline-none transition-all ${
-                    darkMode
-                      ? "bg-slate-800/80 text-white border border-white/10 focus:border-white/30"
-                      : "bg-slate-50 text-slate-900 border border-slate-200 focus:border-slate-300"
-                  }`}
-                >
-                  <option value="">Select</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                </select>
-              </div>
+              <FormInput
+                label="CRN"
+                name="crn"
+                darkMode={darkMode}
+                accent={accent}
+                autoComplete="off"
+                placeholder="Enter Your CRN"
+                register={register}
+                validation={{
+                  required: "CRN is required",
+                  pattern: {
+                    value: /^\d+$/,
+                    message: "Only numbers are allowed",
+                  },
+                }}
+                error={errors.crn}
+              />
 
-              <div>
-                <label
-                  className={`block text-[10px] uppercase tracking-wider font-bold mb-1 text-${accent}-500`}
-                >
-                  CRN
-                </label>
-                <input
-                  type="text"
-                  {...register("crn")}
-                  className={`w-full px-3 py-2 rounded-lg text-sm font-medium outline-none transition-all ${
-                    darkMode
-                      ? "bg-slate-800/80 text-white border border-white/10 focus:border-white/30"
-                      : "bg-slate-50 text-slate-900 border border-slate-200 focus:border-slate-300"
-                  }`}
-                />
-              </div>
+              <FormInput
+                label="URN"
+                name="urn"
+                darkMode={darkMode}
+                accent={accent}
+                autoComplete="off"
+                placeholder="Enter Your URN"
+                register={register}
+                validation={{
+                  required: "URN is required",
+                  pattern: {
+                    value: /^\d+$/,
+                    message: "Only numbers are allowed",
+                  },
+                }}
+                error={errors.urn}
+              />
             </div>
 
-            {/* URN */}
-            <div>
-              <label
-                className={`block text-[10px] uppercase tracking-wider font-bold mb-1 text-${accent}-500`}
-              >
-                URN
-              </label>
-              <input
-                type="text"
-                {...register("urn")}
-                className={`w-full px-3 py-2 rounded-lg text-sm font-medium outline-none transition-all ${
-                  darkMode
-                    ? "bg-slate-800/80 text-white border border-white/10 focus:border-white/30"
-                    : "bg-slate-50 text-slate-900 border border-slate-200 focus:border-slate-300"
-                }`}
+            {/* Row 4: Year & Phone */}
+            <div className="grid grid-cols-2 gap-3">
+              <FormSelect
+                label="Year"
+                name="year"
+                options={["1st Year", "2nd Year", "3rd Year", "4th Year"]}
+                darkMode={darkMode}
+                accent={accent}
+                autoComplete="off"
+                register={register}
+                placeholder="Select Year"
+                validation={{
+                  required: "Year is required",
+                }}
+                error={errors.year}
+              />
+              <FormInput
+                label="Phone Number"
+                name="phone"
+                darkMode={darkMode}
+                accent={accent}
+                autoComplete="tel"
+                inputMode="numeric"
+                maxLength={10}
+                placeholder="Enter Your Phone Number"
+                register={register}
+                validation={{
+                  required: "Phone number is required",
+                  pattern: {
+                    value: /^[0-9]{10}$/,
+                    message: "Must be exactly 10 digits",
+                  },
+                }}
+                error={errors.phone}
               />
             </div>
           </div>
@@ -328,17 +494,40 @@ export default function UserEditModal({
             </button>
             <button
               type="submit"
-              className={`flex-1 py-2.5 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 ${
+              disabled={isSubmitting}
+              className={`flex-1 py-2.5 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${
                 studentUserData.role === "Manager"
                   ? "bg-linear-to-r from-red-500 to-red-600 shadow-red-500/25"
                   : studentUserData.gender === "Male"
-                  ? "bg-linear-to-r from-sky-500 to-blue-600 shadow-sky-500/25"
-                  : studentUserData.gender === "Female"
-                  ? "bg-linear-to-r from-pink-500 to-pink-600 shadow-pink-500/25"
-                  : "bg-linear-to-r from-emerald-500 to-emerald-600 shadow-emerald-500/25"
+                    ? "bg-linear-to-r from-sky-500 to-blue-600 shadow-sky-500/25"
+                    : studentUserData.gender === "Female"
+                      ? "bg-linear-to-r from-pink-500 to-pink-600 shadow-pink-500/25"
+                      : "bg-linear-to-r from-emerald-500 to-emerald-600 shadow-emerald-500/25"
               }`}
             >
-              Save Changes
+              {isSubmitting && (
+                <svg
+                  className="animate-spin h-4 w-4 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+              )}
+              {isSubmitting ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </form>

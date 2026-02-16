@@ -88,6 +88,7 @@ export default function AttendanceChartCard({
           {eventWiseAttendance?.length > 0 && (
             <div className="relative">
               <select
+                id="attendance-event-select"
                 value={selectedEvent}
                 onChange={(e) => setSelectedEvent(e.target.value)}
                 className={`appearance-none w-full px-4 py-2.5 pr-10 rounded-xl text-sm font-medium border-2 transition-all cursor-pointer ${

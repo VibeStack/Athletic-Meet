@@ -9,6 +9,7 @@ const roleAccessPoints = (role) => {
   if (role === "Student") return 1;
   else 0;
 };
+
 const getStatusDisplay = (status) => {
   if (status === "present") {
     return {
@@ -435,7 +436,7 @@ export default function UserDetailEvents({
           />
 
           <div
-            className={`relative w-full max-w-3xl max-h-[80vh] overflow-hidden rounded-2xl ${
+            className={`relative w-full max-w-3xl max-h-[90vh] overflow-hidden rounded-2xl ${
               darkMode
                 ? "bg-slate-900 border border-white/10"
                 : "bg-white border border-slate-200"
@@ -458,7 +459,7 @@ export default function UserDetailEvents({
                 </div>
                 <div>
                   <h2
-                    className={`text-lg font-bold ${
+                    className={`text-base font-bold ${
                       darkMode ? "text-white" : "text-slate-800"
                     }`}
                   >
