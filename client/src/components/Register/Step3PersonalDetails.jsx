@@ -37,6 +37,7 @@ export default function Step3PersonalDetails({ nextStep }) {
       "Production Engineering",
       "Geo Technical Engineering",
       "Structural Engineering",
+      "Power Engineering",
       "Environmental Science & Engineering",
     ],
     MBA: ["Finance", "Marketing", "Human Resource"],
