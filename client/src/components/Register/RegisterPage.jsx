@@ -11,7 +11,6 @@ export default function RegisterPage() {
     mode: "onChange",
   });
   const [step, setStep] = useState(1);
-  const [loginDone, setLoginDone] = useState(false);
 
   const nextStep = (increment = 1) => setStep((s) => s + increment);
 
@@ -38,12 +37,11 @@ export default function RegisterPage() {
                 <Step3PersonalDetails
                   nextStep={nextStep}
                   onSubmit={methods.handleSubmit(onSubmit)}
-                  setLoginDone={setLoginDone}
                 />
               )}
             </>
           ) : (
-            <Step4Success loginDone={loginDone} />
+            <Step4Success />
           )}
         </div>
       </div>
