@@ -3,9 +3,8 @@ import { useFormContext, useWatch } from "react-hook-form";
 import axios from "axios";
 import InputField from "./InputField";
 import SelectField from "./SelectField";
-import { useNavigate } from "react-router-dom";
 
-export default function Step3PersonalDetails({ nextStep }) {
+export default function Step3PersonalDetails({ nextStep, setLoginDone }) {
   const {
     register,
     handleSubmit,
@@ -17,7 +16,6 @@ export default function Step3PersonalDetails({ nextStep }) {
   const selectedCourse = useWatch({ control, name: "course" });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const navigate = useNavigate();
   const timeoutRef = useRef(null);
 
   const courseBranchMap = {
@@ -103,19 +101,25 @@ export default function Step3PersonalDetails({ nextStep }) {
         setMessage("✅ Registration completed successfully! Logging you in...");
         nextStep();
         // Automatically logging in after user getting registered
-        const { data: loginResponse } = await axios.post(
-          `${API_URL}/auth/login`,
-          {
-            username: getValues("username"),
-            email: getValues("email"),
-            password: getValues("password"),
-          },
-          { withCredentials: true },
-        );
+        try {
+          const { data: loginResponse } = await axios.post(
+            `${API_URL}/auth/login`,
+            {
+              username: getValues("username"),
+              email: getValues("email"),
+              password: getValues("password"),
+            },
+            { withCredentials: true },
+          );
 
-        if (loginResponse.message === "Login successful!") {
-          setMessage("🎉 Login successful! Redirecting...");
-          timeoutRef.current = setTimeout(() => navigate("/portal"), 500);
+          if (loginResponse.message === "Login successful!") {
+            // Signal Step4 that login is complete so it can start the redirect countdown
+            setLoginDone(true);
+          }
+        } catch (loginErr) {
+          console.error("Auto-login failed:", loginErr);
+          // Even if auto-login fails, Step4 is already shown
+          // User can still join WhatsApp and manually log in later
         }
 
         return;
@@ -123,7 +127,10 @@ export default function Step3PersonalDetails({ nextStep }) {
 
       if (msg === "Account already exists") {
         setMessage("⚠️ Account already exists. Redirecting to login...");
-        timeoutRef.current = setTimeout(() => navigate("/login"), 1500);
+        timeoutRef.current = setTimeout(
+          () => (window.location.href = "/login"),
+          1500,
+        );
         return;
       }
 
@@ -159,7 +166,10 @@ export default function Step3PersonalDetails({ nextStep }) {
         setMessage(
           "⚠️ Registration already completed. Redirecting to login...",
         );
-        timeoutRef.current = setTimeout(() => navigate("/login"), 1500);
+        timeoutRef.current = setTimeout(
+          () => (window.location.href = "/login"),
+          1500,
+        );
         return;
       }
 

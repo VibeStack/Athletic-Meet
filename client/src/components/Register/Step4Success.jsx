@@ -1,8 +1,64 @@
 // components/Register/Step4Success.jsx
-import React from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { CheckIcon } from "../../icons";
 
-export default function Step4Success() {
+const REDIRECT_SECONDS = 5;
+
+export default function Step4Success({ loginDone }) {
+  const navigate = useNavigate();
+  const [countdown, setCountdown] = useState(REDIRECT_SECONDS);
+  const hasRedirected = useRef(false);
+
+  // Prevents double-navigation from multiple triggers firing together
+  const safeRedirect = useCallback(() => {
+    if (!hasRedirected.current && loginDone) {
+      hasRedirected.current = true;
+      navigate("/portal");
+    }
+  }, [loginDone, navigate]);
+
+  useEffect(() => {
+    if (!loginDone) return;
+
+    // 1. Visual countdown (1-second interval)
+    const interval = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    // 2. Functional redirect timer
+    const timeout = setTimeout(safeRedirect, REDIRECT_SECONDS * 1000);
+
+    // 3. Safari iOS fix: detect when user returns from WhatsApp
+    //    Safari pauses setTimeout in background tabs, so this
+    //    fires as soon as the page becomes visible again.
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        safeRedirect();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [loginDone, safeRedirect]);
+
+  // Redirect once countdown hits 0 (covers edge cases)
+  useEffect(() => {
+    if (countdown === 0) {
+      safeRedirect();
+    }
+  }, [countdown, safeRedirect]);
+
   return (
     <div className="min-h-screen flex items-start sm:items-center justify-center px-4 py-6 sm:py-0">
       <div
@@ -31,26 +87,30 @@ export default function Step4Success() {
             🎉 Congratulations! Your account has been created successfully.
           </p>
 
-          {/* Redirecting Status */}
-          {/* Beautiful Bouncing Dots */}
+          {/* Redirect countdown */}
+          {loginDone && (
+            <div className="my-4">
+              <p className="text-green-600 text-sm font-semibold mb-3">
+                Redirecting to portal in{" "}
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-100 text-green-700 font-bold text-sm">
+                  {countdown}
+                </span>{" "}
+                second{countdown !== 1 ? "s" : ""}...
+              </p>
 
-          {/* <div className="my-8">
-            <p className="text-green-600 text-lg font-semibold mb-6">
-              Redirecting to portal...
-            </p>
-
-            <div className="flex justify-center gap-3">
-              <div className="w-4 h-4 bg-linear-to-r from-green-400 to-green-600 rounded-full animate-bounce shadow-lg"></div>
-              <div
-                className="w-4 h-4 bg-linear-to-r from-green-400 to-green-600 rounded-full animate-bounce shadow-lg"
-                style={{ animationDelay: "0.15s" }}
-              ></div>
-              <div
-                className="w-4 h-4 bg-linear-to-r from-green-400 to-green-600 rounded-full animate-bounce shadow-lg"
-                style={{ animationDelay: "0.3s" }}
-              ></div>
+              <div className="flex justify-center gap-3">
+                <div className="w-3 h-3 bg-linear-to-r from-green-400 to-green-600 rounded-full animate-bounce shadow-lg"></div>
+                <div
+                  className="w-3 h-3 bg-linear-to-r from-green-400 to-green-600 rounded-full animate-bounce shadow-lg"
+                  style={{ animationDelay: "0.15s" }}
+                ></div>
+                <div
+                  className="w-3 h-3 bg-linear-to-r from-green-400 to-green-600 rounded-full animate-bounce shadow-lg"
+                  style={{ animationDelay: "0.3s" }}
+                ></div>
+              </div>
             </div>
-          </div> */}
+          )}
 
           {/* WhatsApp Community */}
           <div
@@ -91,6 +151,20 @@ export default function Step4Success() {
               Join WhatsApp
             </a>
           </div>
+
+          {/* Manual redirect button */}
+          {loginDone && (
+            <button
+              onClick={() => navigate("/portal")}
+              className="mt-4 w-full py-2.5 sm:py-3 rounded-lg
+                bg-linear-to-r from-cyan-500 via-blue-500 to-purple-500
+                text-white font-semibold text-sm sm:text-base
+                hover:from-cyan-600 hover:via-blue-600 hover:to-purple-600
+                transition-all duration-300 shadow-md hover:shadow-lg"
+            >
+              Go to Portal →
+            </button>
+          )}
 
           {/* Footer Message */}
           <div className="mt-8 pt-6 border-t border-gray-200">
