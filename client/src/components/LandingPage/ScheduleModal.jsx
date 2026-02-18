@@ -53,8 +53,8 @@ const scheduleData = {
       { num: 26, name: "Hammer Throw Final", category: "Boys" },
       { num: 27, name: "400m Final", category: "Boys" },
       { num: 28, name: "200m Final", category: "Boys & Girls" },
-      { num: 29, name: "Tug of War Final", category: "Boys & Girls" },
-      { num: 30, name: "4x400m Inter-Year Relay Race", category: "Boys" },
+      { num: 29, name: "Tug of War Final", category: "Boys " },
+      { num: 30, name: "4x400m Inter-Dept. Relay Race", category: "Boys" },
     ],
   },
 };
