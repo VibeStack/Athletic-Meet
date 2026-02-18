@@ -161,7 +161,7 @@ export const exportSingleEvent = asyncHandler(async (req, res) => {
     sheetNames.add(finalSheetName);
 
     const worksheet = XLSX.utils.aoa_to_sheet([
-      ["Annual Athletic Meet 2026"],
+      ["65th GNDEC Annual Athletic Championship 2026"],
       [`Event Name : ${eventName} (${genderLabelFull})`],
       [],
     ]);
@@ -258,7 +258,7 @@ export const exportWinners = asyncHandler(async (req, res) => {
 
     // Create worksheet with title rows
     const worksheet = XLSX.utils.aoa_to_sheet([
-      ["Annual Athletic Meet 2026"],
+      ["65th GNDEC Annual Athletic Championship 2026"],
       [`Event: ${eventName} (${category})`],
       [],
     ]);
