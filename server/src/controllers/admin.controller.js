@@ -853,7 +853,6 @@ export const markAttendanceByQr = asyncHandler(async (req, res) => {
   const counterUpdate = await Event.updateOne(
     {
       _id: eventObjectId,
-      isActive: true,
       "studentsCount.notMarked": { $gt: 0 },
     },
     {
