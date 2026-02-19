@@ -76,7 +76,7 @@ const Footer = ({ darkMode, scrollToSection }) => {
                             darkMode
                               ? "text-gray-400 hover:text-cyan-400"
                               : "text-gray-600 hover:text-cyan-600"
-                          } transition-colors`}
+                          } `}
                         >
                           {item}
                         </button>
@@ -101,7 +101,7 @@ const Footer = ({ darkMode, scrollToSection }) => {
                           darkMode
                             ? "text-gray-400 hover:text-cyan-400"
                             : "text-gray-600 hover:text-cyan-600"
-                        } transition-colors`}
+                        } `}
                       >
                         Rules
                       </button>
@@ -113,7 +113,7 @@ const Footer = ({ darkMode, scrollToSection }) => {
                           darkMode
                             ? "text-gray-400 hover:text-cyan-400"
                             : "text-gray-600 hover:text-cyan-600"
-                        } transition-colors`}
+                        } `}
                       >
                         Schedule
                       </button>
@@ -144,7 +144,7 @@ const Footer = ({ darkMode, scrollToSection }) => {
                       <a
                         key={idx}
                         href="#"
-                        className={`p-2 rounded-lg transition-all ${
+                        className={`p-2 rounded-lg transition-transform ${
                           darkMode
                             ? "bg-gray-800 text-gray-500 hover:text-white hover:bg-gray-700"
                             : "bg-gray-100 text-gray-400 hover:text-gray-600 hover:bg-gray-200"
@@ -184,7 +184,7 @@ const Footer = ({ darkMode, scrollToSection }) => {
                     href="https://maps.app.goo.gl/cifZ4pzRN5HLQUsJ8"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`flex items-center gap-1 text-xs font-medium transition-colors ${
+                    className={`flex items-center gap-1 text-xs font-medium  ${
                       darkMode
                         ? "text-cyan-400 hover:text-cyan-300"
                         : "text-cyan-600 hover:text-cyan-700"
@@ -230,7 +230,7 @@ const Footer = ({ darkMode, scrollToSection }) => {
                 href="https://github.com/arshdeepanand"
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`transition-colors ${
+                className={` ${
                   darkMode ? "hover:text-cyan-400" : "hover:text-cyan-600"
                 }`}
               >

@@ -191,7 +191,7 @@ export default function HamburgerMenu({ menuOpen, setMenuOpen, user }) {
     <>
       {/* Backdrop with blur */}
       <div
-        className={`fixed inset-0 z-40 bg-black/50 backdrop-blur-md transition-opacity duration-300 ${
+        className={`fixed inset-0 z-40 bg-black/50 backdrop-blur-md transition-opacity  ${
           isAnimating ? "opacity-100" : "opacity-0"
         }`}
         onClick={() => setMenuOpen(false)}
@@ -200,7 +200,7 @@ export default function HamburgerMenu({ menuOpen, setMenuOpen, user }) {
       {/* Panel with slide animation */}
       <aside
         className={`fixed top-0 left-0 z-50 h-full w-[280px] flex flex-col overflow-hidden
-          transition-transform duration-300 ease-out
+          transition-transform  ease-out
           ${isAnimating ? "translate-x-0" : "-translate-x-full"}
           ${
             darkMode
@@ -264,7 +264,7 @@ export default function HamburgerMenu({ menuOpen, setMenuOpen, user }) {
           {/* Close button - top right */}
           <button
             onClick={() => setMenuOpen(false)}
-            className={`absolute top-4 right-4 p-2 rounded-xl transition-all duration-200 group ${
+            className={`absolute top-4 right-4 p-2 rounded-xl group ${
               darkMode
                 ? "hover:bg-white/10 text-slate-500 hover:text-white"
                 : "hover:bg-slate-100 text-slate-400 hover:text-slate-600"
@@ -365,7 +365,7 @@ export default function HamburgerMenu({ menuOpen, setMenuOpen, user }) {
                       <Link
                         key={item.path}
                         to={item.path}
-                        className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
+                        className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl
                           ${
                             active
                               ? `bg-linear-to-r ${item.gradient} text-white shadow-lg ${item.shadowColor}`
@@ -381,7 +381,7 @@ export default function HamburgerMenu({ menuOpen, setMenuOpen, user }) {
 
                         {/* Icon container */}
                         <div
-                          className={`flex items-center justify-center w-9 h-9 rounded-lg transition-all duration-200 ${
+                          className={`flex items-center justify-center w-9 h-9 rounded-lg ${
                             active
                               ? "bg-white/20"
                               : darkMode
@@ -390,7 +390,7 @@ export default function HamburgerMenu({ menuOpen, setMenuOpen, user }) {
                           }`}
                         >
                           <Icon
-                            className={`w-[18px] h-[18px] transition-colors ${
+                            className={`w-[18px] h-[18px] ${
                               active
                                 ? "text-white"
                                 : darkMode
@@ -408,7 +408,7 @@ export default function HamburgerMenu({ menuOpen, setMenuOpen, user }) {
                         {/* Hover arrow indicator */}
                         {!active && (
                           <svg
-                            className={`w-4 h-4 ml-auto opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 ${
+                            className={`w-4 h-4 ml-auto opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 ${
                               darkMode ? "text-slate-500" : "text-slate-400"
                             }`}
                             viewBox="0 0 24 24"
@@ -437,7 +437,7 @@ export default function HamburgerMenu({ menuOpen, setMenuOpen, user }) {
           }`}
         >
           <div
-            className={`flex items-center gap-3 p-3 rounded-2xl transition-all duration-200 cursor-pointer}`}
+            className={`flex items-center gap-3 p-3 rounded-2xl cursor-pointer}`}
           >
             {/* Avatar with gradient border (matching header) */}
             <div className="relative">

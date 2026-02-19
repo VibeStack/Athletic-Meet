@@ -210,7 +210,7 @@ export default function CertificateControlsPage() {
             <div className="flex items-center gap-5">
               {/* Lock/Unlock Icon */}
               <div
-                className={`w-20 h-20 sm:w-24 sm:h-24 rounded-2xl flex items-center justify-center transition-all duration-500 ${
+                className={`w-20 h-20 sm:w-24 sm:h-24 rounded-2xl flex items-center justify-center transition-transform  ${
                   isLocked
                     ? darkMode
                       ? "bg-linear-to-br from-red-500/20 to-rose-500/10 ring-2 ring-red-500/30 text-red-400"
@@ -251,14 +251,14 @@ export default function CertificateControlsPage() {
               <button
                 onClick={toggleLock}
                 disabled={updating}
-                className={`group relative px-8 py-4 rounded-xl font-bold text-base transition-all flex items-center justify-center gap-3 shadow-xl min-w-[220px] overflow-hidden ${
+                className={`group relative px-8 py-4 rounded-xl font-bold text-base transition-transform flex items-center justify-center gap-3 shadow-xl min-w-[220px] overflow-hidden ${
                   isLocked
                     ? "bg-linear-to-r from-emerald-500 to-green-600 text-white shadow-emerald-500/25 hover:shadow-emerald-500/40"
                     : "bg-linear-to-r from-red-500 to-rose-600 text-white shadow-red-500/25 hover:shadow-red-500/40"
                 } hover:scale-105 active:scale-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100`}
               >
                 {/* Shine effect */}
-                <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform " />
 
                 <span className="relative w-5 h-5 flex items-center justify-center shrink-0">
                   {updating ? (

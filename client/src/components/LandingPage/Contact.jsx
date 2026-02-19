@@ -106,7 +106,7 @@ const Contact = ({ darkMode }) => {
               </div>
 
               <div
-                className={`flex items-start gap-4 p-5 rounded-xl transition-all duration-300 ${
+                className={`flex items-start gap-4 p-5 rounded-xl transition-transform  ${
                   darkMode
                     ? "bg-gray-800/80 hover:bg-gray-800 shadow-lg shadow-black/20"
                     : "bg-white border border-gray-100 shadow-md hover:shadow-lg"
@@ -150,7 +150,7 @@ const Contact = ({ darkMode }) => {
               </div>
 
               <div
-                className={`flex items-start gap-4 p-5 rounded-xl transition-all duration-300 ${
+                className={`flex items-start gap-4 p-5 rounded-xl transition-transform  ${
                   darkMode
                     ? "bg-gray-800/80 hover:bg-gray-800 shadow-lg shadow-black/20"
                     : "bg-white border border-gray-100 shadow-md hover:shadow-lg"
@@ -194,7 +194,7 @@ const Contact = ({ darkMode }) => {
             </div>
 
             <div
-              className={`lg:col-span-3 p-6 rounded-2xl transition-shadow duration-300 ${
+              className={`lg:col-span-3 p-6 rounded-2xl -shadow  ${
                 darkMode
                   ? "bg-gray-800/60 border border-gray-700/50 shadow-xl shadow-black/30"
                   : "bg-white border border-gray-100 shadow-lg hover:shadow-xl"
@@ -258,7 +258,7 @@ const Contact = ({ darkMode }) => {
                 <button
                   type="submit"
                   disabled={isSending}
-                  className={`mt-10 mb-0 group w-full px-6 py-4 rounded-xl font-semibold text-base text-white overflow-hidden transition-all duration-300 flex items-center justify-center gap-2 ${
+                  className={`mt-10 mb-0 group w-full px-6 py-4 rounded-xl font-semibold text-base text-white overflow-hidden transition-transform  flex items-center justify-center gap-2 ${
                     isSending
                       ? "bg-orange-400 cursor-not-allowed opacity-80"
                       : darkMode
@@ -294,7 +294,7 @@ const Contact = ({ darkMode }) => {
                   ) : (
                     <>
                       <span className="text-white">Send Message</span>
-                      <Send className="w-4 h-4 text-white group-hover:translate-x-0.5 transition-transform duration-200" />
+                      <Send className="w-4 h-4 text-white group-hover:translate-x-0.5 transition-transform " />
                     </>
                   )}
                 </button>

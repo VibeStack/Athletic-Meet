@@ -33,7 +33,7 @@ export default function ProfileField({ label, value, accent = "default" }) {
 
   return (
     <div
-      className={`group relative rounded-xl p-4 transition-all duration-200
+      className={`group relative rounded-xl p-4 transition-transform 
         ${
           darkMode
             ? "bg-slate-900/70 ring-1 ring-white/10 hover:ring-white/20"

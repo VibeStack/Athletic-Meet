@@ -8,7 +8,7 @@ export default function StatCard({
 }) {
   return (
     <div
-      className={`relative overflow-hidden rounded-2xl p-4 sm:p-5 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${
+      className={`relative overflow-hidden rounded-2xl p-4 sm:p-5 transition-transform  hover:scale-[1.02] hover:shadow-xl ${
         darkMode
           ? "bg-slate-900/80 border border-slate-800/50"
           : "bg-white border border-slate-200/50 shadow-lg"

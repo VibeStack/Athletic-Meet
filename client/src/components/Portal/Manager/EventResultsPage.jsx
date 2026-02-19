@@ -296,7 +296,7 @@ export default function EventResultsPage() {
         <p className={darkMode ? "text-red-400" : "text-red-600"}>{error}</p>
         <button
           onClick={() => window.location.reload()}
-          className="mt-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+          className="mt-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 "
         >
           Retry
         </button>
@@ -564,7 +564,7 @@ export default function EventResultsPage() {
                       shouldValidate: true,
                     });
                   }}
-                  className={`w-full flex-1 px-4 py-3 rounded-xl text-sm transition-all duration-200 resize-none focus:outline-none ${(() => {
+                  className={`w-full flex-1 px-4 py-3 rounded-xl text-sm transition-transform  resize-none focus:outline-none ${(() => {
                     const hasInput = watchedValues.jerseyNumbers?.trim();
                     const isValid =
                       hasInput &&
@@ -607,7 +607,7 @@ export default function EventResultsPage() {
                   {...register("eventId", {
                     required: "Please select an event",
                   })}
-                  className={`w-full px-4 py-3 rounded-xl text-sm transition-all duration-200 appearance-none cursor-pointer ${
+                  className={`w-full px-4 py-3 rounded-xl text-sm transition-transform  appearance-none cursor-pointer ${
                     darkMode
                       ? "bg-slate-800/80 border border-slate-700 text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
                       : "bg-slate-50 border border-slate-200 text-slate-900 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
@@ -725,7 +725,7 @@ export default function EventResultsPage() {
                     {positionOptions.map((option) => (
                       <label
                         key={option.value}
-                        className={`relative flex flex-col items-center gap-1 p-2.5 rounded-xl cursor-pointer transition-all duration-200 ${
+                        className={`relative flex flex-col items-center gap-1 p-2.5 rounded-xl cursor-pointer transition-transform  ${
                           watchedValues.position === option.value
                             ? `${option.bgColor} ring-2 ${option.ringColor}`
                             : darkMode
@@ -830,7 +830,7 @@ export default function EventResultsPage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className={`w-full py-4 rounded-xl font-bold text-base transition-all duration-300 flex items-center justify-center gap-2 ${
+                className={`w-full py-4 rounded-xl font-bold text-base transition-transform  flex items-center justify-center gap-2 ${
                   submitSuccess
                     ? darkMode
                       ? "bg-linear-to-r from-emerald-500 to-green-600 text-white"

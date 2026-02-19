@@ -15,7 +15,7 @@ export default function LoadingComponent({
 
   return (
     <div
-      className={`flex flex-col items-center justify-center ${containerClass} gap-6 px-4 transition-colors duration-300 ${
+      className={`flex flex-col items-center justify-center ${containerClass} gap-6 px-4   ${
         fullScreen
           ? isDark
             ? "bg-slate-950"
@@ -28,7 +28,7 @@ export default function LoadingComponent({
       {/* Brand Logo with Shimmer */}
       <div className="relative">
         <div
-          className={`w-16 h-16 rounded-2xl flex items-center justify-center font-black text-xl overflow-hidden transition-all duration-300 ${
+          className={`w-16 h-16 rounded-2xl flex items-center justify-center font-black text-xl overflow-hidden transition-transform  ${
             isDark
               ? "bg-linear-to-br from-cyan-500 to-blue-600 text-white shadow-[0_0_20px_rgba(6,182,212,0.3)]"
               : "bg-linear-to-br from-slate-800 via-slate-700 to-slate-900 text-white shadow-xl"
@@ -83,7 +83,7 @@ export default function LoadingComponent({
       <div className="w-full max-w-3xl space-y-4 mt-2">
         {/* Large card skeleton */}
         <div
-          className={`relative h-28 rounded-2xl overflow-hidden transition-colors duration-300 ${
+          className={`relative h-28 rounded-2xl overflow-hidden   ${
             isDark
               ? "bg-slate-800/40"
               : "bg-white border border-slate-200 shadow-sm"
@@ -102,7 +102,7 @@ export default function LoadingComponent({
         {/* Two smaller cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div
-            className={`relative h-20 rounded-xl overflow-hidden transition-colors duration-300 ${
+            className={`relative h-20 rounded-xl overflow-hidden   ${
               isDark
                 ? "bg-slate-800/40"
                 : "bg-white border border-slate-200 shadow-sm"
@@ -118,7 +118,7 @@ export default function LoadingComponent({
             />
           </div>
           <div
-            className={`relative h-20 rounded-xl overflow-hidden transition-colors duration-300 ${
+            className={`relative h-20 rounded-xl overflow-hidden   ${
               isDark
                 ? "bg-slate-800/40"
                 : "bg-white border border-slate-200 shadow-sm"
@@ -140,7 +140,7 @@ export default function LoadingComponent({
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className={`relative h-12 rounded-lg overflow-hidden transition-colors duration-300 ${
+              className={`relative h-12 rounded-lg overflow-hidden   ${
                 isDark
                   ? "bg-slate-800/40"
                   : "bg-white border border-slate-200 shadow-sm"

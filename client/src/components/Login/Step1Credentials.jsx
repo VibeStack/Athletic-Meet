@@ -49,7 +49,7 @@ export default function Step1Credentials({ nextStep }) {
     <>
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="bg-white/90 backdrop-blur-sm shadow-2xl rounded-2xl w-full max-w-md p-6 sm:p-8 md:p-10 mx-auto border border-white/50 transition-all duration-500"
+        className="bg-white/90 backdrop-blur-sm shadow-2xl rounded-2xl w-full max-w-md p-6 sm:p-8 md:p-10 mx-auto border border-white/50 transition-transform "
       >
         {/* Header */}
         <div className="text-center mb-8">
@@ -138,7 +138,7 @@ export default function Step1Credentials({ nextStep }) {
             bg-linear-to-r from-cyan-500 via-blue-500 to-purple-500
             text-white font-bold rounded-xl shadow-lg
             hover:shadow-xl focus:outline-none focus:ring-0
-            transition-all duration-300 flex items-center justify-center gap-2
+            transition-transform  flex items-center justify-center gap-2
             touch-manipulation
             ${
               isSubmitting
@@ -187,7 +187,7 @@ export default function Step1Credentials({ nextStep }) {
               className="font-semibold
                 bg-linear-to-r from-cyan-500 via-blue-500 to-purple-500
                 bg-clip-text text-transparent
-                hover:opacity-80 transition-opacity duration-200"
+                hover:opacity-80 transition-opacity "
             >
               Create one
             </a>

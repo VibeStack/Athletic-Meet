@@ -54,7 +54,7 @@ export default function PortalHome() {
   ) : (
     <>
       <section
-        className={`relative overflow-hidden rounded-3xl transition-all duration-500 ${
+        className={`relative overflow-hidden rounded-3xl transition-transform  ${
           darkMode
             ? "bg-linear-to-br from-slate-950 via-slate-900 to-slate-950 border border-white/10 shadow-[0_30px_100px_rgba(0,0,0,0.7)]"
             : "bg-linear-to-br from-slate-100 via-white to-slate-200 border border-slate-200 shadow-[0_30px_100px_rgba(15,23,42,0.12)]"
@@ -159,7 +159,7 @@ export default function PortalHome() {
             >
               {/* INNER QR SURFACE */}
               <div
-                className={`rounded-xl p-4 transition-all ${
+                className={`rounded-xl p-4 transition-transform ${
                   darkMode
                     ? "bg-[#04132D] shadow-[0_10px_30px_rgba(56,189,248,0.25)]"
                     : "bg-white shadow-md"
@@ -190,7 +190,7 @@ export default function PortalHome() {
         {/* EVENTS — PRIMARY */}
         <div
           onClick={() => navigate("/portal/events")}
-          className={`lg:col-span-2 cursor-pointer rounded-3xl p-6 sm:px-8 sm:py-6 relative overflow-hidden transition-all duration-300 hover:scale-[1.01] ${
+          className={`lg:col-span-2 cursor-pointer rounded-3xl p-6 sm:px-8 sm:py-6 relative overflow-hidden transition-transform  hover:scale-[1.01] ${
             darkMode
               ? "bg-linear-to-br from-slate-900 via-slate-900 to-slate-950 ring-1 ring-white/10 shadow-[0_25px_70px_rgba(0,0,0,0.65)]"
               : "bg-white ring-1 ring-slate-200 shadow-xl"
@@ -363,7 +363,7 @@ export default function PortalHome() {
           {/* CERTIFICATES */}
           <div
             onClick={() => navigate("/portal/certificates")}
-            className={`cursor-pointer rounded-3xl p-6 relative overflow-hidden transition-all hover:scale-[1.02]
+            className={`cursor-pointer rounded-3xl p-6 relative overflow-hidden transition-transform hover:scale-[1.02]
               ${
                 darkMode
                   ? "bg-linear-to-br from-amber-900/50 to-slate-900 ring-1 ring-amber-500/30"

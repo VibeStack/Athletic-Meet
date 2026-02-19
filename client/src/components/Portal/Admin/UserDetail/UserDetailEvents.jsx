@@ -34,7 +34,97 @@ const getStatusDisplay = (status) => {
     icon: "○",
   };
 };
-/* -------------------- SVG Icons -------------------- */
+
+/* SVG medal icons for positions */
+const MEDAL_ICONS = {
+  gold: (
+    <svg viewBox="0 0 24 24" className="w-6 h-6" fill="#FBBF24">
+      <path d="M19 5h-2V3H7v2H5a2 2 0 00-2 2v1c0 2.5 1.9 4.6 4.4 4.9A5 5 0 0011 15.9V19H7v2h10v-2h-4v-3.1a5 5 0 003.6-3C19.1 12.6 21 10.5 21 8V7a2 2 0 00-2-2z" />
+    </svg>
+  ),
+  silver: (
+    <svg viewBox="0 0 24 24" className="w-6 h-6" fill="#94A3B8">
+      <path d="M19 5h-2V3H7v2H5a2 2 0 00-2 2v1c0 2.5 1.9 4.6 4.4 4.9A5 5 0 0011 15.9V19H7v2h10v-2h-4v-3.1a5 5 0 003.6-3C19.1 12.6 21 10.5 21 8V7a2 2 0 00-2-2z" />
+    </svg>
+  ),
+  bronze: (
+    <svg viewBox="0 0 24 24" className="w-6 h-6" fill="#CD7F32">
+      <path d="M19 5h-2V3H7v2H5a2 2 0 00-2 2v1c0 2.5 1.9 4.6 4.4 4.9A5 5 0 0011 15.9V19H7v2h10v-2h-4v-3.1a5 5 0 003.6-3C19.1 12.6 21 10.5 21 8V7a2 2 0 00-2-2z" />
+    </svg>
+  ),
+  noPosition: (
+    <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none">
+      <circle
+        cx="12"
+        cy="12"
+        r="9"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeDasharray="3 2"
+      />
+      <path
+        d="M8 12h8"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  ),
+  trophy: (
+    <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current">
+      <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z" />
+    </svg>
+  ),
+};
+
+const getPositionDisplay = (position) => {
+  if (position === 1)
+    return {
+      icon: MEDAL_ICONS.gold,
+      label: "1st Place",
+      colorClass: "text-amber-700",
+      darkColorClass: "text-amber-300",
+      bgClass: "bg-amber-400/30 ring-2 ring-amber-400/60",
+      darkBgClass: "bg-amber-400/20 ring-2 ring-amber-400/50",
+    };
+  if (position === 2)
+    return {
+      icon: MEDAL_ICONS.silver,
+      label: "2nd Place",
+      colorClass: "text-slate-600",
+      darkColorClass: "text-slate-200",
+      bgClass: "bg-slate-300/50 ring-2 ring-slate-400/60",
+      darkBgClass: "bg-slate-400/20 ring-2 ring-slate-300/40",
+    };
+  if (position === 3)
+    return {
+      icon: MEDAL_ICONS.bronze,
+      label: "3rd Place",
+      colorClass: "text-orange-700",
+      darkColorClass: "text-orange-300",
+      bgClass: "bg-orange-400/30 ring-2 ring-orange-500/60",
+      darkBgClass: "bg-orange-400/20 ring-2 ring-orange-400/50",
+    };
+  if (position === 0)
+    return {
+      icon: MEDAL_ICONS.noPosition,
+      label: "No Position",
+      colorClass: "text-slate-700",
+      darkColorClass: "text-slate-200",
+      bgClass: "bg-slate-900/8 ring-1 ring-slate-400/50",
+      darkBgClass: "bg-white/5 ring-1 ring-white/20",
+    };
+  if (position === null || position === undefined) return null;
+  return {
+    icon: MEDAL_ICONS.trophy,
+    label: `#${position} Place`,
+    colorClass: "text-purple-600",
+    darkColorClass: "text-purple-400",
+    bgClass: "bg-purple-400/15 ring-1 ring-purple-400/40",
+    darkBgClass: "bg-purple-400/10 ring-1 ring-purple-400/30",
+  };
+};
+
 const ICONS = {
   trophy: (
     <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
@@ -228,6 +318,8 @@ export default function UserDetailEvents({
     }
   };
 
+  console.log(studentUserEventsList);
+
   return (
     <>
       <section
@@ -273,7 +365,7 @@ export default function UserDetailEvents({
             isDetailsComplete && (
               <button
                 onClick={openAddEventModal}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition-transform ${
                   darkMode
                     ? "bg-slate-700 text-white hover:bg-slate-600"
                     : "bg-slate-800 text-white hover:bg-slate-700"
@@ -289,20 +381,27 @@ export default function UserDetailEvents({
           {studentUserEventsList?.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {studentUserEventsList.map(
-                ({ eventId, eventName, eventType, attendanceStatus }) => {
+                ({
+                  eventId,
+                  eventName,
+                  eventType,
+                  position,
+                  attendanceStatus,
+                }) => {
                   const statusDisplay = getStatusDisplay(attendanceStatus);
                   return (
                     <div
                       key={eventId}
-                      className={`rounded-xl p-4 transition-all ${
+                      className={`rounded-xl p-4 ${
                         darkMode
                           ? "bg-slate-800/70 border border-white/5 hover:border-white/10"
                           : "bg-slate-50 border border-slate-100 hover:border-slate-200"
                       }`}
                     >
-                      <div className="flex items-start justify-between gap-2 mb-2">
+                      {/* Row 1: Event Name + Status Badge */}
+                      <div className="flex items-start justify-between gap-2 mb-1">
                         <h3
-                          className={`font-bold text-sm leading-tight ${
+                          className={`font-extrabold text-base leading-tight ${
                             darkMode ? "text-white" : "text-slate-900"
                           }`}
                         >
@@ -311,36 +410,59 @@ export default function UserDetailEvents({
 
                         {/* Current Status Badge */}
                         <span
-                          className={`flex items-center gap-1 text-[10px] px-2 py-1 rounded-md font-bold uppercase ${statusDisplay.bg} ${statusDisplay.text} shadow-sm`}
+                          className={`shrink-0 flex items-center gap-1 text-[10px] px-2 py-1 rounded-md font-bold uppercase ${statusDisplay.bg} ${statusDisplay.text} shadow-sm`}
                         >
                           <span className="text-xs">{statusDisplay.icon}</span>
                           <span>{statusDisplay.label}</span>
                         </span>
                       </div>
 
-                      <span
-                        className={`inline-block text-[10px] px-2 py-0.5 rounded-md font-bold uppercase ${
-                          eventType === "Track"
-                            ? darkMode
-                              ? "bg-orange-500/25 text-orange-400"
-                              : "bg-orange-100 text-orange-600"
-                            : eventType === "Field"
+                      {/* Row 2: Centered Position Badge */}
+                      {(() => {
+                        const pos = getPositionDisplay(position);
+                        if (!pos) return null;
+                        return (
+                          <div className="flex justify-center my-3">
+                            <div
+                              className={`inline-flex items-center gap-1 px-4 py-1.5 rounded-full font-bold text-xs ${
+                                darkMode
+                                  ? `${pos.darkBgClass} ${pos.darkColorClass}`
+                                  : `${pos.bgClass} ${pos.colorClass}`
+                              }`}
+                            >
+                              {pos.icon}
+                              <span className="tracking-wide">{pos.label}</span>
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      {/* Row 3: Event Type Tag */}
+                      <div className="mt-2 mb-3">
+                        <span
+                          className={`inline-block text-[10px] px-2 py-0.5 rounded-md font-bold uppercase ${
+                            eventType === "Track"
                               ? darkMode
-                                ? "bg-emerald-500/25 text-emerald-400"
-                                : "bg-emerald-100 text-emerald-600"
-                              : darkMode
-                                ? "bg-blue-500/25 text-blue-400"
-                                : "bg-blue-100 text-blue-600"
-                        }`}
-                      >
-                        {eventType}
-                      </span>
+                                ? "bg-orange-500/25 text-orange-400"
+                                : "bg-orange-100 text-orange-600"
+                              : eventType === "Field"
+                                ? darkMode
+                                  ? "bg-emerald-500/25 text-emerald-400"
+                                  : "bg-emerald-100 text-emerald-600"
+                                : darkMode
+                                  ? "bg-blue-500/25 text-blue-400"
+                                  : "bg-blue-100 text-blue-600"
+                          }`}
+                        >
+                          {eventType}
+                        </span>
+                      </div>
 
                       <div className="flex gap-2 mt-3">
                         <button
                           onClick={() => markAttendance(eventId, "present")}
                           disabled={markingAttendance !== null}
-                          className={`flex items-center justify-center gap-1.5 flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
+                          className={`flex items-center justify-center gap-1.5 flex-1 py-2 rounded-lg text-xs font-bold transition-transform ${
                             attendanceStatus === "present"
                               ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/30 ring-2 ring-emerald-400/50"
                               : darkMode
@@ -361,7 +483,7 @@ export default function UserDetailEvents({
                         <button
                           onClick={() => markAttendance(eventId, "absent")}
                           disabled={markingAttendance !== null}
-                          className={`flex items-center justify-center gap-1.5 flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
+                          className={`flex items-center justify-center gap-1.5 flex-1 py-2 rounded-lg text-xs font-bold transition-transform ${
                             attendanceStatus === "absent"
                               ? "bg-red-500 text-white shadow-md shadow-red-500/30 ring-2 ring-red-400/50"
                               : darkMode
@@ -382,7 +504,7 @@ export default function UserDetailEvents({
                         <button
                           onClick={() => markAttendance(eventId, "notMarked")}
                           disabled={markingAttendance !== null}
-                          className={`flex items-center justify-center gap-1.5 flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
+                          className={`flex items-center justify-center gap-1.5 flex-1 py-2 rounded-lg text-xs font-bold transition-transform ${
                             attendanceStatus === "notMarked" ||
                             !attendanceStatus
                               ? "bg-amber-500 text-white shadow-md shadow-amber-500/30 ring-2 ring-amber-400/50"
@@ -540,7 +662,7 @@ export default function UserDetailEvents({
                                   ],
                             );
                           }}
-                          className={`relative rounded-lg p-2.5 transition-all cursor-pointer ${
+                          className={`relative rounded-lg p-2.5 transition-transform cursor-pointer ${
                             isSelected
                               ? darkMode
                                 ? "bg-emerald-900/50 ring-2 ring-emerald-500"
@@ -632,7 +754,7 @@ export default function UserDetailEvents({
                                   ],
                             );
                           }}
-                          className={`relative rounded-lg p-2.5 transition-all cursor-pointer ${
+                          className={`relative rounded-lg p-2.5 transition-transform cursor-pointer ${
                             isSelected
                               ? darkMode
                                 ? "bg-emerald-900/50 ring-2 ring-emerald-500"

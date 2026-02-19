@@ -124,18 +124,18 @@ const Registration = ({ darkMode }) => {
                   key={idx}
                   className={`relative p-6 sm:p-8 rounded-2xl ${
                     darkMode ? "bg-gray-900" : "bg-white"
-                  } shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 group border-2 border-transparent hover:${
+                  } shadow-xl hover:shadow-2xl transition-transform  transform hover:-translate-y-3 group border-2 border-transparent hover:${
                     colors.border
                   }`}
                 >
                   <div
-                    className={`absolute -top-4 -right-4 w-16 h-16 sm:w-20 sm:h-20 bg-linear-to-br ${colors.from} ${colors.to} rounded-2xl flex items-center justify-center text-white font-black text-xl sm:text-2xl shadow-lg transform group-hover:rotate-12 transition-transform duration-300`}
+                    className={`absolute -top-4 -right-4 w-16 h-16 sm:w-20 sm:h-20 bg-linear-to-br ${colors.from} ${colors.to} rounded-2xl flex items-center justify-center text-white font-black text-xl sm:text-2xl shadow-lg transform group-hover:rotate-12 transition-transform `}
                   >
                     {step.num}
                   </div>
 
                   <div
-                    className={`mb-4 ${colors.text} group-hover:scale-110 transition-transform duration-300`}
+                    className={`mb-4 ${colors.text} group-hover:scale-110 transition-transform `}
                   >
                     {step.icon}
                   </div>
@@ -215,7 +215,7 @@ const Registration = ({ darkMode }) => {
                     {/* CTA Button */}
                     <button
                       onClick={() => setShowRulesModal(true)}
-                      className="group inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-white bg-linear-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-red-500/20"
+                      className="group inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-white bg-linear-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 transition-transform  hover:scale-105 hover:shadow-lg hover:shadow-red-500/20"
                     >
                       <Book className="w-5 h-5" />
                       Read All Rules

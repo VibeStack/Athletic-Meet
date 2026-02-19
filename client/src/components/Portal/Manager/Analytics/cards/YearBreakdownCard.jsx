@@ -73,7 +73,7 @@ export default function YearBreakdownCard({ data, darkMode }) {
                 }`}
               >
                 <div
-                  className="h-full rounded-full transition-all duration-500"
+                  className="h-full rounded-full transition-transform "
                   style={{
                     width: `${percentage}%`,
                     background: `linear-gradient(90deg, ${color}, ${color}cc)`,

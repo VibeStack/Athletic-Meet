@@ -97,7 +97,7 @@ const RegistrationClosedModal = ({ darkMode, onClose, registrationDate }) => {
           {/* Close Button */}
           <button
             onClick={onClose}
-            className="w-full py-3 px-6 rounded-xl font-bold text-white bg-linear-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/25"
+            className="w-full py-3 px-6 rounded-xl font-bold text-white bg-linear-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 transition-transform  hover:shadow-lg hover:shadow-cyan-500/25"
           >
             Got it!
           </button>
@@ -184,7 +184,7 @@ const Navbar = ({
   return (
     <>
       <nav
-        className={`fixed w-full z-50 transition-all duration-500 backdrop-blur-xl ${
+        className={`fixed w-full z-50 transition-transform  backdrop-blur-xl ${
           darkMode ? "bg-gray-900/98 shadow-2xl" : "bg-white/98 shadow-2xl"
         }`}
       >
@@ -215,7 +215,7 @@ const Navbar = ({
                 <button
                   key={item}
                   onClick={() => handleNavClick(item)}
-                  className={`relative px-4 py-2 font-semibold text-sm transition-all duration-300 rounded-lg group ${
+                  className={`relative px-4 py-2 font-semibold text-sm transition-transform  rounded-lg group ${
                     isActive(item)
                       ? "text-cyan-500"
                       : darkMode
@@ -225,7 +225,7 @@ const Navbar = ({
                 >
                   {item}
                   <span
-                    className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 w-0 h-0.5 bg-linear-to-r from-cyan-500 to-blue-500 transition-all duration-300 ${
+                    className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 w-0 h-0.5 bg-linear-to-r from-cyan-500 to-blue-500 transition-transform  ${
                       isActive(item) ? "w-full" : "group-hover:w-full"
                     }`}
                   ></span>
@@ -236,7 +236,7 @@ const Navbar = ({
             <div className="hidden lg:flex items-center space-x-3">
               <button
                 onClick={() => setDarkMode(!darkMode)}
-                className={`p-3 rounded-lg transition-all duration-300 ${
+                className={`p-3 rounded-lg transition-transform  ${
                   darkMode
                     ? "bg-gray-800 hover:bg-gray-700 text-yellow-400"
                     : "bg-gray-100 hover:bg-gray-200 text-gray-700"
@@ -249,7 +249,7 @@ const Navbar = ({
                 )}
               </button>
               <button
-                className={`relative px-6 py-3 rounded-lg font-bold text-white overflow-hidden group cursor-pointer inset-0 bg-linear-to-r from-cyan-500 via-blue-500 to-purple-500 transition-all duration-300 hover:scale-105 active:scale-95 ${
+                className={`relative px-6 py-3 rounded-lg font-bold text-white overflow-hidden group cursor-pointer inset-0 bg-linear-to-r from-cyan-500 via-blue-500 to-purple-500 transition-transform  hover:scale-105 active:scale-95 ${
                   !isRegistrationOpen ? "opacity-95" : ""
                 }`}
                 onClick={() => handleAuthClick("/login")}
@@ -295,7 +295,7 @@ const Navbar = ({
         </div>
 
         <div
-          className={`lg:hidden transition-all duration-300 ${
+          className={`lg:hidden transition-transform  ${
             menuOpen
               ? "max-h-screen opacity-100"
               : "max-h-0 opacity-0 overflow-hidden"
@@ -308,7 +308,7 @@ const Navbar = ({
               <button
                 key={item}
                 onClick={() => handleNavClick(item)}
-                className={`block w-full text-left px-4 py-3 rounded-lg font-semibold transition-all ${
+                className={`block w-full text-left px-4 py-3 rounded-lg font-semibold transition-transform ${
                   isActive(item)
                     ? "bg-linear-to-r from-cyan-500 to-blue-500 text-white transform scale-105"
                     : darkMode
@@ -321,7 +321,7 @@ const Navbar = ({
             ))}
             <button
               onClick={() => handleAuthClick("/login")}
-              className="relative overflow-hidden group cursor-pointer font-bold text-white rounded-lg bg-linear-to-r from-cyan-500 via-blue-500 to-purple-500 px-4 py-3 w-full transition-all duration-300 active:scale-95 shadow-lg"
+              className="relative overflow-hidden group cursor-pointer font-bold text-white rounded-lg bg-linear-to-r from-cyan-500 via-blue-500 to-purple-500 px-4 py-3 w-full transition-transform  active:scale-95 shadow-lg"
             >
               <span className="relative z-10">Login</span>
               {!isRegistrationOpen && (

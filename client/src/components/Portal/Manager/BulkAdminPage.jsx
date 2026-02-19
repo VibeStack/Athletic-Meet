@@ -364,7 +364,7 @@ export default function BulkAdminPage() {
         >
           <button
             onClick={() => setActiveTab("promote")}
-            className={`flex-1 flex items-center text-center justify-center py-3 px-4 rounded-lg font-bold text-sm transition-all duration-200 ${
+            className={`flex-1 flex items-center text-center justify-center py-3 px-4 rounded-lg font-bold text-sm transition-transform  ${
               activeTab === "promote"
                 ? darkMode
                   ? "bg-linear-to-r from-teal-500 to-cyan-600 text-white shadow-lg shadow-teal-500/30"
@@ -379,7 +379,7 @@ export default function BulkAdminPage() {
           </button>
           <button
             onClick={() => setActiveTab("demote")}
-            className={`flex-1 flex items-center text-center justify-center py-3 px-4 rounded-lg font-bold text-sm transition-all duration-200 ${
+            className={`flex-1 flex items-center text-center justify-center py-3 px-4 rounded-lg font-bold text-sm transition-transform  ${
               activeTab === "demote"
                 ? darkMode
                   ? "bg-linear-to-r from-slate-500 to-gray-600 text-white shadow-lg shadow-slate-500/30"
@@ -531,7 +531,7 @@ export default function BulkAdminPage() {
                     "Please enter valid jersey numbers (comma separated)",
                 })}
                 onChange={(e) => handleJerseyInput(e, setValue)}
-                className={`w-full px-4 py-3 rounded-xl text-sm transition-all duration-200 resize-none focus:outline-none ${(() => {
+                className={`w-full px-4 py-3 rounded-xl text-sm transition-transform  resize-none focus:outline-none ${(() => {
                   const hasInput = watchedValues.jerseyNumbers?.trim();
                   const isValid =
                     hasInput && isValidJerseyInput(watchedValues.jerseyNumbers);
@@ -600,7 +600,7 @@ export default function BulkAdminPage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className={`w-full py-4 rounded-xl font-bold text-base transition-all duration-300 flex items-center justify-center gap-2 ${
+                className={`w-full py-4 rounded-xl font-bold text-base transition-transform  flex items-center justify-center gap-2 ${
                   submitSuccess
                     ? darkMode
                       ? `bg-linear-to-r ${theme.gradient} text-white`

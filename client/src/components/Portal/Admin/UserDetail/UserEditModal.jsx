@@ -49,7 +49,7 @@ function FormInput({
   ...props
 }) {
   const baseInput =
-    "w-full px-3 py-2 rounded-lg text-sm font-medium outline-none transition-all";
+    "w-full px-3 py-2 rounded-lg text-sm font-medium outline-none transition-transform";
 
   const themeInput = darkMode
     ? "bg-slate-800/80 text-white border border-white/10 focus:border-white/30"
@@ -136,7 +136,7 @@ function FormSelect({
   ...props
 }) {
   const baseSelect =
-    "w-full px-3 py-2 rounded-lg text-sm font-medium outline-none transition-all";
+    "w-full px-3 py-2 rounded-lg text-sm font-medium outline-none transition-transform";
 
   const themeSelect = darkMode
     ? "bg-slate-800/80 text-white border border-white/10 focus:border-white/30"
@@ -484,7 +484,7 @@ export default function UserEditModal({
             <button
               type="button"
               onClick={onClose}
-              className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all ${
+              className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-transform ${
                 darkMode
                   ? "bg-slate-800 text-slate-300 hover:bg-slate-700"
                   : "bg-slate-100 text-slate-700 hover:bg-slate-200"
@@ -495,7 +495,7 @@ export default function UserEditModal({
             <button
               type="submit"
               disabled={isSubmitting}
-              className={`flex-1 py-2.5 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${
+              className={`flex-1 py-2.5 rounded-xl font-bold text-sm text-white transition-transform shadow-lg hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${
                 studentUserData.role === "Manager"
                   ? "bg-linear-to-r from-red-500 to-red-600 shadow-red-500/25"
                   : studentUserData.gender === "Male"

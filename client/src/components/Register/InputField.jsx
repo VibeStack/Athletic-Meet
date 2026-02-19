@@ -29,7 +29,7 @@ export default function InputField({
       {/* Input Container */}
       <div className="relative">
         {icon && (
-          <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400 transition-colors">
+          <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400 ">
             {icon}
           </span>
         )}
@@ -43,7 +43,7 @@ export default function InputField({
             focus:outline-none focus:ring-0
             placeholder:text-sm placeholder:text-gray-400 
             text-gray-700 text-sm md:text-base
-            transition-all duration-200
+            transition-transform 
             ${icon ? "pl-10" : ""}
             ${
               errors && errors[id]
@@ -58,7 +58,7 @@ export default function InputField({
             type="button"
             onClick={togglePasswordVisibility}
             aria-label={showPassword ? "Hide password" : "Show password"}
-            className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-600 transition-colors touch-manipulation"
+            className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-600  touch-manipulation"
           >
             {showPassword ? (
               <svg

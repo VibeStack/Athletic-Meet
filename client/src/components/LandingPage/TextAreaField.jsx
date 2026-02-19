@@ -25,7 +25,7 @@ export default function TextAreaField({
         id={id}
         rows={rows}
         placeholder={placeholder}
-        className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-all duration-200 resize-none ${
+        className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-transform  resize-none ${
           darkMode
             ? "bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:ring-orange-500/50"
             : "bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 focus:ring-orange-500/30"

@@ -50,7 +50,7 @@ const Gallery = ({ darkMode }) => {
                 <img
                   src={img.url}
                   alt={img.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform "
                   style={{ objectPosition: "center 25%" }}
                 />
                 <div className="absolute top-3 left-3 z-10">
@@ -70,7 +70,7 @@ const Gallery = ({ darkMode }) => {
                   </p>
                   <p className="text-gray-300 text-sm">Athletic Meet 2024</p>
                 </div>
-                <div className="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-white/30 transition-all duration-500" />
+                <div className="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-white/30 transition-transform " />
               </div>
             ))}
         </div>
@@ -88,7 +88,7 @@ const Gallery = ({ darkMode }) => {
                 <img
                   src={img.url}
                   alt={img.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform "
                   style={{ objectPosition: "center" }}
                 />
                 <div className="absolute top-3 left-3 z-10">
@@ -102,15 +102,15 @@ const Gallery = ({ darkMode }) => {
                     {img.badge}
                   </span>
                 </div>
-                <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent flex flex-col items-start justify-end p-5 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                  <p className="text-white font-bold text-lg mb-1 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent flex flex-col items-start justify-end p-5 opacity-0 group-hover:opacity-100 transition-opacity ">
+                  <p className="text-white font-bold text-lg mb-1 transform translate-y-4 group-hover:translate-y-0 transition-transform ">
                     {img.title}
                   </p>
-                  <p className="text-gray-300 text-sm transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-75">
+                  <p className="text-gray-300 text-sm transform translate-y-4 group-hover:translate-y-0 transition-transform  delay-75">
                     Athletic Meet 2024
                   </p>
                 </div>
-                <div className="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-white/30 transition-all duration-500" />
+                <div className="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-white/30 transition-transform " />
               </div>
             ))}
         </div>
@@ -128,7 +128,7 @@ const Gallery = ({ darkMode }) => {
                 <img
                   src={img.url}
                   alt={img.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform "
                   style={{ objectPosition: "center" }}
                 />
                 <div className="absolute top-3 left-3 z-10">
@@ -142,15 +142,15 @@ const Gallery = ({ darkMode }) => {
                     {img.badge}
                   </span>
                 </div>
-                <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent flex flex-col items-start justify-end p-5 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                  <p className="text-white font-bold text-lg mb-1 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent flex flex-col items-start justify-end p-5 opacity-0 group-hover:opacity-100 transition-opacity ">
+                  <p className="text-white font-bold text-lg mb-1 transform translate-y-4 group-hover:translate-y-0 transition-transform ">
                     {img.title}
                   </p>
-                  <p className="text-gray-300 text-sm transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-75">
+                  <p className="text-gray-300 text-sm transform translate-y-4 group-hover:translate-y-0 transition-transform  delay-75">
                     Athletic Meet 2024
                   </p>
                 </div>
-                <div className="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-white/30 transition-all duration-500" />
+                <div className="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-white/30 transition-transform " />
               </div>
             ))}
         </div>
@@ -158,12 +158,12 @@ const Gallery = ({ darkMode }) => {
         <div className="text-center mt-10">
           <button
             onClick={() => navigate("/gallery")}
-            className="group relative px-8 py-4 bg-linear-to-r from-pink-500 to-orange-500 text-white rounded-full font-bold text-lg overflow-hidden shadow-xl hover:shadow-2xl transition-all transform hover:scale-105"
+            className="group relative px-8 py-4 bg-linear-to-r from-pink-500 to-orange-500 text-white rounded-full font-bold text-lg overflow-hidden shadow-xl hover:shadow-2xl transition-transform transform hover:scale-105"
           >
             <span className="relative z-10">
               Explore All Event Highlights →
             </span>
-            <div className="absolute inset-0 bg-linear-to-r from-orange-500 to-red-500 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300" />
+            <div className="absolute inset-0 bg-linear-to-r from-orange-500 to-red-500 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left " />
           </button>
           <p
             className={`text-xs mt-3 ${

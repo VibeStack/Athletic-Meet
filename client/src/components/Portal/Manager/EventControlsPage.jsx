@@ -254,7 +254,7 @@ export default function EventControlsPage() {
         <p className={darkMode ? "text-red-400" : "text-red-600"}>{error}</p>
         <button
           onClick={() => window.location.reload()}
-          className="mt-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+          className="mt-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 "
         >
           Retry
         </button>
@@ -506,7 +506,7 @@ export default function EventControlsPage() {
                 <button
                   onClick={() => toggleDay(day)}
                   disabled={updating === `day-${day}`}
-                  className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 shadow-lg min-w-[140px] ${
+                  className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-transform flex items-center justify-center gap-2 shadow-lg min-w-[140px] ${
                     dayAllActive
                       ? darkMode
                         ? "bg-linear-to-r from-red-500 to-rose-600 text-white shadow-red-500/25 hover:brightness-110"
@@ -569,7 +569,7 @@ export default function EventControlsPage() {
                           <button
                             onClick={() => toggleTypeInDay(day, type)}
                             disabled={updating === `${day}-${type}`}
-                            className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
+                            className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-transform ${
                               typeAllActive
                                 ? darkMode
                                   ? "bg-red-500/15 text-red-400 ring-1 ring-red-500/30 hover:bg-red-500/25"
@@ -592,7 +592,7 @@ export default function EventControlsPage() {
                           {typeEvents.map((event) => (
                             <div
                               key={event.id}
-                              className={`group relative p-3 sm:p-4 rounded-xl transition-all duration-200 h-full flex flex-col ${
+                              className={`group relative p-3 sm:p-4 rounded-xl transition-transform  h-full flex flex-col ${
                                 event.isActive
                                   ? darkMode
                                     ? "bg-emerald-950/60 ring-2 ring-emerald-500/60"
@@ -653,7 +653,7 @@ export default function EventControlsPage() {
                                   toggleEvent(event.id, event.isActive)
                                 }
                                 disabled={updating === event.id}
-                                className={`mt-3 w-full py-2 rounded-lg text-[11px] font-bold transition-all duration-200 flex items-center justify-center gap-2 ${
+                                className={`mt-3 w-full py-2 rounded-lg text-[11px] font-bold transition-transform  flex items-center justify-center gap-2 ${
                                   event.isActive
                                     ? darkMode
                                       ? "bg-linear-to-r from-rose-600 to-red-600 text-white hover:from-rose-500 hover:to-red-500"

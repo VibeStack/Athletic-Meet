@@ -119,7 +119,7 @@ const ScheduleModal = ({ darkMode, onClose }) => {
             </div>
             <button
               onClick={onClose}
-              className={`p-2 rounded-xl transition-all hover:scale-110 ${
+              className={`p-2 rounded-xl transition-transform hover:scale-110 ${
                 darkMode
                   ? "hover:bg-gray-800 text-gray-400"
                   : "hover:bg-gray-100 text-gray-500"
@@ -135,7 +135,7 @@ const ScheduleModal = ({ darkMode, onClose }) => {
               <button
                 key={day}
                 onClick={() => setActiveDay(day)}
-                className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all ${
+                className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-transform ${
                   activeDay === day
                     ? "bg-linear-to-r from-blue-500 to-cyan-500 text-white shadow-lg"
                     : darkMode
@@ -188,7 +188,7 @@ const ScheduleModal = ({ darkMode, onClose }) => {
             {currentDay.events.map((event) => (
               <div
                 key={event.num}
-                className={`flex items-center gap-4 p-4 rounded-xl transition-all hover:scale-[1.01] ${
+                className={`flex items-center gap-4 p-4 rounded-xl transition-transform hover:scale-[1.01] ${
                   darkMode
                     ? "bg-gray-800/60 hover:bg-gray-800 border border-gray-700/50"
                     : "bg-gray-50 hover:bg-white border border-gray-100 hover:shadow-md"

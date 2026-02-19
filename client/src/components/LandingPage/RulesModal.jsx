@@ -90,7 +90,7 @@ const RulesModal = ({ darkMode, onClose }) => {
             </div>
             <button
               onClick={onClose}
-              className={`p-2 rounded-xl transition-all hover:scale-110 ${
+              className={`p-2 rounded-xl transition-transform hover:scale-110 ${
                 darkMode
                   ? "hover:bg-gray-800 text-gray-400"
                   : "hover:bg-gray-100 text-gray-500"
@@ -107,7 +107,7 @@ const RulesModal = ({ darkMode, onClose }) => {
             {rulesData.map((rule, idx) => (
               <div
                 key={idx}
-                className={`group p-5 rounded-2xl transition-all hover:scale-[1.01] ${
+                className={`group p-5 rounded-2xl transition-transform hover:scale-[1.01] ${
                   darkMode
                     ? "bg-gray-800/60 hover:bg-gray-800 border border-gray-700/50"
                     : "bg-gray-50 hover:bg-white border border-gray-100 hover:shadow-lg"

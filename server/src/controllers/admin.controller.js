@@ -234,11 +234,12 @@ export const getUserDetails = asyncHandler(async (req, res) => {
     urn: user.urn || null,
     phone: user.phone || null,
     isEventsLocked: Boolean(user.isEventsLocked),
-    selectedEvents: user.selectedEvents.map(({ eventId, status }) => ({
+    selectedEvents: user.selectedEvents.map(({ eventId, status, position }) => ({
       eventId: eventId?._id,
       eventName: eventId?.name,
       eventType: eventId?.type,
       eventDay: eventId?.day,
+      position,
       attendanceStatus: status,
     })),
     createdAt: user.createdAt,

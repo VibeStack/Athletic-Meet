@@ -62,7 +62,7 @@ const FAQ = ({ darkMode, scrollToSection }) => {
           {faqs.map((faq, idx) => (
             <div
               key={idx}
-              className={`rounded-2xl overflow-hidden transition-all duration-300 ${
+              className={`rounded-2xl overflow-hidden transition-transform  ${
                 darkMode
                   ? "bg-gray-900 hover:bg-gray-900/80"
                   : "bg-white hover:shadow-md"
@@ -78,7 +78,7 @@ const FAQ = ({ darkMode, scrollToSection }) => {
             >
               <button
                 onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
-                className={`w-full p-5 text-left flex items-center gap-4 transition-colors ${
+                className={`w-full p-5 text-left flex items-center gap-4  ${
                   openFaq === idx
                     ? darkMode
                       ? "bg-teal-500/5"
@@ -103,14 +103,14 @@ const FAQ = ({ darkMode, scrollToSection }) => {
                 )}
 
                 <ChevronDown
-                  className={`w-5 h-5 text-teal-500 shrink-0 transition-transform duration-300 ${
+                  className={`w-5 h-5 text-teal-500 shrink-0 transition-transform  ${
                     openFaq === idx ? "rotate-180" : ""
                   }`}
                 />
               </button>
 
               <div
-                className={`transition-all duration-300 ease-in-out ${
+                className={`transition-transform  ease-in-out ${
                   openFaq === idx ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
                 } overflow-hidden`}
               >
@@ -158,13 +158,13 @@ const FAQ = ({ darkMode, scrollToSection }) => {
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button
               onClick={() => scrollToSection && scrollToSection("contact")}
-              className="px-6 py-2.5 rounded-full font-semibold text-sm transition-all bg-linear-to-r from-green-500 to-teal-500 text-white hover:shadow-lg hover:shadow-teal-500/25 hover:scale-105"
+              className="px-6 py-2.5 rounded-full font-semibold text-sm transition-transform bg-linear-to-r from-green-500 to-teal-500 text-white hover:shadow-lg hover:shadow-teal-500/25 hover:scale-105"
             >
               Contact Us
             </button>
             <button
               onClick={() => scrollToSection && scrollToSection("events")}
-              className={`px-6 py-2.5 rounded-full font-semibold text-sm transition-all ${
+              className={`px-6 py-2.5 rounded-full font-semibold text-sm transition-transform ${
                 darkMode
                   ? "bg-gray-800 text-white hover:bg-gray-700"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"

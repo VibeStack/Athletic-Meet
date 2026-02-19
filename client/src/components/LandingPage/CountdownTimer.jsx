@@ -44,7 +44,7 @@ const CountdownTimer = () => {
       {Object.entries(timeLeft).map(([label, value]) => (
         <div key={label} className="flex flex-col items-center">
           <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl flex items-center justify-center shadow-xl relative overflow-hidden group">
-            <div className="absolute inset-0 bg-linear-to-br from-cyan-500/20 to-blue-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="absolute inset-0 bg-linear-to-br from-cyan-500/20 to-blue-500/20 opacity-0 group-hover:opacity-100 transition-opacity "></div>
             <span className="text-2xl sm:text-3xl md:text-4xl font-bold text-white relative z-10 font-mono">
               {value.toString().padStart(2, "0")}
             </span>

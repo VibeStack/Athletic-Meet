@@ -33,7 +33,7 @@ function OtpCard({ otp, darkMode, now }) {
 
   return (
     <div
-      className={`relative overflow-hidden rounded-2xl sm:rounded-3xl transition-all duration-500 ${
+      className={`relative overflow-hidden rounded-2xl sm:rounded-3xl transition-transform  ${
         darkMode
           ? "bg-linear-to-br from-slate-800/90 via-slate-800/70 to-slate-900/90 backdrop-blur-xl border border-emerald-500/10 shadow-2xl shadow-emerald-900/20"
           : "bg-white border border-emerald-100 shadow-xl shadow-emerald-100/50"
@@ -41,7 +41,7 @@ function OtpCard({ otp, darkMode, now }) {
     >
       {/* Glow Effect */}
       <div
-        className={`absolute -top-16 -right-16 w-32 h-32 sm:w-40 sm:h-40 rounded-full blur-3xl transition-opacity duration-500 ${
+        className={`absolute -top-16 -right-16 w-32 h-32 sm:w-40 sm:h-40 rounded-full blur-3xl transition-opacity  ${
           isExpiringSoon
             ? "bg-amber-500/30 opacity-100"
             : "bg-emerald-500/20 opacity-60"
@@ -51,7 +51,7 @@ function OtpCard({ otp, darkMode, now }) {
       {/* Progress Bar - Top */}
       <div className={`h-1 ${darkMode ? "bg-slate-700/50" : "bg-emerald-50"}`}>
         <div
-          className={`h-full transition-all duration-1000 ease-linear ${
+          className={`h-full transition-transform  ease-linear ${
             isExpiringSoon
               ? "bg-linear-to-r from-amber-400 via-orange-500 to-red-500"
               : "bg-linear-to-r from-emerald-400 via-emerald-500 to-teal-500"
@@ -100,7 +100,7 @@ function OtpCard({ otp, darkMode, now }) {
           {otp.otp?.split("").map((digit, index) => (
             <div
               key={index}
-              className={`flex-1 aspect-square max-w-[44px] sm:max-w-[48px] flex items-center justify-center text-lg sm:text-2xl font-bold rounded-lg sm:rounded-xl transition-all duration-300 ${
+              className={`flex-1 aspect-square max-w-[44px] sm:max-w-[48px] flex items-center justify-center text-lg sm:text-2xl font-bold rounded-lg sm:rounded-xl transition-transform  ${
                 isExpired
                   ? "bg-slate-600/30 text-slate-500"
                   : darkMode
@@ -311,7 +311,7 @@ export default function OtpMonitorPage() {
             {/* Refresh Button */}
             <button
               onClick={fetchOtps}
-              className="flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl font-semibold text-sm sm:text-base text-white transition-all hover:scale-105 active:scale-95 shrink-0"
+              className="flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl font-semibold text-sm sm:text-base text-white transition-transform hover:scale-105 active:scale-95 shrink-0"
               style={{
                 background: "linear-gradient(135deg, #059669, #0d9488)",
                 boxShadow: "0 4px 20px rgba(5, 150, 105, 0.35)",

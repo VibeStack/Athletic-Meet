@@ -36,7 +36,7 @@ export default function SelectField({
           className={`w-full px-4 py-3 border-2 rounded-xl bg-white
             focus:outline-none focus:ring-0
             text-sm md:text-base
-            transition-all duration-200
+            transition-transform 
             appearance-none
             ${icon ? "pl-10" : ""}
             ${

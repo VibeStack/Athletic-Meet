@@ -546,7 +546,7 @@ export default function QRScannerPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     onClick={() => handleCategoryChange("Boys")}
-                    className={`p-3 sm:p-4 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 ${
+                    className={`p-3 sm:p-4 rounded-xl font-semibold transition-transform flex items-center justify-center gap-2 ${
                       selectedCategory === "Boys"
                         ? "bg-linear-to-r from-sky-500 to-blue-600 text-white shadow-lg shadow-sky-500/25"
                         : darkMode
@@ -569,7 +569,7 @@ export default function QRScannerPage() {
                   </button>
                   <button
                     onClick={() => handleCategoryChange("Girls")}
-                    className={`p-3 sm:p-4 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 ${
+                    className={`p-3 sm:p-4 rounded-xl font-semibold transition-transform flex items-center justify-center gap-2 ${
                       selectedCategory === "Girls"
                         ? "bg-linear-to-r from-pink-500 to-rose-600 text-white shadow-lg shadow-pink-500/25"
                         : darkMode
@@ -610,7 +610,7 @@ export default function QRScannerPage() {
                     stopScanning();
                   }}
                   disabled={!selectedCategory}
-                  className={`w-full px-4 py-3 sm:py-4 rounded-xl font-medium transition-all appearance-none cursor-pointer ${
+                  className={`w-full px-4 py-3 sm:py-4 rounded-xl font-medium transition-transform appearance-none cursor-pointer ${
                     darkMode
                       ? "bg-slate-800 ring-1 ring-white/10 text-white focus:ring-cyan-500"
                       : "bg-slate-50 ring-1 ring-slate-200 text-slate-900 focus:ring-cyan-500"
@@ -901,7 +901,7 @@ export default function QRScannerPage() {
                 <button
                   onClick={startScanning}
                   disabled={!selectedEvent}
-                  className={`px-6 py-3 font-semibold rounded-xl transition-all flex items-center gap-2 ${
+                  className={`px-6 py-3 font-semibold rounded-xl transition-transform flex items-center gap-2 ${
                     selectedEvent
                       ? darkMode
                         ? "bg-linear-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-600 hover:to-blue-700 shadow-lg shadow-cyan-500/25"
@@ -975,7 +975,7 @@ export default function QRScannerPage() {
                     setScanResult(null);
                     startScanning();
                   }}
-                  className="px-6 py-3 bg-linear-to-r from-cyan-500 to-blue-600 text-white font-semibold rounded-xl transition-all flex items-center gap-2 hover:from-cyan-600 hover:to-blue-700 shadow-lg"
+                  className="px-6 py-3 bg-linear-to-r from-cyan-500 to-blue-600 text-white font-semibold rounded-xl transition-transform flex items-center gap-2 hover:from-cyan-600 hover:to-blue-700 shadow-lg"
                 >
                   {ICONS.refresh}
                   Scan Next
@@ -988,7 +988,7 @@ export default function QRScannerPage() {
               <div className="absolute bottom-6 left-0 right-0 flex justify-center">
                 <button
                   onClick={stopScanning}
-                  className="px-6 py-3 bg-red-500 text-white font-semibold rounded-xl hover:bg-red-600 transition-all flex items-center gap-2 shadow-lg shadow-red-500/25"
+                  className="px-6 py-3 bg-red-500 text-white font-semibold rounded-xl hover:bg-red-600 transition-transform flex items-center gap-2 shadow-lg shadow-red-500/25"
                 >
                   <div className="w-4 h-4">{ICONS.stop}</div>
                   Stop Scanning
@@ -1052,7 +1052,7 @@ export default function QRScannerPage() {
                       }}
                       placeholder="Enter jersey numbers: 1, 5, 12, 23 (spaces auto-convert to commas)"
                       rows={4}
-                      className={`w-full px-4 py-3 rounded-xl text-sm sm:text-base font-medium transition-all resize-none focus:outline-none ${(() => {
+                      className={`w-full px-4 py-3 rounded-xl text-sm sm:text-base font-medium transition-transform resize-none focus:outline-none ${(() => {
                         const hasInput = jerseyNumbers.trim();
                         const isValid =
                           hasInput &&
@@ -1164,7 +1164,7 @@ export default function QRScannerPage() {
                           .map((n) => n.trim())
                           .filter((n) => n && !isNaN(n)).length === 0
                       }
-                      className={`w-full h-full sm:min-h-[120px] px-6 py-4 font-bold rounded-xl transition-all text-base sm:text-lg flex items-center justify-center ${
+                      className={`w-full h-full sm:min-h-[120px] px-6 py-4 font-bold rounded-xl transition-transform text-base sm:text-lg flex items-center justify-center ${
                         !jerseyNumbers.trim() ||
                         submitting ||
                         jerseyNumbers

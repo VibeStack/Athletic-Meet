@@ -50,7 +50,7 @@ export default function QuickActionsCard({ darkMode }) {
           <button
             key={idx}
             onClick={() => navigate(action.path)}
-            className={`flex items-center gap-4 p-4 rounded-xl transition-all group ${
+            className={`flex items-center gap-4 p-4 rounded-xl transition-transform group ${
               darkMode
                 ? "bg-slate-800/50 hover:bg-slate-800 text-slate-300 hover:text-white"
                 : "bg-slate-50 hover:bg-white hover:shadow-md text-slate-600 hover:text-slate-900 border border-transparent hover:border-slate-200"

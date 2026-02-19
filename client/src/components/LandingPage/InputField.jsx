@@ -62,7 +62,7 @@ export default function InputField({
           maxLength={isPhone ? 14 : undefined} // Allow space for + and spaces if needed, though pattern is 10 digits
           className={`w-full ${
             icon ? "pl-10" : "pl-4"
-          } ${isPassword ? "pr-10" : "pr-4"} py-2.5 border rounded-lg focus:outline-none focus:ring-2 transition-all duration-200 ${
+          } ${isPassword ? "pr-10" : "pr-4"} py-2.5 border rounded-lg focus:outline-none focus:ring-2 transition-transform  ${
             darkMode
               ? "bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:ring-orange-500/50"
               : "bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 focus:ring-orange-500/30"

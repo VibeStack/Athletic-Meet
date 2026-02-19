@@ -117,7 +117,7 @@ function UserCard({ user, darkMode, style }) {
     <div style={style} className="p-2">
       <div
         onClick={() => navigate(`${user.id}`)}
-        className={`group cursor-pointer rounded-3xl overflow-hidden transition-all duration-300 border-2 h-full
+        className={`group cursor-pointer rounded-3xl overflow-hidden  border-2 h-full
           ${borderTheme}
           ${
             darkMode
@@ -132,7 +132,7 @@ function UserCard({ user, darkMode, style }) {
           <div className="flex items-start gap-4">
             {/* Jersey Number Badge */}
             <div
-              className={`relative shrink-0 w-20 h-20 rounded-2xl flex items-center justify-center text-2xl font-black transition-transform duration-300 group-hover:scale-105
+              className={`relative shrink-0 w-20 h-20 rounded-2xl flex items-center justify-center text-2xl font-black transition-transform  group-hover:scale-105
                 ${jerseyTheme}
               `}
             >
@@ -175,7 +175,7 @@ function UserCard({ user, darkMode, style }) {
         <div className="p-5 pt-4">
           <div className="grid grid-cols-2 gap-3">
             <div
-              className={`rounded-xl p-3 transition-colors
+              className={`rounded-xl p-3
                 ${
                   darkMode
                     ? "bg-slate-800/50"
@@ -200,7 +200,7 @@ function UserCard({ user, darkMode, style }) {
             </div>
 
             <div
-              className={`rounded-xl p-3 transition-colors
+              className={`rounded-xl p-3
                 ${
                   darkMode
                     ? "bg-slate-800/50"
@@ -225,7 +225,7 @@ function UserCard({ user, darkMode, style }) {
             </div>
 
             <div
-              className={`rounded-xl p-3 transition-colors
+              className={`rounded-xl p-3
                 ${
                   darkMode
                     ? "bg-slate-800/50"
@@ -250,7 +250,7 @@ function UserCard({ user, darkMode, style }) {
             </div>
 
             <div
-              className={`rounded-xl p-3 transition-colors
+              className={`rounded-xl p-3
                 ${
                   darkMode
                     ? "bg-slate-800/50"
@@ -278,7 +278,7 @@ function UserCard({ user, darkMode, style }) {
 
         {/* Footer - Events */}
         <div
-          className={`px-5 py-4 flex items-center justify-between border-t transition-colors
+          className={`px-5 py-4 flex items-center justify-between border-t
             ${
               darkMode
                 ? "border-white/5 bg-slate-800/30"
@@ -308,7 +308,7 @@ function UserCard({ user, darkMode, style }) {
 
           {/* Arrow Indicator */}
           <div
-            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300
+            className={`w-8 h-8 rounded-full flex items-center justify-center transition-transform 
               ${
                 darkMode
                   ? "bg-slate-700/50 text-slate-400 group-hover:bg-slate-700 group-hover:text-white"

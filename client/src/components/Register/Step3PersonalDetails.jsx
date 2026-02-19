@@ -183,7 +183,7 @@ export default function Step3PersonalDetails({ nextStep, setLoginDone }) {
   return (
     <form
       onSubmit={handleSubmit(onFormSubmit)}
-      className="bg-white/90 backdrop-blur-sm shadow-2xl rounded-2xl w-full max-w-2xl p-6 sm:p-8 md:p-10 mx-auto border border-white/50 transition-all duration-500"
+      className="bg-white/90 backdrop-blur-sm shadow-2xl rounded-2xl w-full max-w-2xl p-6 sm:p-8 md:p-10 mx-auto border border-white/50 transition-transform "
     >
       {/* Header */}
       <div className="text-center mb-8">
@@ -353,7 +353,7 @@ export default function Step3PersonalDetails({ nextStep, setLoginDone }) {
             bg-linear-to-r from-cyan-500 via-blue-500 to-purple-500
             text-white font-bold rounded-xl shadow-lg
             hover:shadow-xl focus:outline-none focus:ring-0
-            transition-all duration-300 touch-manipulation
+            transition-transform  touch-manipulation
             hover:from-cyan-600 hover:via-blue-600 hover:to-purple-600
             disabled:opacity-75"
           disabled={loading}

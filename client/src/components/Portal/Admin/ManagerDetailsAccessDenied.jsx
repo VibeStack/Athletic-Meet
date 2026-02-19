@@ -87,7 +87,7 @@ export default function ManagerDetailsAccessDenied() {
         {/* Go back button */}
         <button
           onClick={() => navigate(-1)}
-          className="group inline-flex items-center gap-2 px-8 py-3 rounded-xl font-bold text-sm text-white transition-all duration-200 bg-linear-to-r from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 hover:scale-[1.02] active:scale-[0.98]"
+          className="group inline-flex items-center gap-2 px-8 py-3 rounded-xl font-bold text-sm text-white transition-transform  bg-linear-to-r from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 hover:scale-[1.02] active:scale-[0.98]"
         >
           <svg
             viewBox="0 0 24 24"

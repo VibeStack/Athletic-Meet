@@ -62,7 +62,7 @@ const Team = ({ darkMode }) => {
           {/* Profile Card */}
           <div className="w-full flex justify-center lg:order-2 lg:justify-end">
             <div
-              className={`rounded-2xl overflow-hidden w-full max-w-[320px] sm:max-w-[360px] transition-all duration-500 hover:-translate-y-1 ${
+              className={`rounded-2xl overflow-hidden w-full max-w-[320px] sm:max-w-[360px] transition-transform  hover:-translate-y-1 ${
                 darkMode
                   ? "bg-gray-800 border border-gray-700 hover:border-purple-500/50"
                   : "bg-white border-2 border-purple-100 shadow-lg shadow-purple-500/5 hover:shadow-xl hover:shadow-purple-500/10"
@@ -101,7 +101,7 @@ const Team = ({ darkMode }) => {
                     href={developer.github}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 w-full py-2.5 sm:py-3 px-4 rounded-xl font-semibold text-sm sm:text-base transition-all duration-300 bg-linear-to-r from-blue-600 to-purple-600 text-white hover:shadow-lg hover:shadow-purple-500/25 hover:scale-[1.02]"
+                    className="flex items-center justify-center gap-2 w-full py-2.5 sm:py-3 px-4 rounded-xl font-semibold text-sm sm:text-base transition-transform  bg-linear-to-r from-blue-600 to-purple-600 text-white hover:shadow-lg hover:shadow-purple-500/25 hover:scale-[1.02]"
                   >
                     <Github className="w-4 h-4 sm:w-5 sm:h-5" />
                     View GitHub
@@ -111,7 +111,7 @@ const Team = ({ darkMode }) => {
                       href={developer.linkedin}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`relative flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl font-semibold text-xs sm:text-sm transition-all duration-300 hover:scale-[1.02] border-2 ${
+                      className={`relative flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl font-semibold text-xs sm:text-sm transition-transform  hover:scale-[1.02] border-2 ${
                         darkMode
                           ? "border-blue-500 text-blue-400 hover:bg-blue-500/10"
                           : "border-blue-500 text-blue-600 hover:bg-blue-50"
@@ -130,7 +130,7 @@ const Team = ({ darkMode }) => {
                       href={developer.website}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`relative flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl font-semibold text-xs sm:text-sm transition-all duration-300 hover:scale-[1.02] border-2 ${
+                      className={`relative flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl font-semibold text-xs sm:text-sm transition-transform  hover:scale-[1.02] border-2 ${
                         darkMode
                           ? "border-purple-500 text-purple-400 hover:bg-purple-500/10"
                           : "border-purple-500 text-purple-600 hover:bg-purple-50"
@@ -199,7 +199,7 @@ const Team = ({ darkMode }) => {
               {stats.map((stat, idx) => (
                 <div
                   key={idx}
-                  className={`text-center p-2.5 sm:p-4 rounded-xl sm:rounded-2xl transition-all duration-300 hover:scale-105 ${
+                  className={`text-center p-2.5 sm:p-4 rounded-xl sm:rounded-2xl transition-transform  hover:scale-105 ${
                     darkMode
                       ? "bg-gray-800/50 hover:bg-gray-800"
                       : "bg-white/80 hover:bg-white shadow-md sm:shadow-lg hover:shadow-xl"
@@ -249,7 +249,7 @@ const Team = ({ darkMode }) => {
               {techStack.map((tech, idx) => (
                 <div
                   key={idx}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 hover:scale-105 ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-transform  hover:scale-105 ${
                     darkMode
                       ? "bg-gray-800 text-gray-300 hover:bg-gray-700"
                       : "bg-white shadow-md hover:shadow-lg text-gray-700"

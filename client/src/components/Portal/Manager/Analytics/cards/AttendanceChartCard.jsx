@@ -91,7 +91,7 @@ export default function AttendanceChartCard({
                 id="attendance-event-select"
                 value={selectedEvent}
                 onChange={(e) => setSelectedEvent(e.target.value)}
-                className={`appearance-none w-full px-4 py-2.5 pr-10 rounded-xl text-sm font-medium border-2 transition-all cursor-pointer ${
+                className={`appearance-none w-full px-4 py-2.5 pr-10 rounded-xl text-sm font-medium border-2 transition-transform cursor-pointer ${
                   darkMode
                     ? "bg-slate-800/80 border-slate-700 text-white hover:border-slate-600 focus:border-cyan-500"
                     : "bg-white border-slate-200 text-slate-700 hover:border-slate-300 focus:border-cyan-500"

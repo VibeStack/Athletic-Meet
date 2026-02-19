@@ -274,7 +274,7 @@ export default function EventsPage() {
 
     return (
       <div
-        className={`group rounded-xl p-3 sm:p-4 transition-all duration-200 relative h-full flex flex-col ${
+        className={`group rounded-xl p-3 sm:p-4 transition-transform  relative h-full flex flex-col ${
           isTeamAndNotEnrolled
             ? darkMode
               ? "bg-slate-900/50 ring-1 ring-dashed ring-slate-700 opacity-60 grayscale-30"
@@ -352,7 +352,7 @@ export default function EventsPage() {
         <button
           onClick={() => handleEnroll(event.id)}
           disabled={isLocked || isTeam || isDisabled || enrolling === event.id}
-          className={`mt-3 w-full py-2 rounded-lg text-[11px] font-bold transition-all duration-200 grid place-items-center ${
+          className={`mt-3 w-full py-2 rounded-lg text-[11px] font-bold transition-transform  grid place-items-center ${
             isTeamAndNotEnrolled
               ? darkMode
                 ? "bg-transparent border border-dashed border-slate-600 text-slate-500 cursor-not-allowed"
@@ -795,7 +795,7 @@ export default function EventsPage() {
             <button
               onClick={handleLockEvents}
               disabled={locking}
-              className={`relative flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-bold text-xs w-full sm:w-auto sm:min-w-[140px] h-10 transition-all ${
+              className={`relative flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-bold text-xs w-full sm:w-auto sm:min-w-[140px] h-10 transition-transform ${
                 darkMode
                   ? "bg-linear-to-r from-amber-500 to-orange-600 text-white hover:brightness-110"
                   : "bg-linear-to-r from-amber-500 to-orange-500 text-white hover:brightness-110"
@@ -859,7 +859,7 @@ export default function EventsPage() {
               <button
                 onClick={handleUnlockEvents}
                 disabled={locking}
-                className={`grid place-items-center px-5 py-2.5 rounded-lg font-bold text-xs w-full sm:w-auto h-10 transition-all ${
+                className={`grid place-items-center px-5 py-2.5 rounded-lg font-bold text-xs w-full sm:w-auto h-10 transition-transform ${
                   darkMode
                     ? "bg-linear-to-r from-orange-500 to-red-600 text-white hover:brightness-110"
                     : "bg-linear-to-r from-orange-500 to-red-500 text-white hover:brightness-110"

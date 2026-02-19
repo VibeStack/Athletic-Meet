@@ -196,7 +196,7 @@ export default function Step2EmailOtp({ nextStep }) {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="bg-white/90 backdrop-blur-sm shadow-2xl rounded-2xl w-full max-w-md p-6 sm:p-8 md:p-10 mx-auto border border-white/50 transition-all duration-500"
+      className="bg-white/90 backdrop-blur-sm shadow-2xl rounded-2xl w-full max-w-md p-6 sm:p-8 md:p-10 mx-auto border border-white/50 transition-transform "
     >
       {/* Header */}
       <div className="text-center mb-8">
@@ -239,7 +239,7 @@ export default function Step2EmailOtp({ nextStep }) {
             onChange={(e) => handleChange(e, i)}
             onPaste={handlePaste}
             className="aspect-5/6 w-10 md:w-12 text-center border border-gray-300 rounded-lg text-lg
-        focus:outline-none focus:ring-2 focus:ring-blue-500 transition shadow-sm font-bold"
+        focus:outline-none focus:ring-2 focus:ring-blue-500  shadow-sm font-bold"
           />
         ))}
 
@@ -265,7 +265,7 @@ export default function Step2EmailOtp({ nextStep }) {
           bg-linear-to-r from-cyan-500 via-blue-500 to-purple-500
           text-white font-bold rounded-xl shadow-lg
           hover:shadow-xl focus:outline-none focus:ring-0
-          transition-all duration-300 flex items-center justify-center gap-2
+          transition-transform  flex items-center justify-center gap-2
           touch-manipulation
           ${
             loading
@@ -296,11 +296,11 @@ export default function Step2EmailOtp({ nextStep }) {
             hover:from-cyan-100 hover:via-blue-100 hover:to-purple-100
             hover:border-blue-400 hover:shadow-lg hover:shadow-blue-200/50
             hover:scale-[1.02]
-            transition-all duration-300 ease-out"
+            transition-transform  ease-out"
         >
           <span className="bg-linear-to-r from-cyan-500 via-blue-500 to-purple-500 bg-clip-text text-transparent">
             <svg
-              className="w-5 h-5 text-blue-500 group-hover:text-purple-500 transition-colors duration-300"
+              className="w-5 h-5 text-blue-500 group-hover:text-purple-500  "
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -317,7 +317,7 @@ export default function Step2EmailOtp({ nextStep }) {
             Open College Email
           </span>
           <svg
-            className="w-4 h-4 text-purple-400 group-hover:translate-x-1 transition-transform duration-300"
+            className="w-4 h-4 text-purple-400 group-hover:translate-x-1 transition-transform "
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"

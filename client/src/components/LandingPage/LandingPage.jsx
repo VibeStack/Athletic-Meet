@@ -54,7 +54,7 @@ const LandingPage = () => {
 
   return (
     <div
-      className={`min-h-screen transition-colors duration-500 ${darkMode ? "bg-gray-900 text-white" : "bg-white text-gray-900"}`}
+      className={`min-h-screen   ${darkMode ? "bg-gray-900 text-white" : "bg-white text-gray-900"}`}
     >
       <Navbar
         darkMode={darkMode}

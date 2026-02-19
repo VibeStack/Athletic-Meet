@@ -409,7 +409,7 @@ export default function UserDetailHeader({
                 <button
                   onClick={handleLockUnlock}
                   disabled={lockingEvents}
-                  className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-all sm:min-w-40 shadow-lg hover:brightness-110 whitespace-nowrap ${lockButtonTheme} ${lockingEvents ? "opacity-70 cursor-not-allowed" : ""}`}
+                  className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-transform sm:min-w-40 shadow-lg hover:brightness-110 whitespace-nowrap ${lockButtonTheme} ${lockingEvents ? "opacity-70 cursor-not-allowed" : ""}`}
                 >
                   {lockingEvents ? (
                     <span className="animate-spin h-4 w-4 border-2 border-white/30 rounded-full border-t-white" />
@@ -441,7 +441,7 @@ export default function UserDetailHeader({
                 <button
                   onClick={verifyUserEmail}
                   disabled={verifyingEmail}
-                  className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 bg-linear-to-r from-emerald-500 to-emerald-600 shadow-emerald-500/25 ${verifyingEmail ? "opacity-70 cursor-not-allowed" : ""}`}
+                  className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-transform shadow-lg hover:brightness-110 bg-linear-to-r from-emerald-500 to-emerald-600 shadow-emerald-500/25 ${verifyingEmail ? "opacity-70 cursor-not-allowed" : ""}`}
                 >
                   {verifyingEmail ? (
                     <span className="animate-spin h-4 w-4 border-2 border-white/30 rounded-full border-t-white" />
@@ -460,7 +460,7 @@ export default function UserDetailHeader({
               {canShowDelete && (
                 <button
                   onClick={() => setShowDeletePopup(true)}
-                  className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 ${
+                  className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-transform shadow-lg hover:brightness-110 ${
                     localDetailsComplete === "partial"
                       ? "bg-linear-to-r from-slate-500 to-slate-600 shadow-slate-500/25"
                       : lockButtonTheme
@@ -477,7 +477,7 @@ export default function UserDetailHeader({
               <button
                 onClick={isUserHavingAdminAccess ? removeAsAdmin : makeAsAdmin}
                 disabled={togglingAdmin}
-                className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 ${lockButtonTheme} ${togglingAdmin ? "opacity-70 cursor-not-allowed" : ""}`}
+                className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-transform shadow-lg hover:brightness-110 ${lockButtonTheme} ${togglingAdmin ? "opacity-70 cursor-not-allowed" : ""}`}
               >
                 {togglingAdmin ? (
                   <span className="animate-spin h-5 w-5 border-2 border-white/30 rounded-full border-t-white" />
@@ -509,7 +509,7 @@ export default function UserDetailHeader({
             onClick={closeDeletePopup}
           />
           <div
-            className={`relative w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl transition-all duration-300 ${
+            className={`relative w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl transition-transform  ${
               darkMode
                 ? "bg-slate-900 border border-white/10"
                 : "bg-white border border-slate-200"
@@ -518,7 +518,7 @@ export default function UserDetailHeader({
             {/* Glow based on user color */}
             {darkMode && (
               <div
-                className={`absolute -top-20 -right-20 w-40 h-40 rounded-full blur-3xl pointer-events-none transition-colors duration-500 ${
+                className={`absolute -top-20 -right-20 w-40 h-40 rounded-full blur-3xl pointer-events-none   ${
                   deleteState === "success"
                     ? "bg-emerald-500/30"
                     : studentUserData.role === "Manager"
@@ -537,7 +537,7 @@ export default function UserDetailHeader({
             <div className="relative p-6 text-center">
               {/* Icon - Changes based on state */}
               <div
-                className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center transition-all duration-300 ${
+                className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center transition-transform  ${
                   deleteState === "success"
                     ? "bg-emerald-500/15 scale-110"
                     : deleteState === "deleting"
@@ -589,7 +589,7 @@ export default function UserDetailHeader({
 
               {/* Title - Changes based on state */}
               <h3
-                className={`text-xl font-bold mb-2 transition-colors duration-300 ${
+                className={`text-xl font-bold mb-2   ${
                   deleteState === "success"
                     ? darkMode
                       ? "text-emerald-400"
@@ -655,7 +655,7 @@ export default function UserDetailHeader({
                 <div className="flex gap-3">
                   <button
                     onClick={closeDeletePopup}
-                    className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${
+                    className={`flex-1 py-3 rounded-xl font-bold text-sm transition-transform ${
                       darkMode
                         ? "bg-slate-800 text-slate-300 hover:bg-slate-700"
                         : "bg-slate-100 text-slate-700 hover:bg-slate-200"
@@ -665,7 +665,7 @@ export default function UserDetailHeader({
                   </button>
                   <button
                     onClick={deleteUser}
-                    className={`flex-1 py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 ${
+                    className={`flex-1 py-3 rounded-xl font-bold text-sm text-white transition-transform shadow-lg hover:brightness-110 ${
                       studentUserData.role === "Manager"
                         ? "bg-linear-to-r from-red-500 to-red-600 shadow-red-500/25"
                         : studentUserData.isUserDetailsComplete === "true"

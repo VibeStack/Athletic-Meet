@@ -258,7 +258,7 @@ export default function BulkAddEventPage() {
         <p className={darkMode ? "text-red-400" : "text-red-600"}>{error}</p>
         <button
           onClick={() => window.location.reload()}
-          className="mt-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+          className="mt-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 "
         >
           Retry
         </button>
@@ -534,7 +534,7 @@ export default function BulkAddEventPage() {
                       shouldValidate: true,
                     });
                   }}
-                  className={`w-full flex-1 px-4 py-3 rounded-xl text-sm transition-all duration-200 resize-none focus:outline-none ${(() => {
+                  className={`w-full flex-1 px-4 py-3 rounded-xl text-sm transition-transform  resize-none focus:outline-none ${(() => {
                     const hasInput = watchedValues.jerseyNumbers?.trim();
                     const isValid =
                       hasInput &&
@@ -574,7 +574,7 @@ export default function BulkAddEventPage() {
                   {...register("eventId", {
                     required: "Please select an event",
                   })}
-                  className={`w-full px-4 py-3 rounded-xl text-sm transition-all duration-200 appearance-none cursor-pointer ${
+                  className={`w-full px-4 py-3 rounded-xl text-sm transition-transform  appearance-none cursor-pointer ${
                     darkMode
                       ? "bg-slate-800/80 border border-slate-700 text-white focus:border-lime-500 focus:ring-2 focus:ring-lime-500/20"
                       : "bg-slate-50 border border-slate-200 text-slate-900 focus:border-lime-500 focus:ring-2 focus:ring-lime-500/20"
@@ -730,7 +730,7 @@ export default function BulkAddEventPage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className={`w-full py-4 rounded-xl font-bold text-base transition-all duration-300 flex items-center justify-center gap-2 ${
+                className={`w-full py-4 rounded-xl font-bold text-base transition-transform  flex items-center justify-center gap-2 ${
                   submitSuccess
                     ? darkMode
                       ? "bg-linear-to-r from-lime-500 to-green-600 text-white"

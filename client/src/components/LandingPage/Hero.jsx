@@ -78,7 +78,7 @@ const RegistrationClosedModal = ({ onClose, registrationDate }) => {
           {/* Close Button */}
           <button
             onClick={onClose}
-            className="w-full py-3 px-6 rounded-xl font-bold text-white bg-linear-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/25"
+            className="w-full py-3 px-6 rounded-xl font-bold text-white bg-linear-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 transition-transform  hover:shadow-lg hover:shadow-cyan-500/25"
           >
             Got it!
           </button>
@@ -158,7 +158,7 @@ const Hero = ({ scrollToSection }) => {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
             <button
-              className="group relative px-8 py-4 bg-linear-to-r from-cyan-500 to-blue-600 text-white rounded-xl font-bold text-base sm:text-lg overflow-hidden transform hover:scale-105 transition-all duration-300 shadow-2xl hover:shadow-cyan-500/25 w-full sm:w-auto"
+              className="group relative px-8 py-4 bg-linear-to-r from-cyan-500 to-blue-600 text-white rounded-xl font-bold text-base sm:text-lg overflow-hidden transform hover:scale-105 transition-transform  shadow-2xl hover:shadow-cyan-500/25 w-full sm:w-auto"
               onClick={handleRegisterClick}
             >
               <span className="relative z-10">Register Now</span>
@@ -169,13 +169,13 @@ const Hero = ({ scrollToSection }) => {
                   </div>
                 </div>
               )}
-              <div className="absolute inset-0 bg-linear-to-r from-blue-600 to-purple-600 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300"></div>
+              <div className="absolute inset-0 bg-linear-to-r from-blue-600 to-purple-600 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left "></div>
               {/* Glow effect */}
-              <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-[0_0_30px_rgba(6,182,212,0.5)]"></div>
+              <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity  shadow-[0_0_30px_rgba(6,182,212,0.5)]"></div>
             </button>
             <button
               onClick={() => scrollToSection("events")}
-              className="relative px-8 py-4 bg-white/10 backdrop-blur-md text-white border-2 border-white/30 rounded-xl font-bold text-base sm:text-lg hover:bg-white/20 hover:border-white/50 transition-all duration-300 w-full sm:w-auto"
+              className="relative px-8 py-4 bg-white/10 backdrop-blur-md text-white border-2 border-white/30 rounded-xl font-bold text-base sm:text-lg hover:bg-white/20 hover:border-white/50 transition-transform  w-full sm:w-auto"
             >
               Explore Events
             </button>
@@ -185,10 +185,10 @@ const Hero = ({ scrollToSection }) => {
             {stats.map((stat, idx) => (
               <div
                 key={idx}
-                className="group relative p-4 sm:p-6 bg-white/8 backdrop-blur-lg rounded-2xl border border-white/15 hover:bg-white/15 hover:border-white/25 transition-all duration-500 transform hover:-translate-y-2"
+                className="group relative p-4 sm:p-6 bg-white/8 backdrop-blur-lg rounded-2xl border border-white/15 hover:bg-white/15 hover:border-white/25 transition-transform  transform hover:-translate-y-2"
                 style={{ animationDelay: `${idx * 150}ms` }}
               >
-                <div className="text-cyan-400 mb-2 flex justify-center opacity-60 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="text-cyan-400 mb-2 flex justify-center opacity-60 group-hover:opacity-100 transition-opacity ">
                   {stat.icon}
                 </div>
                 <div className="text-2xl sm:text-3xl md:text-4xl font-black text-white mb-1">
@@ -206,7 +206,7 @@ const Hero = ({ scrollToSection }) => {
           className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce z-20 cursor-pointer"
           onClick={() => scrollToSection("register")}
         >
-          <ChevronDown className="w-8 h-8 sm:w-10 sm:h-10 text-white/80 hover:text-white transition-colors" />
+          <ChevronDown className="w-8 h-8 sm:w-10 sm:h-10 text-white/80 hover:text-white " />
         </div>
       </section>
 

@@ -115,7 +115,7 @@ export default function UserDetailInfo({
             roleAccessPoints(viewerRole) > roleAccessPoints(targetRole) && (
               <button
                 onClick={() => setShowEditModal(true)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition-transform ${
                   darkMode
                     ? "bg-slate-700 text-white hover:bg-slate-600"
                     : "bg-slate-800 text-white hover:bg-slate-700"

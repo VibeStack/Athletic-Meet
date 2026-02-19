@@ -72,7 +72,7 @@ export default function PortalLayout() {
 
   return (
     <div
-      className={`min-h-screen transition-colors duration-500 ${
+      className={`min-h-screen ${
         darkMode
           ? "bg-slate-950 text-white"
           : "bg-linear-to-br from-cyan-50 via-white to-blue-50"
@@ -81,7 +81,7 @@ export default function PortalLayout() {
       <header className="fixed inset-x-0 top-4 z-40">
         <div className="mx-auto max-w-7xl px-4">
           <div
-            className={`h-16 rounded-2xl backdrop-blur-2xl transition-all duration-500 ${
+            className={`h-16 rounded-2xl backdrop-blur-2xl ${
               darkMode
                 ? "bg-slate-900/50 border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.65)]"
                 : "bg-white/80 border border-slate-200 shadow-[0_10px_40px_rgba(0,0,0,0.08)]"
@@ -91,7 +91,7 @@ export default function PortalLayout() {
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => setMenuOpen(true)}
-                  className="relative p-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 transition"
+                  className="relative p-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/10"
                 >
                   <HamburgerIcon className="w-5 h-5 opacity-80" />
                 </button>
@@ -131,7 +131,7 @@ export default function PortalLayout() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={toggleTheme}
-                  className="relative w-10 h-10 rounded-xl flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/10 transition"
+                  className="relative w-10 h-10 rounded-xl flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/10"
                 >
                   <span
                     className={`absolute inset-0 rounded-xl blur-lg transition-opacity ${
@@ -194,7 +194,7 @@ export default function PortalLayout() {
 
                     <button
                       onClick={() => setShowLogoutPopup(true)}
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-red-500 font-semibold hover:bg-red-500/10 transition"
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-red-500 font-semibold hover:bg-red-500/10"
                     >
                       <LogoutIcon className="w-4 h-4" />
                       <span className="hidden sm:inline">Logout</span>
@@ -229,7 +229,7 @@ export default function PortalLayout() {
             }
           />
           <div
-            className={`relative w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl transition-all duration-300 ${
+            className={`relative w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl transition-transform  ${
               darkMode
                 ? "bg-slate-900 border border-white/10"
                 : "bg-white border border-slate-200"
@@ -238,7 +238,7 @@ export default function PortalLayout() {
             {/* Glow based on user role/gender */}
             {darkMode && (
               <div
-                className={`absolute -top-20 -right-20 w-40 h-40 rounded-full blur-3xl pointer-events-none transition-colors duration-500 ${
+                className={`absolute -top-20 -right-20 w-40 h-40 rounded-full blur-3xl pointer-events-none   ${
                   logoutState === "success"
                     ? "bg-emerald-500/30"
                     : userDetail?.role === "Manager"
@@ -257,7 +257,7 @@ export default function PortalLayout() {
             <div className="relative p-6 text-center">
               {/* Icon - Changes based on state */}
               <div
-                className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center transition-all duration-300 ${
+                className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center transition-transform  ${
                   logoutState === "success"
                     ? "bg-emerald-500/15 scale-110"
                     : logoutState === "logging-out"
@@ -307,7 +307,7 @@ export default function PortalLayout() {
               </div>
 
               <h3
-                className={`text-xl font-bold mb-2 transition-colors duration-300 ${
+                className={`text-xl font-bold mb-2   ${
                   logoutState === "success"
                     ? darkMode
                       ? "text-emerald-400"
@@ -339,7 +339,7 @@ export default function PortalLayout() {
                 <div className="flex gap-3">
                   <button
                     onClick={() => setShowLogoutPopup(false)}
-                    className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${
+                    className={`flex-1 py-3 rounded-xl font-bold text-sm transition-transform ${
                       darkMode
                         ? "bg-slate-800 text-slate-300 hover:bg-slate-700"
                         : "bg-slate-100 text-slate-700 hover:bg-slate-200"
@@ -349,7 +349,7 @@ export default function PortalLayout() {
                   </button>
                   <button
                     onClick={handleLogout}
-                    className={`flex-1 py-3 rounded-xl font-bold text-sm text-white transition-all shadow-lg hover:brightness-110 ${
+                    className={`flex-1 py-3 rounded-xl font-bold text-sm text-white transition-transform shadow-lg hover:brightness-110 ${
                       userDetail?.role === "Manager"
                         ? "bg-linear-to-r from-red-500 to-red-600 shadow-red-500/25"
                         : userDetail?.role === "Admin"

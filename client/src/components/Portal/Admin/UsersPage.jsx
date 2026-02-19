@@ -194,7 +194,7 @@ export default function UsersPage() {
               <div className="mt-8 flex justify-center">
                 <button
                   onClick={loadMore}
-                  className={`px-8 py-4 rounded-2xl font-bold text-sm transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 ${
+                  className={`px-8 py-4 rounded-2xl font-bold text-sm transition-transform  shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 ${
                     darkMode
                       ? "bg-linear-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 shadow-red-500/40 hover:shadow-red-500/60"
                       : "bg-linear-to-r from-slate-900 to-slate-800 text-white hover:from-slate-800 hover:to-slate-700 shadow-slate-900/25 hover:shadow-slate-900/40"
@@ -228,7 +228,7 @@ export default function UsersPage() {
 function NoResultsMessage({ query, setQuery, darkMode }) {
   return (
     <div
-      className={`rounded-3xl overflow-hidden border transition-all ${
+      className={`rounded-3xl overflow-hidden border transition-transform ${
         darkMode
           ? "bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 border-white/10 shadow-2xl"
           : "bg-linear-to-br from-white via-slate-50 to-white border-slate-200 shadow-xl"
@@ -246,7 +246,7 @@ function NoResultsMessage({ query, setQuery, darkMode }) {
           {/* Search Icon */}
           <div className="relative inline-block mb-8">
             <div
-              className={`w-28 h-28 sm:w-32 sm:h-32 rounded-full flex items-center justify-center transition-all duration-300 ${
+              className={`w-28 h-28 sm:w-32 sm:h-32 rounded-full flex items-center justify-center transition-transform  ${
                 darkMode
                   ? "bg-slate-800/80 shadow-[0_0_50px_rgba(56,189,248,0.2)]"
                   : "bg-slate-100 shadow-lg"
@@ -254,7 +254,7 @@ function NoResultsMessage({ query, setQuery, darkMode }) {
             >
               <svg
                 viewBox="0 0 24 24"
-                className={`w-14 h-14 sm:w-16 sm:h-16 transition-all ${
+                className={`w-14 h-14 sm:w-16 sm:h-16 transition-transform ${
                   darkMode ? "text-cyan-500/70" : "text-slate-400"
                 }`}
                 fill="none"
@@ -302,7 +302,7 @@ function NoResultsMessage({ query, setQuery, darkMode }) {
 
           {/* Suggestions */}
           <div
-            className={`inline-block rounded-2xl p-5 sm:p-6 mb-8 transition-all ${
+            className={`inline-block rounded-2xl p-5 sm:p-6 mb-8 transition-transform ${
               darkMode
                 ? "bg-slate-800/50 border border-white/5"
                 : "bg-slate-50 border border-slate-200"
@@ -361,7 +361,7 @@ function NoResultsMessage({ query, setQuery, darkMode }) {
           {/* Clear Button */}
           <button
             onClick={() => setQuery("")}
-            className={`group relative px-8 py-3.5 rounded-xl font-bold text-sm transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 ${
+            className={`group relative px-8 py-3.5 rounded-xl font-bold text-sm transition-transform  shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 ${
               darkMode
                 ? "bg-linear-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-600 hover:to-blue-700 shadow-cyan-500/25 hover:shadow-cyan-500/40"
                 : "bg-linear-to-r from-slate-900 to-slate-800 text-white hover:from-slate-800 hover:to-slate-700 shadow-slate-900/25 hover:shadow-slate-900/40"
@@ -370,7 +370,7 @@ function NoResultsMessage({ query, setQuery, darkMode }) {
             <span className="flex items-center gap-2">
               <svg
                 viewBox="0 0 20 20"
-                className="w-4 h-4 transition-transform group-hover:rotate-180 duration-300"
+                className="w-4 h-4 transition-transform group-hover:rotate-180 "
                 fill="currentColor"
               >
                 <path

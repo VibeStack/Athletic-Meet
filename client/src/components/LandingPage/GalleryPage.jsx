@@ -87,7 +87,7 @@ const RegistrationClosedModal = ({ darkMode, onClose, registrationDate }) => {
           </p>
           <button
             onClick={onClose}
-            className="w-full py-3 px-6 rounded-xl font-bold text-white bg-linear-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/25"
+            className="w-full py-3 px-6 rounded-xl font-bold text-white bg-linear-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 transition-transform  hover:shadow-lg hover:shadow-cyan-500/25"
           >
             Got it!
           </button>
@@ -122,7 +122,7 @@ const GalleryPage = () => {
     <div className={`min-h-screen ${darkMode ? "bg-gray-900" : "bg-white"}`}>
       {/* Header - Matching home page exactly */}
       <nav
-        className={`fixed w-full z-50 transition-all duration-500 backdrop-blur-xl ${
+        className={`fixed w-full z-50 transition-transform  backdrop-blur-xl ${
           darkMode ? "bg-gray-900/98 shadow-2xl" : "bg-white/98 shadow-2xl"
         }`}
       >
@@ -152,7 +152,7 @@ const GalleryPage = () => {
               {/* Dark mode toggle - rounded-xl */}
               <button
                 onClick={() => setDarkMode(!darkMode)}
-                className={`p-3 rounded-lg transition-all duration-300 ${
+                className={`p-3 rounded-lg transition-transform  ${
                   darkMode
                     ? "bg-gray-800 hover:bg-gray-700 text-yellow-400"
                     : "bg-gray-100 hover:bg-gray-200 text-gray-700"
@@ -167,7 +167,7 @@ const GalleryPage = () => {
 
               {/* Login button */}
               <button
-                className={`relative px-6 py-3 rounded-lg font-bold text-white overflow-hidden group cursor-pointer inset-0 bg-linear-to-r from-cyan-500 via-blue-500 to-purple-500 transition-all duration-300 hover:scale-105 active:scale-95 ${
+                className={`relative px-6 py-3 rounded-lg font-bold text-white overflow-hidden group cursor-pointer inset-0 bg-linear-to-r from-cyan-500 via-blue-500 to-purple-500 transition-transform  hover:scale-105 active:scale-95 ${
                   !isRegistrationOpen ? "opacity-95" : ""
                 }`}
                 onClick={handleLoginClick}
@@ -269,14 +269,14 @@ const GalleryPage = () => {
                 alt={`Photo ${idx + 1}`}
                 loading={idx < 12 ? "eager" : "lazy"}
                 onLoad={() => handleImageLoad(idx)}
-                className={`w-full h-auto block group-hover:scale-105 transition-transform duration-500 ${
+                className={`w-full h-auto block group-hover:scale-105 transition-transform  ${
                   loadedImages[idx] ? "opacity-100" : "opacity-0"
                 }`}
               />
 
-              <div className="absolute inset-0 bg-linear-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="absolute inset-0 bg-linear-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity " />
 
-              <div className="absolute bottom-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <div className="absolute bottom-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity ">
                 <span className="px-2 py-1 bg-black/60 backdrop-blur-sm rounded text-xs font-medium text-white">
                   {idx + 1}
                 </span>

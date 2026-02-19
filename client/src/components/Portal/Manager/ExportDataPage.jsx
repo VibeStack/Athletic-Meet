@@ -235,7 +235,7 @@ export default function ExportDataPage() {
           value={value}
           onChange={(e) => onChange(e.target.value)}
           disabled={disabled}
-          className={`w-full appearance-none px-4 py-3 pr-10 rounded-xl text-sm font-medium transition-all cursor-pointer ${
+          className={`w-full appearance-none px-4 py-3 pr-10 rounded-xl text-sm font-medium transition-transform cursor-pointer ${
             darkMode
               ? "bg-slate-800/80 text-white border border-white/10 focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20"
               : "bg-white text-slate-800 border border-slate-200 focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
@@ -384,7 +384,7 @@ export default function ExportDataPage() {
             {selectedEvent && (
               <button
                 onClick={resetFilters}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-transform ${
                   darkMode
                     ? "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white"
                     : "bg-slate-100 text-slate-600 hover:bg-slate-200"
@@ -452,7 +452,7 @@ export default function ExportDataPage() {
               <button
                 onClick={handleExport}
                 disabled={exportingEvents || exportingWinners || loading}
-                className={`flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm text-white transition-all shadow-lg w-full ${
+                className={`flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm text-white transition-transform shadow-lg w-full ${
                   darkMode
                     ? "bg-linear-to-r from-emerald-500 to-teal-600 hover:brightness-110 shadow-emerald-500/25"
                     : "bg-linear-to-r from-emerald-500 to-teal-600 hover:brightness-110 shadow-emerald-500/30"
@@ -478,7 +478,7 @@ export default function ExportDataPage() {
               <button
                 onClick={handleExportWinners}
                 disabled={exportingEvents || exportingWinners || loading}
-                className={`flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm transition-all shadow-lg w-full ${
+                className={`flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm transition-transform shadow-lg w-full ${
                   darkMode
                     ? "bg-slate-800 text-emerald-400 hover:bg-slate-700 ring-1 ring-emerald-500/20 shadow-emerald-950/20"
                     : "bg-white text-emerald-600 hover:bg-emerald-50 ring-1 ring-emerald-200 shadow-emerald-100/50"
@@ -607,7 +607,7 @@ export default function ExportDataPage() {
                   return (
                     <tr
                       key={student.id || student._id || index}
-                      className={`transition-colors ${
+                      className={` ${
                         darkMode ? "hover:bg-slate-800/30" : "hover:bg-slate-50"
                       }`}
                     >

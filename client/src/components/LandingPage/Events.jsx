@@ -249,7 +249,7 @@ const Events = ({ darkMode }) => {
 
   const EventCard = ({ event }) => (
     <div
-      className={`group relative p-6 rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-2 hover:shadow-xl ${
+      className={`group relative p-6 rounded-2xl overflow-hidden cursor-pointer transition-transform  hover:-translate-y-2 hover:shadow-xl ${
         darkMode
           ? "bg-gray-800/80 backdrop-blur-sm border border-gray-700/50"
           : "bg-white border border-gray-100"
@@ -257,12 +257,12 @@ const Events = ({ darkMode }) => {
     >
       {/* Top accent line */}
       <div
-        className={`absolute top-0 left-0 right-0 h-1 bg-linear-to-r ${event.color} transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left`}
+        className={`absolute top-0 left-0 right-0 h-1 bg-linear-to-r ${event.color} transform scale-x-0 group-hover:scale-x-100 transition-transform  origin-left`}
       />
 
       <div className="relative z-10">
         {/* Icon */}
-        <div className="text-5xl mb-4 transform group-hover:-translate-y-1 group-hover:scale-110 transition-transform duration-300">
+        <div className="text-5xl mb-4 transform group-hover:-translate-y-1 group-hover:scale-110 transition-transform ">
           {event.icon}
         </div>
 
@@ -351,7 +351,7 @@ const Events = ({ darkMode }) => {
             </div>
             <button
               onClick={() => setShowModal(false)}
-              className={`p-2 rounded-xl transition-all hover:scale-110 ${
+              className={`p-2 rounded-xl transition-transform hover:scale-110 ${
                 darkMode
                   ? "hover:bg-gray-800 text-gray-400"
                   : "hover:bg-gray-100 text-gray-500"
@@ -377,7 +377,7 @@ const Events = ({ darkMode }) => {
                 <button
                   key={day.id}
                   onClick={() => setActiveDay(day.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-transform ${
                     activeDay === day.id
                       ? "bg-purple-500 text-white shadow-md"
                       : darkMode
@@ -407,7 +407,7 @@ const Events = ({ darkMode }) => {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-transform flex items-center gap-1.5 ${
                       activeTab === tab.id
                         ? "bg-pink-500 text-white shadow-md"
                         : darkMode
@@ -430,7 +430,7 @@ const Events = ({ darkMode }) => {
             {getFilteredEvents().map((event, idx) => (
               <div
                 key={idx}
-                className={`group p-4 rounded-xl transition-all duration-300 hover:scale-[1.02] ${
+                className={`group p-4 rounded-xl transition-transform  hover:scale-[1.02] ${
                   darkMode
                     ? "bg-gray-800/60 hover:bg-gray-800 border border-gray-700/50"
                     : "bg-gray-50 hover:bg-white border border-gray-100 hover:shadow-lg"
@@ -619,10 +619,10 @@ const Events = ({ darkMode }) => {
             </p>
             <button
               onClick={() => setShowModal(true)}
-              className={`group inline-flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-lg transition-all duration-300 transform hover:scale-105 hover:shadow-xl bg-linear-to-r from-purple-600 to-pink-600 text-white hover:from-purple-500 hover:to-pink-500`}
+              className={`group inline-flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-lg transition-transform  transform hover:scale-105 hover:shadow-xl bg-linear-to-r from-purple-600 to-pink-600 text-white hover:from-purple-500 hover:to-pink-500`}
             >
               View Full Event List
-              <ArrowRight className="w-5 h-5 transform group-hover:translate-x-1 transition-transform duration-300" />
+              <ArrowRight className="w-5 h-5 transform group-hover:translate-x-1 transition-transform " />
             </button>
           </div>
         </div>

@@ -370,7 +370,7 @@ export default function CertificatesPage() {
           {/* Trophy Icon */}
           <div className="relative mb-6">
             <div
-              className={`w-24 h-24 sm:w-28 sm:h-28 mx-auto rounded-2xl flex items-center justify-center transform transition-all duration-500 hover:scale-110 hover:rotate-6 ${
+              className={`w-24 h-24 sm:w-28 sm:h-28 mx-auto rounded-2xl flex items-center justify-center transform transition-transform  hover:scale-110 hover:rotate-6 ${
                 darkMode
                   ? "bg-linear-to-br from-amber-500/20 to-yellow-500/10 ring-2 ring-amber-500/30"
                   : "bg-linear-to-br from-amber-100 to-yellow-100 ring-2 ring-amber-300 shadow-lg"
@@ -378,7 +378,7 @@ export default function CertificatesPage() {
             >
               <svg
                 viewBox="0 0 24 24"
-                className={`w-14 h-14 sm:w-16 sm:h-16 transition-colors duration-300 ${
+                className={`w-14 h-14 sm:w-16 sm:h-16   ${
                   darkMode ? "text-amber-400" : "text-amber-500"
                 }`}
                 fill="none"
@@ -702,7 +702,7 @@ export default function CertificatesPage() {
               return (
                 <div
                   key={`winner-${cert.eventId}`}
-                  className={`relative overflow-hidden rounded-2xl p-5 transition-all duration-300 hover:scale-[1.03] hover:-translate-y-1 ${pColors.cardBg} ring-2 ${pColors.cardRing} shadow-2xl ${pColors.shadow}`}
+                  className={`relative overflow-hidden rounded-2xl p-5 transition-transform  hover:scale-[1.03] hover:-translate-y-1 ${pColors.cardBg} ring-2 ${pColors.cardRing} shadow-2xl ${pColors.shadow}`}
                 >
                   {/* Premium glow effects */}
                   {darkMode && (
@@ -762,7 +762,7 @@ export default function CertificatesPage() {
                         <button
                           onClick={() => handlePreview(cert, "winner", pColors)}
                           disabled={previewLoading === `${cert.eventId}-winner`}
-                          className={`flex-1 py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all min-h-[48px] ${
+                          className={`flex-1 py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-transform min-h-[48px] ${
                             darkMode
                               ? "bg-slate-800 text-white hover:bg-slate-700"
                               : "bg-slate-200 text-slate-800 hover:bg-slate-300"
@@ -784,7 +784,7 @@ export default function CertificatesPage() {
                       <button
                         onClick={() => handleDownload(cert, "winner")}
                         disabled={downloading === `${cert.eventId}-winner`}
-                        className={`flex-1 py-3 rounded-xl text-sm font-black flex items-center justify-center gap-2 transition-all min-h-[48px] shadow-xl ${pColors.buttonBg} ${darkMode ? "text-white" : "text-black"} hover:brightness-110 hover:shadow-2xl disabled:opacity-50`}
+                        className={`flex-1 py-3 rounded-xl text-sm font-black flex items-center justify-center gap-2 transition-transform min-h-[48px] shadow-xl ${pColors.buttonBg} ${darkMode ? "text-white" : "text-black"} hover:brightness-110 hover:shadow-2xl disabled:opacity-50`}
                       >
                         <span className="w-5 h-5 flex items-center justify-center shrink-0">
                           {downloading === `${cert.eventId}-winner` ? (
@@ -854,7 +854,7 @@ export default function CertificatesPage() {
             return (
               <div
                 key={`participation-${cert.eventId}`}
-                className={`relative overflow-hidden rounded-2xl p-5 transition-all duration-300 hover:scale-[1.03] hover:-translate-y-1 ${cardColors.cardBg} ring-2 ${cardColors.cardRing} shadow-xl ${cardColors.shadow}`}
+                className={`relative overflow-hidden rounded-2xl p-5 transition-transform  hover:scale-[1.03] hover:-translate-y-1 ${cardColors.cardBg} ring-2 ${cardColors.cardRing} shadow-xl ${cardColors.shadow}`}
               >
                 {/* Decorative glow */}
                 {darkMode && (
@@ -902,7 +902,7 @@ export default function CertificatesPage() {
                         disabled={
                           previewLoading === `${cert.eventId}-participation`
                         }
-                        className={`flex-1 py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all min-h-[44px] ${
+                        className={`flex-1 py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-transform min-h-[44px] ${
                           darkMode
                             ? "bg-slate-800 text-white hover:bg-slate-700"
                             : "bg-slate-200 text-slate-800 hover:bg-slate-300"
@@ -925,7 +925,7 @@ export default function CertificatesPage() {
                     <button
                       onClick={() => handleDownload(cert, "participation")}
                       disabled={downloading === `${cert.eventId}-participation`}
-                      className={`flex-1 py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all min-h-[44px] shadow-lg ${cardColors.buttonBg} ${darkMode ? "text-white" : "text-black"} hover:brightness-110 hover:shadow-xl disabled:opacity-50`}
+                      className={`flex-1 py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-transform min-h-[44px] shadow-lg ${cardColors.buttonBg} ${darkMode ? "text-white" : "text-black"} hover:brightness-110 hover:shadow-xl disabled:opacity-50`}
                     >
                       <span className="w-5 h-5 flex items-center justify-center shrink-0">
                         {downloading === `${cert.eventId}-participation` ? (
@@ -957,7 +957,7 @@ export default function CertificatesPage() {
 
           {/* Modal Content */}
           <div
-            className={`relative w-full max-w-5xl rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl transform transition-all duration-300 scale-100 ${
+            className={`relative w-full max-w-5xl rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl transform transition-transform  scale-100 ${
               darkMode
                 ? `${activeCert?.theme?.cardBg || "bg-slate-900"} ring-2 ${activeCert?.theme?.cardRing || "ring-white/10"}`
                 : `${activeCert?.theme?.cardBg || "bg-white"} ring-2 ${activeCert?.theme?.cardRing || "ring-slate-200"}`
@@ -1014,7 +1014,7 @@ export default function CertificatesPage() {
                   disabled={
                     downloading === `${activeCert?.eventId}-${activeCert?.type}`
                   }
-                  className={`flex items-center gap-2 p-2.5 sm:px-5 sm:py-2.5 rounded-xl text-xs font-black transition-all shadow-lg hover:scale-105 active:scale-95 ${
+                  className={`flex items-center gap-2 p-2.5 sm:px-5 sm:py-2.5 rounded-xl text-xs font-black transition-transform shadow-lg hover:scale-105 active:scale-95 ${
                     activeCert?.theme?.buttonBg ||
                     (darkMode
                       ? "bg-emerald-500 text-white hover:bg-emerald-600"
@@ -1034,7 +1034,7 @@ export default function CertificatesPage() {
 
                 <button
                   onClick={closePreview}
-                  className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-all ${
+                  className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-transform ${
                     darkMode
                       ? "bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700"
                       : "bg-slate-100 text-slate-500 hover:text-slate-800 hover:bg-slate-200"
@@ -1066,7 +1066,7 @@ export default function CertificatesPage() {
               )}
 
               <div
-                className={`relative group max-w-4xl mx-auto rounded-xl overflow-hidden shadow-2xl ring-2 sm:ring-4 ${activeCert?.theme?.cardRing || "ring-black/10"} transition-transform duration-500 hover:scale-[1.005] bg-white`}
+                className={`relative group max-w-4xl mx-auto rounded-xl overflow-hidden shadow-2xl ring-2 sm:ring-4 ${activeCert?.theme?.cardRing || "ring-black/10"} transition-transform  hover:scale-[1.005] bg-white`}
               >
                 {/* Certificate PDF Embed */}
                 <embed
@@ -1076,7 +1076,7 @@ export default function CertificatesPage() {
                 />
 
                 {/* Info Overlay */}
-                <div className="absolute inset-x-0 bottom-0 p-4 bg-linear-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                <div className="absolute inset-x-0 bottom-0 p-4 bg-linear-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity  pointer-events-none">
                   <p className="text-white text-[10px] text-center font-bold tracking-wide uppercase">
                     High-Fidelity PDF Preview
                   </p>

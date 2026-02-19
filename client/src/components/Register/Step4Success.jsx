@@ -142,7 +142,7 @@ export default function Step4Success() {
               className="block w-full py-2.5 sm:py-3
                rounded-lg bg-green-500 text-white
                font-semibold text-sm sm:text-base
-               hover:bg-green-600 transition"
+               hover:bg-green-600 "
             >
               Join WhatsApp
             </a>
@@ -155,7 +155,7 @@ export default function Step4Success() {
               bg-linear-to-r from-cyan-500 via-blue-500 to-purple-500
               text-white font-semibold text-sm sm:text-base
               hover:from-cyan-600 hover:via-blue-600 hover:to-purple-600
-              transition-all duration-300 shadow-md hover:shadow-lg"
+              transition-transform  shadow-md hover:shadow-lg"
           >
             Go to Portal →
           </button>
