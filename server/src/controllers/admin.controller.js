@@ -947,7 +947,7 @@ export const markAttendanceByGivingJerseyArray = asyncHandler(
         if (!user.isEventsLocked) continue;
 
         const ev = user.selectedEvents.find(
-          (e) => e.eventId.toString() === eventId.toString() && e.position === 0
+          (e) => e.eventId.toString() === eventId.toString()
         );
 
         if (!ev) continue;
