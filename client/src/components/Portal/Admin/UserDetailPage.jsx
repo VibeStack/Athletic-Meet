@@ -67,6 +67,10 @@ export default function UserDetailPage() {
         setUserEventsList(response.data);
       }
       setStudentUserEventsList(response.data || []);
+      setStudentUserData((prev) => ({
+        ...prev,
+        selectedEvents: response.data || [],
+      }));
       // Update cache with new events count
       updateUserInCache(studentUserData.id, {
         eventsCount: response.data?.length || 0,
@@ -80,19 +84,24 @@ export default function UserDetailPage() {
 
   const unlockUserEvents = async () => {
     try {
-      await axios.post(
+      const { data: response } = await axios.post(
         `${API_URL}/admin/users/${studentUserData.id}/events/unlock`,
         {},
         { withCredentials: true },
       );
+      const retainedEvents = response.data || [];
       setIsUserEventsLocked(false);
       if (studentUserData.id === user.id) {
-        setUserEventsList([]);
+        setUserEventsList(retainedEvents);
       }
-      setStudentUserEventsList([]);
+      setStudentUserEventsList(retainedEvents);
+      setStudentUserData((prev) => ({
+        ...prev,
+        selectedEvents: retainedEvents,
+      }));
       // Update cache with zero events count
       updateUserInCache(studentUserData.id, {
-        eventsCount: 0,
+        eventsCount: retainedEvents.length,
         isEventsLocked: false,
       });
     } catch (err) {

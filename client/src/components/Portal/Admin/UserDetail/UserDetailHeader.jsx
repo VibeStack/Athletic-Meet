@@ -151,6 +151,14 @@ export default function UserDetailHeader({
   const [deleteState, setDeleteState] = useState("confirm"); // 'confirm' | 'deleting' | 'success'
   const timeoutRef = useRef(null);
 
+  // Unlock popup state
+  const [showUnlockPopup, setShowUnlockPopup] = useState(false);
+  const [unlockState, setUnlockState] = useState("confirm"); // 'confirm' | 'unlocking' | 'success'
+  const unlockTimeoutRef = useRef(null);
+
+  // Unlock error popup state
+  const [showUnlockErrorPopup, setShowUnlockErrorPopup] = useState(false);
+
   // When isUserHavingAdminAccess changes, we need to compute the displayed role:
   // - Manager always stays Manager
   // - Others show Admin if isUserHavingAdminAccess is true, otherwise Student
@@ -307,6 +315,43 @@ export default function UserDetailHeader({
     }
   };
 
+  const startLockUnlock = () => {
+    if (isUserEventsLocked) {
+      const hasRestrictedEvents = studentUserData.selectedEvents?.some(
+        (ev) => ev.eventType === "Team" || ev.position > 0,
+      );
+
+      if (hasRestrictedEvents) {
+        setShowUnlockErrorPopup(true);
+      } else {
+        setShowUnlockPopup(true);
+      }
+    } else {
+      handleLockUnlock();
+    }
+  };
+
+  const confirmUnlock = async () => {
+    setUnlockState("unlocking");
+    try {
+      await unlockUserEvents();
+      setUnlockState("success");
+      unlockTimeoutRef.current = setTimeout(() => {
+        setShowUnlockPopup(false);
+        setUnlockState("confirm");
+      }, 1500);
+    } catch (error) {
+      console.error("Failed to unlock user events", error);
+      setUnlockState("confirm");
+    }
+  };
+
+  const closeUnlockPopup = () => {
+    if (unlockState === "unlocking") return;
+    setShowUnlockPopup(false);
+    setUnlockState("confirm");
+  };
+
   const deleteUser = async () => {
     setDeleteState("deleting");
     try {
@@ -407,7 +452,7 @@ export default function UserDetailHeader({
             <div className="flex items-center gap-2 sm:gap-3">
               {canShowLockUnlock && (
                 <button
-                  onClick={handleLockUnlock}
+                  onClick={startLockUnlock}
                   disabled={lockingEvents}
                   className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white transition-transform sm:min-w-40 shadow-lg hover:brightness-110 whitespace-nowrap ${lockButtonTheme} ${lockingEvents ? "opacity-70 cursor-not-allowed" : ""}`}
                 >
@@ -500,6 +545,255 @@ export default function UserDetailHeader({
           </div>
         </div>
       </section>
+
+      {/* ================= UNLOCK CONFIRMATION POPUP ================= */}
+      {showUnlockPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={closeUnlockPopup}
+          />
+          <div
+            className={`relative w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl transition-transform  ${
+              darkMode
+                ? "bg-slate-900 border border-white/10"
+                : "bg-white border border-slate-200"
+            }`}
+          >
+            {/* Glow based on user color */}
+            {darkMode && (
+              <div
+                className={`absolute -top-20 -right-20 w-40 h-40 rounded-full blur-3xl pointer-events-none   ${
+                  unlockState === "success"
+                    ? "bg-emerald-500/30"
+                    : studentUserData.role === "Manager"
+                      ? "bg-red-500/20"
+                      : studentUserData.isUserDetailsComplete === "true"
+                        ? studentUserData.gender === "Male"
+                          ? "bg-sky-500/20"
+                          : "bg-pink-500/20"
+                        : studentUserData.isUserDetailsComplete === "partial"
+                          ? "bg-slate-500/20"
+                          : "bg-emerald-500/20"
+                }`}
+              />
+            )}
+
+            <div className="relative p-6 text-center">
+              {/* Icon - Changes based on state */}
+              <div
+                className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center transition-transform  ${
+                  unlockState === "success"
+                    ? "bg-emerald-500/15 scale-110"
+                    : unlockState === "unlocking"
+                      ? "bg-amber-500/15"
+                      : studentUserData.role === "Manager"
+                        ? "bg-red-500/10"
+                        : studentUserData.isUserDetailsComplete === "true"
+                          ? studentUserData.gender === "Male"
+                            ? "bg-sky-500/10"
+                            : "bg-pink-500/10"
+                          : studentUserData.isUserDetailsComplete === "partial"
+                            ? "bg-slate-500/10"
+                            : "bg-emerald-500/10"
+                }`}
+              >
+                {unlockState === "success" ? (
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="w-8 h-8 text-emerald-500"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                ) : unlockState === "unlocking" ? (
+                  <span className="animate-spin h-8 w-8 border-3 border-amber-500/30 rounded-full border-t-amber-500" />
+                ) : (
+                  <div
+                    className={`w-8 h-8 flex items-center justify-center ${
+                      studentUserData.role === "Manager"
+                        ? "text-red-500"
+                        : studentUserData.isUserDetailsComplete === "true"
+                          ? studentUserData.gender === "Male"
+                            ? "text-sky-500"
+                            : "text-pink-500"
+                          : studentUserData.isUserDetailsComplete === "partial"
+                            ? "text-slate-500"
+                            : "text-emerald-500"
+                    }`}
+                  >
+                    {ICONS.unlock}
+                  </div>
+                )}
+              </div>
+
+              {/* Title - Changes based on state */}
+              <h3
+                className={`text-xl font-bold mb-2   ${
+                  unlockState === "success"
+                    ? darkMode
+                      ? "text-emerald-400"
+                      : "text-emerald-600"
+                    : darkMode
+                      ? "text-white"
+                      : "text-slate-900"
+                }`}
+              >
+                {unlockState === "success"
+                  ? "Unlocked Successfully!"
+                  : unlockState === "unlocking"
+                    ? "Unlocking..."
+                    : "Unlock Events"}
+              </h3>
+
+              {/* Content - Changes based on state */}
+              {unlockState === "success" ? (
+                <p
+                  className={`text-sm mb-6 ${
+                    darkMode ? "text-emerald-400/80" : "text-emerald-600/80"
+                  }`}
+                >
+                  Events for{" "}
+                  {studentUserData.fullname || studentUserData.username} have
+                  been unlocked.
+                </p>
+              ) : unlockState === "unlocking" ? (
+                <p
+                  className={`text-sm mb-6 ${
+                    darkMode ? "text-slate-400" : "text-slate-500"
+                  }`}
+                >
+                  Please wait while we unlock the events...
+                </p>
+              ) : (
+                <>
+                  <p
+                    className={`text-sm mb-1 ${
+                      darkMode ? "text-slate-400" : "text-slate-500"
+                    }`}
+                  >
+                    Are you sure you want to unlock events for
+                  </p>
+                  <p
+                    className={`text-base font-bold mb-4 ${
+                      darkMode ? "text-white" : "text-slate-800"
+                    }`}
+                  >
+                    {studentUserData.fullname || studentUserData.username}?
+                  </p>
+                  <p
+                    className={`text-xs mb-6 ${
+                      darkMode ? "text-amber-400/80" : "text-amber-500/80"
+                    }`}
+                  >
+                    This will remove the user from all their registered events,
+                    except for group events or events where they hold a winning
+                    position.
+                  </p>
+                </>
+              )}
+
+              {/* Buttons - Only show for confirm state */}
+              {unlockState === "confirm" && (
+                <div className="flex gap-3">
+                  <button
+                    onClick={closeUnlockPopup}
+                    className={`flex-1 py-3 rounded-xl font-bold text-sm transition-transform ${
+                      darkMode
+                        ? "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                    }`}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmUnlock}
+                    className={`flex-1 py-3 rounded-xl font-bold text-sm text-white transition-transform shadow-lg hover:brightness-110 ${
+                      studentUserData.role === "Manager"
+                        ? "bg-linear-to-r from-red-500 to-red-600 shadow-red-500/25"
+                        : studentUserData.isUserDetailsComplete === "true"
+                          ? studentUserData.gender === "Male"
+                            ? "bg-linear-to-r from-sky-500 to-blue-600 shadow-sky-500/25"
+                            : "bg-linear-to-r from-pink-500 to-pink-600 shadow-pink-500/25"
+                          : studentUserData.isUserDetailsComplete === "partial"
+                            ? "bg-linear-to-r from-slate-500 to-slate-600 shadow-slate-500/25"
+                            : "bg-linear-to-r from-emerald-500 to-emerald-600 shadow-emerald-500/25"
+                    }`}
+                  >
+                    Unlock
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= UNLOCK RESTRICTION ERROR POPUP ================= */}
+      {showUnlockErrorPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowUnlockErrorPopup(false)}
+          />
+          <div
+            className={`relative w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl transition-transform  ${
+              darkMode
+                ? "bg-slate-900 border border-white/10"
+                : "bg-white border border-slate-200"
+            }`}
+          >
+            {darkMode && (
+              <div className="absolute -top-20 -right-20 w-40 h-40 rounded-full blur-3xl pointer-events-none bg-red-500/20" />
+            )}
+
+            <div className="relative p-6 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center bg-red-500/10 text-red-500">
+                <svg
+                  viewBox="0 0 24 24"
+                  className="w-8 h-8 fill-current"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+                </svg>
+              </div>
+
+              <h3
+                className={`text-xl font-bold mb-2 ${
+                  darkMode ? "text-white" : "text-slate-900"
+                }`}
+              >
+                Cannot Unlock Events
+              </h3>
+
+              <p
+                className={`text-sm mb-6 ${
+                  darkMode ? "text-red-400/80" : "text-red-500/80"
+                }`}
+              >
+                You cannot unlock events for this user because they are
+                registered in Team events or hold a winning position in an
+                event.
+              </p>
+
+              <button
+                onClick={() => setShowUnlockErrorPopup(false)}
+                className={`w-full py-3 rounded-xl font-bold text-sm transition-transform ${
+                  darkMode
+                    ? "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                }`}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ================= DELETE CONFIRMATION POPUP ================= */}
       {showDeletePopup && (

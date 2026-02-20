@@ -234,14 +234,16 @@ export const getUserDetails = asyncHandler(async (req, res) => {
     urn: user.urn || null,
     phone: user.phone || null,
     isEventsLocked: Boolean(user.isEventsLocked),
-    selectedEvents: user.selectedEvents.map(({ eventId, status, position }) => ({
-      eventId: eventId?._id,
-      eventName: eventId?.name,
-      eventType: eventId?.type,
-      eventDay: eventId?.day,
-      position,
-      attendanceStatus: status,
-    })),
+    selectedEvents: user.selectedEvents.map(
+      ({ eventId, status, position }) => ({
+        eventId: eventId?._id,
+        eventName: eventId?.name,
+        eventType: eventId?.type,
+        eventDay: eventId?.day,
+        position,
+        attendanceStatus: status,
+      })
+    ),
     createdAt: user.createdAt,
   };
 
@@ -449,13 +451,17 @@ export const lockUserEvents = asyncHandler(async (req, res) => {
   // Load event details for response
   const events = await Event.find({ _id: { $in: eventIds } }).lean();
 
-  const formatted = events.map((e) => ({
-    eventId: e._id.toString(),
-    eventName: e.name,
-    eventType: e.type,
-    eventDay: e.day,
-    attendanceStatus: "notMarked",
-  }));
+  const formatted = user.selectedEvents.map((se) => {
+    const e = events.find((ev) => ev._id.toString() === se.eventId.toString());
+    return {
+      eventId: e._id.toString(),
+      eventName: e.name,
+      eventType: e.type,
+      eventDay: e.day,
+      attendanceStatus: se.status || "notMarked",
+      position: se.position || 0,
+    };
+  });
 
   return res
     .status(200)
@@ -502,8 +508,45 @@ export const unlockUserEvents = asyncHandler(async (req, res) => {
       .json(new ApiResponse(null, "Events unlocked successfully"));
   }
 
-  // Free serial numbers for events that were marked present
-  const serialNumbersToFree = selectedEvents
+  // Fetch event details to determine event types (Team vs Track/Field)
+  const eventIds = selectedEvents.map((ev) => ev.eventId);
+  const eventsDetails = await Event.find({ _id: { $in: eventIds } })
+    .select("type")
+    .lean();
+
+  const eventTypeMap = {};
+  eventsDetails.forEach((e) => {
+    eventTypeMap[e._id.toString()] = e.type;
+  });
+
+  const eventsToKeep = [];
+  const eventsToRemove = [];
+
+  selectedEvents.forEach((ev) => {
+    const isTeamEvent = eventTypeMap[ev.eventId.toString()] === "Team";
+    // Keep if Team event or if user has a winning position (1, 2, or 3)
+    const hasWinningPosition = ev.position && ev.position > 0;
+
+    if (isTeamEvent || hasWinningPosition) {
+      eventsToKeep.push(ev);
+    } else {
+      eventsToRemove.push(ev);
+    }
+  });
+
+  if (eventsToRemove.length === 0) {
+    // Only unlocking, no events to remove
+    await User.updateOne(
+      { _id: user._id, isEventsLocked: true },
+      { $set: { isEventsLocked: false, selectedEvents: eventsToKeep } }
+    );
+    return res
+      .status(200)
+      .json(new ApiResponse(null, "Events unlocked successfully"));
+  }
+
+  // Free serial numbers for events that were marked present AND are being removed
+  const serialNumbersToFree = eventsToRemove
     .filter((ev) => ev.status === "present" && ev.serialNo > 0)
     .map((ev) => ev.serialNo);
 
@@ -514,8 +557,8 @@ export const unlockUserEvents = asyncHandler(async (req, res) => {
     );
   }
 
-  // Build bulk decrement operations
-  const bulkUpdates = selectedEvents.map((ev) => {
+  // Build bulk decrement operations for removed events
+  const bulkUpdates = eventsToRemove.map((ev) => {
     const status = ev.status || "notMarked";
 
     return {
@@ -531,15 +574,17 @@ export const unlockUserEvents = asyncHandler(async (req, res) => {
     };
   });
 
-  await Event.bulkWrite(bulkUpdates);
+  if (bulkUpdates.length > 0) {
+    await Event.bulkWrite(bulkUpdates);
+  }
 
-  // Unlock user + clear selected events
+  // Unlock user + retain eventsToKeep
   await User.updateOne(
     { _id: user._id, isEventsLocked: true },
     {
       $set: {
         isEventsLocked: false,
-        selectedEvents: [],
+        selectedEvents: eventsToKeep,
       },
     }
   );
