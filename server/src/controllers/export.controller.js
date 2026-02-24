@@ -12,6 +12,7 @@ import {
   buildSheetName,
   formatWorksheet,
   sortEvents,
+  BRANCH_SHORTFORMS,
 } from "../utils/excelUtils.js";
 
 export const exportAllEvents = asyncHandler(async (req, res) => {
@@ -202,7 +203,7 @@ export const exportWinners = asyncHandler(async (req, res) => {
   const sheetNames = new Set();
 
   // Define the winners column structure (used for all sheets)
-  const winnerHeaders = ["S.No", "Jersey No", "Full Name","Course", "Branch", "Year", "URN", "CRN", "Position"];
+  const winnerHeaders = ["S.No", "Jersey No", "Full Name","Course", "Branch", "Year", "URN", "Time/Distance", "Position"];
 
   sortedEvents.forEach((event) => {
     const eventId = event._id.toString();
@@ -249,11 +250,11 @@ export const exportWinners = asyncHandler(async (req, res) => {
           )
           .join(" ") || "",
       Course: w.student.course || "",
-      Branch: w.student.branch || "",
+      Branch: BRANCH_SHORTFORMS[w.student.branch] || "",
       Year: w.student.year || "",
       URN: w.student.urn || "",
-      CRN: w.student.crn || "",
       Position: w.position === 1 ? "1st" : w.position === 2 ? "2nd" : "3rd",
+      "Time/Distance": "",
     }));
 
     // Create worksheet with title rows

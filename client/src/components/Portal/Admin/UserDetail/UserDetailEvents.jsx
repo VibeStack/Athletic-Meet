@@ -558,7 +558,7 @@ export default function UserDetailEvents({
           />
 
           <div
-            className={`relative w-full max-w-3xl max-h-[90vh] overflow-hidden rounded-2xl ${
+            className={`relative w-full max-w-3xl max-h-[95vh] overflow-hidden rounded-2xl ${
               darkMode
                 ? "bg-slate-900 border border-white/10"
                 : "bg-white border border-slate-200"
@@ -795,7 +795,7 @@ export default function UserDetailEvents({
             </div>
 
             <div
-              className={`py-2 px-5 flex gap-2 justify-end border-t ${
+              className={`py-2 px-5 flex gap-2 min-h-[5vh] justify-end border-t ${
                 darkMode ? "border-white/10" : "border-slate-200"
               }`}
             >
