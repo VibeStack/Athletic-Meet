@@ -548,9 +548,9 @@ export default function UserDetailHeader({
 
       {/* ================= UNLOCK CONFIRMATION POPUP ================= */}
       {showUnlockPopup && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 m-0">
           <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm "
             onClick={closeUnlockPopup}
           />
           <div
@@ -735,7 +735,7 @@ export default function UserDetailHeader({
 
       {/* ================= UNLOCK RESTRICTION ERROR POPUP ================= */}
       {showUnlockErrorPopup && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 m-0">
           <div
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setShowUnlockErrorPopup(false)}
@@ -797,7 +797,7 @@ export default function UserDetailHeader({
 
       {/* ================= DELETE CONFIRMATION POPUP ================= */}
       {showDeletePopup && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 m-0">
           <div
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={closeDeletePopup}

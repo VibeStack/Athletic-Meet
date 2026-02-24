@@ -125,7 +125,7 @@ export default function UserDetailPage() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 relative">
       {/* ================= USER HEADER ================= */}
       <UserDetailHeader
         studentUserData={studentUserData}
